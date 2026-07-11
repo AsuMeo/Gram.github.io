@@ -2,28 +2,29 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Graph Web Bot Client Pro</title>
     <style>
         :root {
-    --bg-dark: #000000;         /* Чистый черный */
-    --bg-surface: #0a0a0a;      /* Очень темный серый */
-    --bg-input: #121212;        /* Почти черный для полей */
-    --accent: #2481cc;          
-    --accent-hover: #2f94e3;
-    --text-main: #e0e0e0;       /* Чуть мягче чистого белого */
-    --text-muted: #606060;
-    --msg-in: #1c1c1c;          /* Темно-серый для вх. */
-    --msg-out: #252525;         /* Чуть светлее для исх. */
-    --error: #ff4747;
-    --success: #3ef067;
-}
+            --bg-dark: #000000;
+            --bg-surface: #0a0a0a;
+            --bg-input: #121212;
+            --accent: #2481cc;          
+            --accent-hover: #2f94e3;
+            --text-main: #e0e0e0;
+            --text-muted: #606060;
+            --msg-in: #1c1c1c;
+            --msg-out: #252525;
+            --error: #ff4747;
+            --success: #3ef067;
+        }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -32,9 +33,32 @@
             height: 100vh;
             display: flex;
             overflow: hidden;
+            position: relative;
         }
 
-        /* --- ЭКРАН ВХОДА --- */
+        .dev-link {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            font-size: 13px;
+            color: #2481cc;
+            text-decoration: none;
+            z-index: 2000;
+            font-weight: 600;
+            background: rgba(10, 10, 10, 0.8);
+            padding: 6px 12px;
+            border-radius: 12px;
+            border: 1px solid #1f2836;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s ease;
+        }
+
+        .dev-link:hover {
+            color: #2f94e3;
+            border-color: #2481cc;
+            box-shadow: 0 0 10px rgba(36, 129, 204, 0.3);
+        }
+
         #login-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -131,14 +155,12 @@
             text-align: left;
         }
 
-        /* --- ГЛАВНАЯ СТРУКТУРА --- */
         .wrapper {
             display: flex;
             width: 100%;
             height: 100%;
         }
 
-        /* Боковое меню */
         .sidebar {
             width: 360px;
             background: var(--bg-surface);
@@ -149,7 +171,6 @@
             position: relative;
         }
 
-        /* Шапка бота */
         .bot-header {
             padding: 15px;
             height: 70px;
@@ -158,7 +179,6 @@
             border-bottom: 1px solid #161e28;
         }
 
-        /* Поиск и Вкладки */
         .search-area {
             padding: 10px 15px 5px 15px;
         }
@@ -180,7 +200,6 @@
             outline: none;
         }
 
-        /* Кнопки категорий (Вкладки) */
         .tabs {
             display: flex;
             padding: 5px 15px 10px 15px;
@@ -206,7 +225,6 @@
             color: var(--accent);
         }
 
-        /* Список диалогов */
         .chats-container {
             flex: 1;
             overflow-y: auto;
@@ -222,7 +240,7 @@
         }
 
         .chat-row:hover { background: #161d27; }
-        .chat-row.active { background: var(--active-chat); }
+        .chat-row.active { background: #1c2430; }
 
         .avatar {
             width: 48px;
@@ -240,16 +258,6 @@
             background-position: center;
             flex-shrink: 0;
             position: relative;
-        }
-
-        .avatar.channel::after {
-            content: "📢";
-            position: absolute;
-            bottom: -3px; right: -3px;
-            font-size: 12px;
-            background: var(--bg-surface);
-            border-radius: 50%;
-            padding: 2px;
         }
 
         .chat-details {
@@ -285,7 +293,6 @@
             text-overflow: ellipsis;
         }
 
-        /* Основная область чата */
         .chat-window {
             flex: 1;
             display: flex;
@@ -312,7 +319,6 @@
             margin-right: 15px;
         }
 
-        /* Окно сообщений */
         .chat-feed {
             flex: 1;
             overflow-y: auto;
@@ -370,25 +376,55 @@
             height: auto;
             border-radius: 8px;
             margin-bottom: 5px;
-            display: block; /* Ensure it doesn't leave space below */
-            cursor: pointer; /* Для открытия в полноэкранном режиме */
+            display: block;
+            cursor: pointer;
         }
-        .bubble-text:empty {
-            margin-top: 0; /* No margin if text is empty and only media */
-        }
+
         .bubble-text {
             color: var(--text-main);
         }
 
-        /* Поле ввода сообщения */
+        .document-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 13.5px;
+            word-break: break-all;
+            transition: background 0.2s;
+        }
+
+        .document-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .voice-player {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+            padding: 5px 0;
+        }
+
+        .voice-player audio {
+            outline: none;
+            height: 32px;
+            width: 100%;
+        }
+
         .chat-input-bar {
             padding: 12px 20px;
             background: var(--bg-surface);
             display: flex;
-            align-items: flex-end; /* Align items to the bottom */
+            align-items: flex-end;
             gap: 12px;
             border-top: 1px solid #161e28;
         }
+
         .input-controls {
             display: flex;
             flex-direction: column;
@@ -407,10 +443,11 @@
             font-size: 14px;
             resize: none;
             max-height: 100px;
-            min-height: 44px; /* Default height */
+            min-height: 44px;
             overflow-y: auto;
         }
-        .attachment-btn {
+
+        .attachment-btn, .voice-btn {
             background: transparent;
             border: none;
             color: var(--text-muted);
@@ -421,11 +458,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: color 0.2s, transform 0.1s;
         }
+
         .attachment-btn:hover { color: var(--accent); }
-        .file-upload-input {
-            display: none; /* Hide the default file input */
+        .voice-btn:hover { color: var(--accent); }
+
+        .voice-btn.recording {
+            color: var(--error);
+            animation: pulse-red 1.5s infinite;
         }
+
+        @keyframes pulse-red {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .file-upload-input {
+            display: none;
+        }
+
         .file-preview-container {
             display: flex;
             align-items: center;
@@ -437,6 +490,7 @@
             font-size: 13px;
             color: var(--text-main);
         }
+
         .file-preview-close {
             color: var(--error);
             font-size: 18px;
@@ -444,29 +498,6 @@
             margin-left: auto;
         }
 
-        /* FAB Кнопка добавления нового чата */
-        .fab-add {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: white;
-            font-size: 24px;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(36, 129, 204, 0.4);
-            transition: all 0.2s;
-        }
-
-        .fab-add:hover { background: var(--accent-hover); transform: scale(1.05); }
-
-        /* --- МОДАЛЬНОЕ ОКНО --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -476,6 +507,7 @@
             justify-content: center;
             z-index: 1100;
         }
+
         .modal-overlay.active { display: flex; }
 
         .modal {
@@ -492,10 +524,11 @@
             font-weight: bold;
             margin-bottom: 15px;
         }
+
         .modal-content-scroll {
             max-height: 80vh;
             overflow-y: auto;
-            padding-right: 10px; /* For scrollbar */
+            padding-right: 10px;
         }
 
         .modal-footer {
@@ -508,10 +541,13 @@
             margin-bottom: 10px;
             font-size: 14px;
         }
+
         .modal-profile-info b { color: var(--accent); }
+
         .modal-profile-info .avatar {
             width: 80px; height: 80px; font-size: 28px; margin: 0 auto 20px auto;
         }
+
         .modal-media-viewer {
             max-width: 90vw;
             max-height: 90vh;
@@ -520,23 +556,66 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.7);
         }
 
-        /* Адаптивность для смартфонов */
         @media (max-width: 768px) {
-            .sidebar { width: 100%; }
+            .dev-link {
+                top: auto;
+                bottom: 15px;
+                right: 15px;
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+            .sidebar { 
+                width: 100%; 
+                height: 100%;
+            }
             .chat-window {
                 display: none;
                 position: fixed;
                 top: 0; left: 0; width: 100%; height: 100%;
                 z-index: 500;
+                background-color: var(--bg-dark);
             }
             .chat-window.active { display: flex; }
             .back-btn { display: block; }
+            .chat-feed {
+                padding: 12px;
+                gap: 8px;
+            }
+            .bubble {
+                max-width: 85%;
+                font-size: 14px;
+                padding: 8px 12px;
+            }
+            .chat-input-bar {
+                padding: 8px 12px;
+                gap: 8px;
+            }
+            .textarea-message {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            .attachment-btn, .voice-btn {
+                padding: 8px;
+                font-size: 18px;
+                height: 40px;
+            }
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            .chats-container {
+                -webkit-overflow-scrolling: touch;
+            }
+            .chat-row {
+                padding: 14px 15px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- ОКНО ВХОДА -->
+    <a href="https://t.me/AsuMeo" target="_blank" class="dev-link">Разработчик</a>
+
     <div id="login-screen">
         <div class="login-card">
             <div class="login-logo">✈</div>
@@ -548,9 +627,7 @@
         </div>
     </div>
 
-    <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
     <div class="wrapper">
-        <!-- Левый список чатов -->
         <div class="sidebar">
             <div class="bot-header">
                 <div class="avatar" id="bot-avatar-img">?</div>
@@ -560,30 +637,20 @@
                 </div>
             </div>
 
-            <!-- Область поиска -->
             <div class="search-area">
                 <div class="search-wrapper">
                     <input type="text" id="search-input" class="search-field" placeholder="Поиск по имени или ID..." oninput="renderChats()">
                 </div>
             </div>
 
-            <!-- Фильтры диалогов (Вкладки) -->
             <div class="tabs">
                 <button class="tab-btn active" id="tab-all" onclick="switchTab('all')">Все</button>
                 <button class="tab-btn" id="tab-users" onclick="switchTab('users')">Люди</button>
-                <button class="tab-btn" id="tab-channels" onclick="switchTab('channels')">Каналы</button>
             </div>
 
-            <!-- Непосредственно список -->
-            <div class="chats-container" id="chats-list">
-                <!-- Заполняется динамически -->
-            </div>
-
-            <!-- Кнопка Добавить чат -->
-            <button class="fab-add" onclick="openAddChatModal()">+</button>
+            <div class="chats-container" id="chats-list"></div>
         </div>
 
-        <!-- Правое окно переписки -->
         <div class="chat-window" id="chat-window-pane">
             <div class="chat-window-header">
                 <div class="back-btn" onclick="backToSidebar()">←</div>
@@ -597,14 +664,16 @@
 
             <div class="chat-feed" id="messages-feed">
                 <div class="empty-placeholder">
-                    Здесь будет отображаться история переписки. Нажмите на любого пользователя или нажмите кнопку «+», чтобы вручную подключить канал, чат или пользователя.
+                    Здесь будет отображаться история переписки. Напишите вашему боту в Telegram, чтобы начать диалог.
                 </div>
             </div>
 
             <div class="chat-input-bar" id="chat-input-bar" style="display: none;">
                 <label for="file-input" class="attachment-btn">📎</label>
-                <input type="file" id="file-input" class="file-upload-input" accept="image/*,video/*" onchange="handleFileChange(event)">
+                <input type="file" id="file-input" class="file-upload-input" accept="*/*" onchange="handleFileChange(event)">
                 
+                <button class="voice-btn" id="voice-btn" onclick="toggleVoiceRecord()">🎙️</button>
+
                 <div class="input-controls">
                     <div id="file-preview" class="file-preview-container" style="display: none;">
                         <span id="file-name"></span>
@@ -617,23 +686,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО "ДОБАВИТЬ ЧАТ / ПОИСК" -->
-    <div class="modal-overlay" id="add-chat-modal">
-        <div class="modal">
-            <div class="modal-header">Найти и Добавить Чат / Канал</div>
-            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">
-                Введите <b>@юзернейм</b> канала/группы/пользователя или их численный <b>Chat ID</b>. Бот сможет подключиться, если он состоит в этой группе или ранее получал сообщения от этого пользователя.
-            </p>
-            <input type="text" id="modal-chat-query" class="login-input" placeholder="@username или -1001234567" style="margin-bottom: 5px;">
-            <div id="modal-error" class="error-log" style="margin-top: 5px; margin-bottom: 10px;"></div>
-            <div class="modal-footer">
-                <button class="btn" style="background:#27303d;" onclick="closeAddChatModal()">Отмена</button>
-                <button class="btn" id="modal-action-btn" onclick="findAndAddChat()">Подключить</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- МОДАЛЬНОЕ ОКНО "ПРОФИЛЬ ЧАТА" -->
     <div class="modal-overlay" id="profile-modal">
         <div class="modal">
             <div class="modal-header">Информация о чате</div>
@@ -653,73 +705,63 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО "ПРОСМОТР МЕДИА" -->
     <div class="modal-overlay" id="media-viewer-modal" onclick="closeMediaViewer()">
         <img id="media-viewer-img" class="modal-media-viewer" style="display:none;">
         <video id="media-viewer-video" class="modal-media-viewer" style="display:none;" controls></video>
     </div>
 
     <script>
-        // --- СОСТОЯНИЕ ПРИЛОЖЕНИЯ ---
         let botToken = "";
         let botInfo = {};
-        let chats = {};            // Формат: {chatId: {id, name, username, type, messages: [{text, time, out, fileId, mediaType}], lastTime}}
+        let chats = {};
         let currentChatId = null;
         let lastUpdateId = 0;
-        let currentTab = "all";    // all, users, channels
+        let currentTab = "all";
         let isPolling = false;
-        let selectedFile = null;   // Для отправки медиа
+        let selectedFile = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
 
-        // --- ИНИЦИАЛИЗАЦИЯ И БЕЗОПАСНАЯ РАБОТА С ПАМЯТЬЮ ---
         const safeStorage = {
             get(key) { 
                 try { return localStorage.getItem(key); } 
-                catch(e) { console.error("localStorage.get failed:", e); return null; } 
+                catch(e) { return null; } 
             },
             set(key, val) { 
                 try { localStorage.setItem(key, val); } 
-                catch(e) { console.error("localStorage.set failed:", e); } 
+                catch(e) {} 
             }
         };
 
-        // Загрузка сохраненных данных на старте
         window.onload = function() {
-            console.log("Страница загружена. Попытка восстановить состояние.");
             const savedToken = safeStorage.get("saved_token");
             const savedChats = safeStorage.get("saved_chats");
             
             if (savedChats) {
                 try { 
                     chats = JSON.parse(savedChats);
-                    // Обновляем lastTime для сортировки, если чат без сообщений
                     for (const id in chats) {
                         if (chats[id].messages.length === 0) {
                             chats[id].lastTime = chats[id].lastTime || 0; 
                         }
                     }
-                    console.log("Загружено чатов из localStorage:", Object.keys(chats).length);
                 } catch(e) {
-                    console.error("Ошибка парсинга сохраненных чатов:", e);
-                    chats = {}; // Сбросить, если не удалось распарсить
+                    chats = {};
                 }
             }
 
             if (savedToken) {
                 document.getElementById('token-field').value = savedToken;
-                console.log("Найден сохраненный токен. Автоматический вход.");
                 tryLogin(savedToken);
-            } else {
-                console.log("Сохраненный токен не найден. Ожидание ввода.");
             }
-            adjustTextareaHeight(); // Инициализация высоты поля ввода
+            adjustTextareaHeight();
         };
 
         function saveState() {
             safeStorage.set("saved_chats", JSON.stringify(chats));
-            console.log("Состояние чатов сохранено в localStorage.");
         }
 
-        // --- АВТОРИЗАЦИЯ ---
         async function tryLogin(tokenOverride = null) {
             const inputField = document.getElementById('token-field');
             const loginBtn = document.getElementById('login-action-btn');
@@ -734,42 +776,34 @@
             errorDiv.style.display = "none";
             loginBtn.disabled = true;
             loginBtn.innerText = "ПОДКЛЮЧЕНИЕ...";
-            console.log("Попытка входа с токеном:", token.substring(0, 10) + "...");
 
             try {
                 const response = await fetch(`https://api.telegram.org/bot${token}/getMe`);
-                console.log("Получен HTTP ответ:", response.status, response.statusText);
-
                 if (!response.ok) {
-                    const errorText = await response.text(); // Попытаться прочитать текст ошибки
-                    throw new Error(`HTTP ошибка: ${response.status} ${response.statusText}. Ответ сервера: ${errorText.substring(0, 200)}`);
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ошибка: ${response.status}`);
                 }
 
                 const data = await response.json();
-                console.log("Получены данные от Telegram API:", data);
-
                 if (data.ok) {
                     botToken = token;
                     botInfo = data.result;
                     safeStorage.set("saved_token", token);
-                    console.log(`Успешный вход! Бот: ${botInfo.first_name} (@${botInfo.username})`);
 
-                    // Установка данных бота на панель
                     document.getElementById('bot-name-display').innerText = botInfo.first_name;
                     document.getElementById('login-screen').style.opacity = 0;
                     setTimeout(() => document.getElementById('login-screen').style.display = 'none', 300);
 
                     updateAvatarUI(botInfo.id, botInfo.first_name, 'bot-avatar-img');
-                    fetchAvatarFromServer(botInfo.id); // Аватар бота
+                    fetchAvatarFromServer(botInfo.id);
 
                     renderChats();
                     startLongPolling();
                 } else {
-                    showLoginError(`Telegram API вернул ошибку: ${data.description || 'Неизвестная ошибка'}`);
+                    showLoginError(`Ошибка: ${data.description || 'Неизвестная ошибка'}`);
                 }
             } catch (e) {
-                console.error("Критическая ошибка при входе:", e);
-                showLoginError(`Не удалось связаться с сервером. Проверьте сеть или статус работы VPN.\nДетали: ${e.message}`);
+                showLoginError(`Не удалось связаться с сервером.`);
             } finally {
                 loginBtn.disabled = false;
                 loginBtn.innerText = "ВОЙТИ";
@@ -780,35 +814,20 @@
             const errorDiv = document.getElementById('login-error');
             errorDiv.innerText = msg;
             errorDiv.style.display = "block";
-            console.error("Ошибка на экране входа:", msg);
         }
 
-        // --- РАБОТА С СЕТЬЮ / LONG POLLING ---
         async function startLongPolling() {
             if (isPolling) return;
             isPolling = true;
-            console.log("Запущен цикл Long Polling обновлений...");
-
-            // При первом запуске Polling, загружаем последние 100 обновлений для истории
-            // (Bot API позволяет получать только последние 100 событий, а не полную историю)
-            // Инициализация lastUpdateId для первой загрузки
-            if (lastUpdateId === 0) {
-                // Если lastUpdateId не установлен, пытаемся получить последние 100 обновлений
-                // Telegram API сам скорректирует offset, если он 0
-            }
             
             while (isPolling) {
                 try {
-                    // Используем timeout для Long Polling, limit=100 для получения большей истории
                     const response = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?offset=${lastUpdateId}&limit=100&timeout=30`);
-                    
                     if (!response.ok) {
-                         const errorText = await response.text();
-                         throw new Error(`HTTP ошибка Polling: ${response.status} ${response.statusText}. Ответ: ${errorText.substring(0, 100)}`);
+                         throw new Error(`Polling error`);
                     }
 
                     const data = await response.json();
-
                     if (data.ok && data.result.length > 0) {
                         let hasNewMsg = false;
                         
@@ -820,7 +839,7 @@
                                 processIncomingMessage(update.channel_post);
                                 hasNewMsg = true;
                             }
-                            lastUpdateId = Math.max(lastUpdateId, update.update_id + 1); // Обновляем lastUpdateId
+                            lastUpdateId = Math.max(lastUpdateId, update.update_id + 1);
                         });
 
                         if (hasNewMsg) {
@@ -830,11 +849,9 @@
                         }
                     }
                 } catch (e) {
-                    console.warn("Сбой сети во время запроса обновлений (Polling):", e.message);
-                    // Задержка при ошибке связи
                     await new Promise(r => setTimeout(r, 4000));
                 }
-                await new Promise(r => setTimeout(r, 1000)); // Небольшая пауза между запросами
+                await new Promise(r => setTimeout(r, 1000));
             }
         }
 
@@ -850,7 +867,7 @@
                     id: chatId,
                     name: name,
                     username: chatObj.username || "",
-                    type: chatObj.type, // private, group, supergroup, channel
+                    type: chatObj.type,
                     messages: [],
                     lastTime: Date.now()
                 };
@@ -861,10 +878,10 @@
             const timeMs = msg.date * 1000;
             let fileId = null;
             let mediaType = null;
-            let caption = null; // Подпись к медиа
+            let caption = null;
 
             if (msg.photo) {
-                fileId = msg.photo[msg.photo.length - 1].file_id; // Выбираем последнее (самое большое) фото
+                fileId = msg.photo[msg.photo.length - 1].file_id;
                 mediaType = 'photo';
                 caption = msg.caption || "";
             } else if (msg.video) {
@@ -874,105 +891,104 @@
             } else if (msg.document) {
                 fileId = msg.document.file_id;
                 mediaType = 'document';
-                caption = msg.caption || msg.document.file_name || ""; // Имя файла для документа
+                caption = msg.caption || msg.document.file_name || "";
             } else if (msg.sticker) {
                 fileId = msg.sticker.file_id;
                 mediaType = 'sticker';
                 caption = msg.sticker.emoji || "[Стикер]";
+            } else if (msg.voice) {
+                fileId = msg.voice.file_id;
+                mediaType = 'voice';
+                caption = "";
             }
-            // Можно добавить другие типы (audio, voice, location, contact и т.д.)
 
-            // Избегаем дубликатов по времени при повторных запросах getUpdates
             const isDuplicate = chats[chatId].messages.some(m => 
                 m.text === (text || caption) && Math.abs(m.time - timeMs) < 3000 && m.fileId === fileId
             );
 
             if (!isDuplicate) {
                 chats[chatId].messages.push({
-                    text: text || caption, // Используем caption, если текст пуст и есть медиа
+                    text: text || caption,
                     time: timeMs,
                     out: false,
                     fileId: fileId,
                     mediaType: mediaType
                 });
                 chats[chatId].lastTime = timeMs;
-                console.log(`Новое сообщение в чате ${chatId}:`, chats[chatId].messages[chats[chatId].messages.length - 1]);
             }
         }
 
-        // --- ГЛОБАЛЬНЫЙ ПОИСК ЧАНЕЛОВ / ПОДКЛЮЧЕНИЕ ---
-        async function findAndAddChat() {
-            const queryField = document.getElementById('modal-chat-query');
-            const actionBtn = document.getElementById('modal-action-btn');
-            const errorDiv = document.getElementById('modal-error');
-            const query = queryField.value.trim();
-
-            if (!query) return;
-
-            errorDiv.style.display = "none";
-            actionBtn.disabled = true;
-            actionBtn.innerText = "ПОИСК...";
-            console.log("Поиск чата по запросу:", query);
-
-            try {
-                // getChat позволяет найти публичные каналы/юзеров по @username
-                // и любые чаты, если бот в них состоит, по их chat_id
-                const response = await fetch(`https://api.telegram.org/bot${botToken}/getChat?chat_id=${encodeURIComponent(query)}`);
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP ошибка при поиске чата: ${response.status} ${response.statusText}. Ответ: ${errorText.substring(0, 100)}`);
+        async function toggleVoiceRecord() {
+            const btn = document.getElementById('voice-btn');
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = e => {
+                        if (e.data.size > 0) audioChunks.push(e.data);
+                    };
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
+                        await sendVoiceMessage(audioBlob);
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btn.classList.add('recording');
+                    btn.innerText = '🛑';
+                } catch (err) {
+                    alert('Не удалось получить доступ к микрофону: ' + err.message);
                 }
+            } else {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+                isRecording = false;
+                btn.classList.remove('recording');
+                btn.innerText = '🎙️';
+            }
+        }
 
+        async function sendVoiceMessage(blob) {
+            if (!currentChatId) return;
+            const targetId = currentChatId;
+            const sendBtn = document.getElementById('send-btn');
+            sendBtn.disabled = true;
+            sendBtn.innerText = "Отправка...";
+            try {
+                const formData = new FormData();
+                formData.append('chat_id', targetId);
+                formData.append('voice', blob, 'voice.ogg');
+                const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
+                    method: 'POST',
+                    body: formData
+                });
                 const data = await response.json();
-                console.log("Результат getChat:", data);
-
-                if (data.ok) {
-                    const result = data.result;
-                    const chatId = result.id;
-                    
-                    let name = result.title || result.first_name || `Чат ${chatId}`;
-                    if (result.last_name) name += " " + result.last_name;
-
-                    // Добавляем или обновляем информацию о чате
-                    if (!chats[chatId]) {
-                        chats[chatId] = {
-                            id: chatId,
-                            name: name,
-                            username: result.username || "",
-                            type: result.type,
-                            messages: [], // Новые чаты начинают с пустой историей
-                            lastTime: Date.now()
-                        };
-                    } else {
-                        // Если чат уже есть, просто обновляем его инфо
-                        chats[chatId].name = name;
-                        chats[chatId].username = result.username || "";
-                        chats[chatId].type = result.type;
-                        chats[chatId].lastTime = Date.now();
-                    }
-
-                    fetchAvatarFromServer(chatId);
+                if (data.ok && data.result.voice) {
+                    const sentMessage = {
+                        text: "",
+                        time: Date.now(),
+                        out: true,
+                        fileId: data.result.voice.file_id,
+                        mediaType: 'voice'
+                    };
+                    chats[targetId].messages.push(sentMessage);
+                    chats[targetId].lastTime = Date.now();
+                    if (currentChatId === targetId) renderMessages();
                     renderChats();
                     saveState();
-                    closeAddChatModal();
-                    openChat(chatId);
-                    console.log(`Чат ${chatId} (${name}) добавлен/обновлен.`);
                 } else {
-                    errorDiv.innerText = `Не удалось найти чат. ${data.description}. Убедитесь, что бот добавлен в этот канал/чат как участник или администратор, или что это публичный юзернейм/ID.`;
-                    errorDiv.style.display = "block";
+                    alert(`Ошибка отправки голосового: ${data.description}`);
                 }
             } catch (e) {
-                console.error("Ошибка при поиске чата:", e);
-                errorDiv.innerText = `Ошибка поиска: ${e.message}. (Это может быть связано с тем, что Bot API не может искать произвольные чаты/пользователей, если бот с ними ранее не взаимодействовал или не состоит в них).`;
-                errorDiv.style.display = "block";
+                alert(`Ошибка соединения: ${e.message}`);
             } finally {
-                actionBtn.disabled = false;
-                actionBtn.innerText = "Подключить";
+                sendBtn.disabled = false;
+                sendBtn.innerText = "Отправить";
             }
         }
 
-        // --- ОТПРАВКА СООБЩЕНИЙ И МЕДИА ---
         async function sendBotMessage() {
             const textarea = document.getElementById('message-text');
             const text = textarea.value.trim();
@@ -987,7 +1003,6 @@
             const sendBtn = document.getElementById('send-btn');
             sendBtn.disabled = true;
             sendBtn.innerText = "Отправка...";
-            console.log(`Отправка сообщения в чат ${targetId}...`);
 
             try {
                 let response;
@@ -999,7 +1014,7 @@
                 if (selectedFile) {
                     const formData = new FormData();
                     formData.append('chat_id', targetId);
-                    if (text) formData.append('caption', text); // Подпись к медиа
+                    if (text) formData.append('caption', text);
 
                     if (selectedFile.type.startsWith('image')) {
                         method = 'sendPhoto';
@@ -1010,11 +1025,10 @@
                         formData.append('video', selectedFile);
                         sentMediaType = 'video';
                     } else {
-                        method = 'sendDocument'; // Для других типов файлов
+                        method = 'sendDocument';
                         formData.append('document', selectedFile);
                         sentMediaType = 'document';
                     }
-                    console.log(`Отправка ${sentMediaType}:`, selectedFile.name);
 
                     response = await fetch(`https://api.telegram.org/bot${botToken}/${method}`, {
                         method: 'POST',
@@ -1036,7 +1050,6 @@
                     method = 'sendMessage';
                     response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${targetId}&text=${encodeURIComponent(text)}`);
                     data = await response.json();
-                    console.log("Отправка текста:", text);
                 }
 
                 if (data.ok) {
@@ -1056,14 +1069,11 @@
                     }
                     renderChats();
                     saveState();
-                    removeFile(); // Очищаем выбранный файл после отправки
-                    console.log("Сообщение успешно отправлено.");
+                    removeFile();
                 } else {
-                    console.error("Ошибка API при отправке сообщения:", data.description);
                     alert(`Не удалось отправить сообщение: ${data.description}`);
                 }
             } catch (e) {
-                console.error("Ошибка соединения во время отправки:", e);
                 alert(`Ошибка соединения во время отправки: ${e.message}`);
             } finally {
                 sendBtn.disabled = false;
@@ -1071,7 +1081,6 @@
             }
         }
 
-        // --- ОБРАБОТКА МЕДИА-ВВОДА ---
         function handleFileChange(event) {
             const fileInput = event.target;
             const previewContainer = document.getElementById('file-preview');
@@ -1081,9 +1090,7 @@
                 selectedFile = fileInput.files[0];
                 fileNameSpan.innerText = selectedFile.name;
                 previewContainer.style.display = 'flex';
-                // Подгоняем высоту текстового поля
                 adjustTextareaHeight();
-                console.log("Выбран файл:", selectedFile.name, selectedFile.type);
             } else {
                 removeFile();
             }
@@ -1091,20 +1098,16 @@
 
         function removeFile() {
             selectedFile = null;
-            document.getElementById('file-input').value = ''; // Очищаем инпут
+            document.getElementById('file-input').value = '';
             document.getElementById('file-preview').style.display = 'none';
-            adjustTextareaHeight(); // Возвращаем высоту
-            console.log("Выбранный файл удален.");
+            adjustTextareaHeight();
         }
-
-        // --- ИНТЕРФЕЙС / РЕНДЕРИНГ ---
 
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active');
             renderChats();
-            console.log("Переключена вкладка:", tab);
         }
 
         function renderChats() {
@@ -1115,22 +1118,15 @@
             const sorted = Object.values(chats).sort((a,b) => b.lastTime - a.lastTime);
 
             if (sorted.length === 0) {
-                 container.innerHTML = `<div class="empty-placeholder" style="margin-top: 50px;">
-                    Нет активных диалогов.<br>
-                    Пожалуйста, напишите боту в Telegram, чтобы начать, или воспользуйтесь кнопкой "+" для поиска.
-                 </div>`;
+                 container.innerHTML = `<div class="empty-placeholder" style="margin-top: 50px;">Нет активных диалогов.</div>`;
                  return;
             }
 
             sorted.forEach(chat => {
-                // Фильтр вкладок
                 const isUser = chat.type === "private";
-                const isChannelOrGroup = chat.type === "channel" || chat.type === "supergroup" || chat.type === "group";
 
                 if (currentTab === "users" && !isUser) return;
-                if (currentTab === "channels" && !isChannelOrGroup) return;
 
-                // Поиск
                 if (searchVal) {
                     const matchName = chat.name.toLowerCase().includes(searchVal);
                     const matchUser = chat.username && chat.username.toLowerCase().includes(searchVal);
@@ -1146,11 +1142,12 @@
                 let msgText = "История переписки пуста";
                 if (lastMsg) {
                     let prefix = lastMsg.out ? "Вы: " : "";
-                    if (lastMsg.mediaType === 'photo') prefix += "🖼 ";
-                    else if (lastMsg.mediaType === 'video') prefix += "🎞 ";
-                    else if (lastMsg.mediaType === 'document') prefix += "📄 ";
-                    else if (lastMsg.mediaType === 'sticker') prefix += "✨ "; // Стикер
-                    msgText = prefix + (lastMsg.text ? lastMsg.text : "");
+                    if (lastMsg.mediaType === 'photo') prefix += "🖼 Фото";
+                    else if (lastMsg.mediaType === 'video') prefix += "🎞 Видео";
+                    else if (lastMsg.mediaType === 'document') prefix += "📄 Файл";
+                    else if (lastMsg.mediaType === 'sticker') prefix += "✨ Стикер";
+                    else if (lastMsg.mediaType === 'voice') prefix += "🎙 Голосовое сообщение";
+                    msgText = prefix + (lastMsg.text ? " " + lastMsg.text : "");
                 }
                
                 const isChan = (chat.type === 'channel' || chat.type === 'supergroup');
@@ -1172,7 +1169,6 @@
                 `;
                 container.appendChild(item);
             });
-            console.log("Список чатов отрендерен.");
         }
 
         function openChat(id) {
@@ -1187,8 +1183,7 @@
             updateAvatarUI(chat.id, chat.name, 'active-chat-avatar');
 
             renderMessages();
-            renderChats(); // Обновляем активный статус в списке
-            console.log("Открыт чат:", id, chat.name);
+            renderChats();
         }
 
         async function renderMessages() {
@@ -1220,29 +1215,36 @@
                             const video = document.createElement('video');
                             video.src = mediaUrl;
                             video.className = 'bubble-media';
-                            video.controls = true; // Для воспроизведения в чате
-                            video.onclick = (e) => { e.stopPropagation(); openMediaViewer(mediaUrl, 'video'); }; // Открывать в модале при клике
+                            video.controls = true;
+                            video.onclick = (e) => { e.stopPropagation(); openMediaViewer(mediaUrl, 'video'); };
                             div.appendChild(video);
                         } else if (msg.mediaType === 'document') {
                             const docLink = document.createElement('a');
                             docLink.href = mediaUrl;
                             docLink.target = '_blank';
-                            docLink.innerText = `📄 ${msg.text || "Документ"}`;
-                            docLink.style.color = 'var(--accent)';
-                            docLink.style.textDecoration = 'underline';
+                            docLink.className = 'document-link';
+                            docLink.innerHTML = `📄 ${escapeHtml(msg.text || "Файл")}`;
                             div.appendChild(docLink);
                         } else if (msg.mediaType === 'sticker') {
                             const stickerImg = document.createElement('img');
                             stickerImg.src = mediaUrl;
-                            stickerImg.className = 'bubble-media'; // Или отдельный стиль для стикеров
+                            stickerImg.className = 'bubble-media';
                             stickerImg.alt = msg.text || "Стикер";
-                            stickerImg.style.maxWidth = '150px'; // Стикеры обычно меньше
+                            stickerImg.style.maxWidth = '150px';
                             div.appendChild(stickerImg);
+                        } else if (msg.mediaType === 'voice') {
+                            const playerDiv = document.createElement('div');
+                            playerDiv.className = 'voice-player';
+                            const audio = document.createElement('audio');
+                            audio.src = mediaUrl;
+                            audio.controls = true;
+                            playerDiv.appendChild(audio);
+                            div.appendChild(playerDiv);
                         }
                     }
                 }
                 
-                if (msg.text) {
+                if (msg.text && msg.mediaType !== 'document') {
                     const textSpan = document.createElement('div');
                     textSpan.className = 'bubble-text';
                     textSpan.innerHTML = escapeHtml(msg.text);
@@ -1258,22 +1260,16 @@
             }
 
             container.scrollTop = container.scrollHeight;
-            console.log("Сообщения чата отрендерены.");
         }
 
-        // Авто-ресайз текстового поля
         function adjustTextareaHeight() {
             const textarea = document.getElementById('message-text');
-            textarea.style.height = 'auto'; // Сбросить высоту
-            // Установить новую высоту, но не более 100px и не менее 44px
+            textarea.style.height = 'auto';
             textarea.style.height = Math.max(44, Math.min(textarea.scrollHeight, 100)) + 'px';
         }
         document.getElementById('message-text').addEventListener('input', adjustTextareaHeight);
 
-
-        // --- УПРАВЛЕНИЕ АВАТАРКАМИ ---
         async function fetchAvatarFromServer(id, elementIdOverride = null) {
-            // Проверяем кэш, если уже есть, не делаем запрос
             if (safeStorage.get("av_data_" + id)) {
                 updateAvatarUI(id, null, elementIdOverride);
                 updateAvatarUI(id, null, `av-list-${id}`);
@@ -1298,12 +1294,8 @@
                         updateAvatarUI(id, null, elementIdOverride);
                         updateAvatarUI(id, null, `av-list-${id}`);
                     }
-                } else if (!chatData.ok) {
-                     // console.warn(`Не удалось получить фото для чата ${id}:`, chatData.description);
                 }
-            } catch(e) {
-                // console.warn("Ошибка при получении аватара для чата:", id, e);
-            }
+            } catch(e) {}
         }
 
         function updateAvatarUI(id, fallbackName = null, forceElementId = null) {
@@ -1315,7 +1307,7 @@
                 targetElement.style.backgroundImage = `url(${url})`;
                 targetElement.innerText = "";
                 targetElement.style.fontSize = "0";
-            } else { // Если URL нет или сброшено
+            } else {
                 const nameToDisplay = fallbackName || (chats[id] ? chats[id].name : '?');
                 targetElement.style.backgroundImage = "none";
                 targetElement.style.backgroundColor = getPastelColor(id);
@@ -1324,7 +1316,6 @@
             }
         }
         
-        // --- ПОЛУЧЕНИЕ ПРЯМОГО URL МЕДИА-ФАЙЛА ---
         async function getMediaFileUrl(fileId) {
             const cachedUrl = safeStorage.get("media_url_" + fileId);
             if (cachedUrl) return cachedUrl;
@@ -1337,13 +1328,10 @@
                     safeStorage.set("media_url_" + fileId, url);
                     return url;
                 }
-            } catch (e) {
-                console.error("Ошибка при получении URL медиа-файла:", e);
-            }
+            } catch (e) {}
             return null;
         }
 
-        // --- УПРАВЛЕНИЕ МОДАЛЬНЫМИ ОКНАМИ ---
         function openProfileModal(chatId) {
             if (!chatId || !chats[chatId]) {
                 alert("Выберите чат для просмотра профиля.");
@@ -1359,18 +1347,10 @@
             updateAvatarUI(chat.id, chat.name, 'profile-modal-avatar');
 
             document.getElementById('profile-modal').classList.add('active');
-            console.log("Открыт профиль для чата:", chatId);
         }
 
         function closeProfileModal() {
             document.getElementById('profile-modal').classList.remove('active');
-        }
-
-        function openAddChatModal() { document.getElementById('add-chat-modal').classList.add('active'); }
-        function closeAddChatModal() { 
-            document.getElementById('add-chat-modal').classList.remove('active'); 
-            document.getElementById('modal-chat-query').value = "";
-            document.getElementById('modal-error').style.display = "none";
         }
 
         function openMediaViewer(url, type) {
@@ -1380,7 +1360,7 @@
             
             imgEl.style.display = 'none';
             videoEl.style.display = 'none';
-            videoEl.pause(); // Остановить воспроизведение, если было
+            videoEl.pause();
 
             if (type === 'photo') {
                 imgEl.src = url;
@@ -1391,7 +1371,6 @@
                 videoEl.play();
             }
             viewerModal.classList.add('active');
-            console.log("Открыт медиа-вьюер:", url, type);
         }
 
         function closeMediaViewer() {
@@ -1399,19 +1378,18 @@
             const videoEl = document.getElementById('media-viewer-video');
             if (videoEl.style.display === 'block') {
                 videoEl.pause();
-                videoEl.currentTime = 0; // Сбросить видео на начало
+                videoEl.currentTime = 0;
             }
             viewerModal.classList.remove('active');
-            console.log("Медиа-вьюер закрыт.");
         }
 
-        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
         function getPastelColor(id) {
             const colors = ['#e57373', '#f06292', '#ba68c8', '#9575cd', '#7986cb', '#64b5f6', '#4fc3f7', '#4dd0e1', '#4db6ac', '#81c784'];
             return colors[Math.abs(id) % colors.length];
         }
 
         function escapeHtml(text) {
+            if (!text) return "";
             return text.replace(/[&<>'"]/g, tag => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
             }[tag] || tag));
@@ -1428,8 +1406,8 @@
         function backToSidebar() {
             document.getElementById('chat-window-pane').classList.remove('active');
             currentChatId = null;
-            console.log("Возврат к списку чатов.");
         }
+        // мяу, я устала писать
     </script>
 </body>
-                    </html>
+    </html>
