@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Graph Web Bot Client Pro v3</title>
+    <title>Graph Web Bot Client Pro v4</title>
     <style>
         :root {
             --bg-dark: #050508;
@@ -87,12 +87,18 @@
         }
 
         .login-logo {
-            font-size: 72px;
-            margin-bottom: 20px;
+            width: 72px; /* Set explicit width for SVG */
+            height: 72px; /* Set explicit height for SVG */
+            margin: 0 auto 20px auto;
             color: var(--accent);
             display: inline-block;
             animation: float 4s ease-in-out infinite;
-            text-shadow: 0 0 20px rgba(36, 129, 204, 0.3);
+            filter: drop-shadow(0 0 20px rgba(36, 129, 204, 0.3));
+        }
+        .login-logo svg {
+            width: 100%;
+            height: 100%;
+            fill: currentColor; /* Use currentColor for SVG fill */
         }
 
         @keyframes float {
@@ -148,6 +154,15 @@
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 4px 15px rgba(36, 129, 204, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
         }
 
         .btn:hover { 
@@ -351,7 +366,7 @@
 
         .back-btn {
             display: none;
-            font-size: 22px;
+            font-size: 22px; /* Adjusted to fit SVG */
             color: var(--accent);
             cursor: pointer;
             margin-right: 18px;
@@ -362,6 +377,11 @@
             border-radius: 50%;
             background: var(--bg-input);
             transition: background 0.2s;
+        }
+        .back-btn svg {
+            width: 20px; /* SVG size */
+            height: 20px;
+            fill: currentColor;
         }
 
         .back-btn:active {
@@ -545,7 +565,7 @@
 
         /* Контекстное меню сообщения */
         .message-menu {
-            position: absolute;
+            position: fixed; /* Changed to fixed for better mobile positioning */
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
             border-radius: 12px;
@@ -569,6 +589,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+        .message-menu button svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
         }
 
         .message-menu button:hover {
@@ -614,7 +639,7 @@
         }
 
         .document-icon {
-            font-size: 24px;
+            font-size: 24px; /* Adjusted to fit SVG */
             background: rgba(36, 129, 204, 0.15);
             width: 44px;
             height: 44px;
@@ -624,6 +649,11 @@
             justify-content: center;
             flex-shrink: 0;
             color: var(--accent);
+        }
+        .document-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
         }
 
         .voice-player {
@@ -641,13 +671,18 @@
             background: var(--accent);
             border: none;
             color: white;
-            font-size: 14px;
+            font-size: 14px; /* Adjusted to fit SVG */
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
             transition: background 0.2s;
+        }
+        .voice-play-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
         }
 
         .voice-play-btn:hover {
@@ -679,6 +714,7 @@
             flex-direction: column;
             gap: 8px;
             border-top: 1px solid var(--border-color);
+            flex-shrink: 0; /* Ensures it doesn't shrink, keeping buttons visible */
         }
 
         /* Информационные плашки над вводом (ответ/редактирование) */
@@ -745,7 +781,7 @@
             background: var(--bg-input);
             border: 1px solid var(--border-color);
             color: #a0a5b5;
-            font-size: 18px;
+            font-size: 18px; /* Adjusted to fit SVG */
             cursor: pointer;
             width: 48px;
             height: 48px;
@@ -755,6 +791,11 @@
             justify-content: center;
             flex-shrink: 0;
             transition: all 0.2s ease;
+        }
+        .attachment-btn svg, .voice-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
         }
 
         .attachment-btn:hover, .voice-btn:hover {
@@ -874,6 +915,10 @@
             width: 90px; height: 90px; font-size: 32px; margin: 0 auto 24px auto;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
+        .modal-profile-info .btn svg {
+            width: 16px;
+            height: 16px;
+        }
 
         .modal-media-viewer {
             max-width: 95vw;
@@ -918,18 +963,23 @@
             }
             .chat-input-bar {
                 padding: 10px 14px;
-                gap: 8px;
+                gap: 6px; /* Reduced gap for mobile */
             }
             .textarea-message {
                 padding: 11px 14px;
                 font-size: 14px;
                 min-height: 40px;
+                max-height: 80px; /* Reduced max height for mobile */
             }
             .attachment-btn, .voice-btn {
                 width: 40px;
                 height: 40px;
                 border-radius: 12px;
                 font-size: 16px;
+            }
+            .attachment-btn svg, .voice-btn svg {
+                width: 18px;
+                height: 18px;
             }
             .btn {
                 padding: 11px 18px;
@@ -952,6 +1002,19 @@
                 height: 70px;
                 padding: 10px 16px;
             }
+            /* Mobile specific for input banners/previews */
+            .file-preview-container, .input-info-banner {
+                padding: 6px 12px;
+                margin-bottom: 6px;
+                font-size: 13px;
+            }
+            .message-menu {
+                width: 180px; /* Slightly wider for touch */
+                max-width: calc(100% - 20px); /* Ensure it stays within screen */
+            }
+            .message-menu button {
+                padding: 12px 14px;
+            }
         }
     </style>
 </head>
@@ -961,8 +1024,10 @@
 
     <div id="login-screen">
         <div class="login-card">
-            <div class="login-logo">✈</div>
-            <h1>Graph Web Bot Client Pro v3</h1>
+            <div class="login-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 4L3 11.5L10 14L21 4ZM10.5 20.5L14 16L21 4L10.5 20.5Z"/></svg>
+            </div>
+            <h1>Graph Web Bot Client Pro v4</h1>
             <p>Вход по Bot Token. Общайтесь от имени бота с расширенными функциями редактирования, ответов и удаления.</p>
             <input type="password" id="token-field" class="login-input" placeholder="Токен бота (например, 12345:AAH...)">
             <button class="btn" id="login-action-btn" onclick="tryLogin()">ВОЙТИ</button>
@@ -996,13 +1061,17 @@
 
         <div class="chat-window" id="chat-window-pane">
             <div class="chat-window-header">
-                <div class="back-btn" onclick="backToSidebar()">←</div>
+                <div class="back-btn" onclick="backToSidebar()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10.8284 12.0007L15.7782 16.9504L14.364 18.3646L8 12.0007L14.364 5.63672L15.7782 7.05093L10.8284 12.0007Z"/></svg>
+                </div>
                 <div class="avatar" id="active-chat-avatar">?</div>
                 <div class="chat-details" style="flex:1;">
                     <div class="chat-title" id="active-chat-name">Выберите чат</div>
                     <div class="chat-last-message" id="active-chat-status">и начнется общение</div>
                 </div>
-                <button class="btn" style="width: auto; padding: 8px 15px; font-size: 13px;" onclick="openProfileModal(currentChatId)">Подробнее</button>
+                <button class="btn" style="width: auto; padding: 8px 15px; font-size: 13px;" onclick="openProfileModal(currentChatId)">
+                    Подробнее
+                </button>
             </div>
 
             <!-- Плашка закрепленного сообщения -->
@@ -1016,6 +1085,9 @@
             <div class="chat-feed" id="messages-feed" onclick="closeContextMenu()">
                 <div class="empty-placeholder">
                     Здесь будет отображаться история переписки. Напишите вашему боту в Telegram, чтобы начать диалог.
+                    <p style="font-size:12px; margin-top:10px; color:var(--text-muted);">
+                        Примечание: Для чисто клиентского приложения (без сервера), история загружается только из последних доступных обновлений Telegram (обычно до 100 последних). Полная история сохраняется локально после первого запуска.
+                    </p>
                 </div>
             </div>
 
@@ -1034,10 +1106,15 @@
                 </div>
 
                 <div class="input-main-row">
-                    <label for="file-input" class="attachment-btn">📎</label>
+                    <label for="file-input" class="attachment-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C8.68356 2 6 4.68356 6 8V14C6 16.2091 7.79086 18 10 18C12.2091 18 14 16.2091 14 14V8C14 6.89543 13.1046 6 12 6C10.8954 6 10 6.89543 10 8V13C10 13.5523 10.4477 14 11 14C11.5523 14 12 13.5523 12 13V8H14V13C14 17.3016 10.6015 20 6.5 20C2.39845 20 0 16.8016 0 13V8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8V14C16 17.866 12.866 21 9 21C5.13401 21 2 17.866 2 14V8H4V14C4 16.7614 6.23858 19 9 19C11.7614 19 14 16.7614 14 14V8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8V14C2 16.7614 4.23858 19 7 19H9C11.7614 19 14 16.7614 14 14V8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8V14C2 16.7614 4.23858 19 7 19H9C11.7614 19 14 16.7614 14 14V8C14 4.68629 11.3137 2 8 2Z" fill="currentColor"/></svg>
+                    </label>
                     <input type="file" id="file-input" class="file-upload-input" accept="*/*" onchange="handleFileChange(event)">
                     
-                    <button class="voice-btn" id="voice-btn" onclick="toggleVoiceRecord()">🎙️</button>
+                    <button class="voice-btn" id="voice-btn" onclick="toggleVoiceRecord()">
+                        <svg id="mic-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 14C14.2091 14 16 12.2091 16 10V4C16 1.79086 14.2091 0 12 0C9.79086 0 8 1.79086 8 4V10C8 12.2091 9.79086 14 12 14ZM12 12C10.8954 12 10 11.1046 10 10V4C10 2.89543 10.8954 2 12 2C13.1046 2 14 2.89543 14 4V10C14 11.1046 13.1046 12 12 12ZM7 10C7 13.866 10.134 17 14 17V19C10.6863 19 8.00001 16.3137 8.00001 13V12H6V13C6 16.9038 8.94828 20.0766 12.7937 20.9715L12 22H10V24H14V22H13.2063C17.0517 21.0766 20 17.9038 20 13V12H18V13C18 16.3137 15.3137 19 12 19V17C15.134 17 17 13.866 17 10H19V10H20V10H22V10H24V10V4C24 1.79086 22.2091 0 20 0C17.7909 0 16 1.79086 16 4V10C16 12.2091 17.7909 14 20 14V17C20 18.0463 20 18.0463 20 18.0463V19H19.047C18.2435 19.8659 17.2023 20.5057 16.0371 20.8655L16 21V22H18V24H16V22H15.2063C11.3482 21.0772 8 17.866 8 14V10H7V10Z" fill="currentColor"/></svg>
+                        <svg id="stop-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0H24V24H0V0Z" fill="none"/><path d="M6 6H18V18H6V6Z" fill="currentColor"/></svg>
+                    </button>
 
                     <div class="input-controls">
                         <div id="file-preview" class="file-preview-container" style="display: none;">
@@ -1046,7 +1123,10 @@
                         </div>
                         <textarea id="message-text" class="textarea-message" placeholder="Напишите сообщение..." rows="1" onkeydown="handleInputKey(event)" oninput="handleTypingNotification()"></textarea>
                     </div>
-                    <button class="btn" style="width: auto; padding: 12px 24px;" id="send-btn" onclick="sendBotMessage()">Отправить</button>
+                    <button class="btn" style="width: auto; padding: 12px 24px;" id="send-btn" onclick="sendBotMessage()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 4L3 11.5L10 14L21 4ZM10.5 20.5L14 16L21 4L10.5 20.5Z"/></svg>
+                        Отправить
+                    </button>
                 </div>
             </div>
         </div>
@@ -1061,11 +1141,11 @@
             <span onclick="sendReaction('😂')">😂</span>
             <span onclick="sendReaction('👏')">👏</span>
         </div>
-        <button onclick="triggerReply()"><span style="font-size:14px;">↩️</span> Ответить</button>
-        <button id="menu-edit-btn" onclick="triggerEdit()"><span style="font-size:14px;">✏️</span> Изменить</button>
-        <button onclick="pinMessage()"><span style="font-size:14px;">📌</span> Закрепить</button>
-        <button onclick="copyMessageText()"><span style="font-size:14px;">📋</span> Копировать</button>
-        <button onclick="deleteMessage()" style="color: var(--error);"><span style="font-size:14px;">🗑️</span> Удалить</button>
+        <button onclick="triggerReply()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 9L14 12L10 15V9ZM12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20Z" fill="currentColor"/></svg> Ответить</button>
+        <button id="menu-edit-btn" onclick="triggerEdit()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 2L21 7L13 15L8 15L8 10L16 2ZM17.8284 3.82843L19.1716 5.17157L17.5 6.84315L16.1569 5.5L17.8284 3.82843ZM6 18H18V20H6V18Z" fill="currentColor"/></svg> Изменить</button>
+        <button onclick="pinMessage()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 14L18 17V22H16V19L14 17L11.5 19.5L12.9142 20.9142L14.3284 22.3284L12.9142 23.7426L10.0858 20.9142L9 22L7 20L8 19L5 16V11L14 2L22 10L15 14ZM14 4L7 11L10 14L17 7L14 4Z" fill="currentColor"/></svg> Закрепить</button>
+        <button onclick="copyMessageText()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 6V4C7 3.44772 7.44772 3 8 3H18C18.5523 3 19 3.44772 19 4V16C19 16.5523 18.5523 17 18 17H16V19C16 19.5523 15.5523 20 15 20H6C5.44772 20 5 19.5523 5 19V8C5 7.44772 5.44772 7 6 7H7V6ZM17 5H9V7H16C16.5523 7 17 7.44772 17 8V15H18C18.5523 15 19 14.5523 19 14V6C19 5.44772 18.5523 5 18 5H17ZM7 9V18H14V9H7Z" fill="currentColor"/></svg> Копировать</button>
+        <button onclick="deleteMessage()" style="color: var(--error);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 11H11V17H9V11ZM13 11H15V17H13V11ZM9 4V6H15V4H9Z" fill="currentColor"/></svg> Удалить</button>
     </div>
 
     <!-- Модалка информации -->
@@ -1081,7 +1161,8 @@
                 
                 <div style="margin-top: 20px; text-align: center;">
                     <button class="btn" style="background: var(--bg-input); border: 1px solid var(--border-color); font-size: 13px;" onclick="document.getElementById('local-avatar-loader').click()">
-                        🖼️ Загрузить свой аватар
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 12L20 17V5L15 10L15 12ZM2 6C2 4.89543 2.89543 4 4 4H12C13.1046 4 14 4.89543 14 6V18C14 19.1046 13.1046 20 12 20H4C2.89543 20 2 19.1046 2 18V6ZM4 6V18H12V6H4ZM6 9L8.5 12.5L10 10.5L12 13H6L6 9Z" fill="currentColor"/></svg>
+                        Загрузить свой аватар
                     </button>
                     <input type="file" id="local-avatar-loader" accept="image/*" style="display: none;" onchange="saveLocalAvatar(event)">
                 </div>
@@ -1110,7 +1191,6 @@
         let audioChunks = [];
         let isRecording = false;
 
-        // Переменные состояний для Ответа / Изменения / Меню
         let selectedMessageId = null; 
         let replyToMessageId = null;
         let editingMessageId = null;
@@ -1119,11 +1199,11 @@
         const safeStorage = {
             get(key) { 
                 try { return localStorage.getItem(key); } 
-                catch(e) { return null; } 
+                catch(e) { console.error("Error reading from localStorage:", e); return null; } 
             },
             set(key, val) { 
                 try { localStorage.setItem(key, val); } 
-                catch(e) {} 
+                catch(e) { console.error("Error writing to localStorage:", e); } 
             }
         };
 
@@ -1135,6 +1215,7 @@
                 try { 
                     chats = JSON.parse(savedChats);
                 } catch(e) {
+                    console.error("Failed to parse saved chats from localStorage:", e);
                     chats = {};
                 }
             }
@@ -1168,7 +1249,8 @@
             try {
                 const response = await fetch(`https://api.telegram.org/bot${token}/getMe`);
                 if (!response.ok) {
-                    throw new Error(`HTTP ошибка: ${response.status}`);
+                    const errorJson = await response.json();
+                    throw new Error(`HTTP ошибка: ${response.status} - ${errorJson.description || 'Неизвестная ошибка'}`);
                 }
 
                 const data = await response.json();
@@ -1190,10 +1272,10 @@
                     showLoginError(`Ошибка: ${data.description || 'Неизвестная ошибка'}`);
                 }
             } catch (e) {
-                showLoginError(`Не удалось связаться с сервером.`);
+                showLoginError(`Не удалось связаться с сервером. ${e.message}`);
             } finally {
                 loginBtn.disabled = false;
-                loginBtn.innerText = "ВОЙТИ";
+                loginBtn.innerHTML = SVG_ICONS.sendPlane + " ВОЙТИ";
             }
         }
 
@@ -1206,7 +1288,36 @@
         async function startLongPolling() {
             if (isPolling) return;
             isPolling = true;
+
+            // Try to fetch initial batch of historical updates if `lastUpdateId` is 0
+            if (lastUpdateId === 0) {
+                console.log("Fetching initial history (max 100 recent updates)...");
+                try {
+                    const response = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?offset=1&limit=100`);
+                    if (!response.ok) {
+                        throw new Error(`Initial history fetch error`);
+                    }
+                    const data = await response.json();
+                    if (data.ok && data.result.length > 0) {
+                        data.result.forEach(update => {
+                            if (update.message) processIncomingMessage(update.message);
+                            else if (update.edited_message) processEditedMessage(update.edited_message);
+                            else if (update.channel_post) processIncomingMessage(update.channel_post);
+                            lastUpdateId = Math.max(lastUpdateId, update.update_id + 1);
+                        });
+                        console.log(`Fetched ${data.result.length} initial updates.`);
+                        renderChats();
+                        if (currentChatId) renderMessages();
+                        saveState();
+                    } else {
+                        console.log("No initial updates found or API response not OK for initial fetch.");
+                    }
+                } catch (e) {
+                    console.warn("Failed to fetch initial history:", e);
+                }
+            }
             
+            // Start regular long polling
             while (isPolling) {
                 try {
                     const response = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?offset=${lastUpdateId}&limit=100&timeout=30`);
@@ -1228,6 +1339,15 @@
                             } else if (update.channel_post) {
                                 processIncomingMessage(update.channel_post);
                                 hasNewMsg = true;
+                            } else if (update.message_reaction) {
+                                processMessageReaction(update.message_reaction);
+                                hasNewMsg = true;
+                            } else if (update.pinned_message) {
+                                processPinnedMessage(update.pinned_message, update.chat_member); // Simplified for direct pin, full info from chat_member might be needed
+                                hasNewMsg = true;
+                            } else if (update.unpinned_message) {
+                                processUnpinnedMessage(update.unpinned_message);
+                                hasNewMsg = true;
                             }
                             lastUpdateId = Math.max(lastUpdateId, update.update_id + 1);
                         });
@@ -1239,9 +1359,10 @@
                         }
                     }
                 } catch (e) {
-                    await new Promise(r => setTimeout(r, 4000));
+                    console.error("Long polling error:", e);
+                    await new Promise(r => setTimeout(r, 4000)); // Wait before retrying on error
                 }
-                await new Promise(r => setTimeout(r, 1000));
+                await new Promise(r => setTimeout(r, 1000)); // Short delay between polls
             }
         }
 
@@ -1260,7 +1381,7 @@
                     type: chatObj.type,
                     messages: [],
                     lastTime: Date.now(),
-                    pinnedMessageId: null
+                    pinnedMessageId: null // Initialize pinned message
                 };
                 fetchAvatarFromServer(chatId);
             }
@@ -1304,13 +1425,12 @@
                     fileId: fileId,
                     mediaType: mediaType,
                     replyToId: (msg.reply_to_message && msg.reply_to_message.message_id) || null,
-                    reactions: []
+                    reactions: [] // Store reactions
                 });
                 chats[chatId].lastTime = timeMs;
             }
         }
 
-        // Обработка измененных пользователем сообщений
         function processEditedMessage(msg) {
             const chatId = msg.chat.id;
             if (!chats[chatId]) return;
@@ -1321,12 +1441,46 @@
                 targetMsg.isEdited = true;
             }
         }
+        
+        function processMessageReaction(reactionUpdate) {
+            const chatId = reactionUpdate.chat.id;
+            const messageId = reactionUpdate.message_id;
+            if (!chats[chatId]) return;
+
+            const targetMsg = chats[chatId].messages.find(m => m.messageId === messageId);
+            if (targetMsg) {
+                // Telegram sends an array of reactions. For simplicity, just store the first unique emoji.
+                const newReactions = reactionUpdate.new_reaction.map(r => r.emoji).filter(Boolean);
+                targetMsg.reactions = newReactions;
+            }
+        }
+
+        function processPinnedMessage(msg) {
+            const chatId = msg.chat.id;
+            if (chats[chatId]) {
+                chats[chatId].pinnedMessageId = msg.message_id;
+                // Add message to local storage if not present
+                if (!chats[chatId].messages.some(m => m.messageId === msg.message_id)) {
+                    processIncomingMessage(msg); 
+                }
+                if (currentChatId === chatId) renderPinnedBar();
+            }
+        }
+
+        function processUnpinnedMessage(msg) {
+            const chatId = msg.chat.id;
+            if (chats[chatId]) {
+                chats[chatId].pinnedMessageId = null;
+                if (currentChatId === chatId) renderPinnedBar();
+            }
+        }
+
 
         // Улучшение 1: Статус "печатает..."
         function handleTypingNotification() {
-            if (!currentChatId) return;
+            if (!currentChatId || editingMessageId || selectedFile) return; // Don't send typing if editing or sending file
             const now = Date.now();
-            if (now - lastTypingTime > 4000) {
+            if (now - lastTypingTime > 4000) { // Send typing action every 4 seconds
                 lastTypingTime = now;
                 fetch(`https://api.telegram.org/bot${botToken}/sendChatAction?chat_id=${currentChatId}&action=typing`).catch(()=>{});
             }
@@ -1337,7 +1491,7 @@
             const chat = chats[chatId];
             if (!chat) return "не в сети";
             
-            // Если канал или группа
+            // Если канал или группа, просто показываем тип
             if (chat.type !== 'private') return chat.type;
 
             // Время последней активности берём по последнему ВХОДЯЩЕМУ сообщению
@@ -1361,11 +1515,19 @@
             if (date.toDateString() === today.toDateString()) {
                 return `был(а) в сети сегодня в ${hours}:${minutes}`;
             }
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            if (date.toDateString() === yesterday.toDateString()) {
+                return `был(а) в сети вчера в ${hours}:${minutes}`;
+            }
             return `был(а) в сети ${date.toLocaleDateString()} в ${hours}:${minutes}`;
         }
 
         async function toggleVoiceRecord() {
             const btn = document.getElementById('voice-btn');
+            const micIcon = document.getElementById('mic-icon');
+            const stopIcon = document.getElementById('stop-icon');
+
             if (!isRecording) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1382,7 +1544,8 @@
                     mediaRecorder.start();
                     isRecording = true;
                     btn.classList.add('recording');
-                    btn.innerText = '🛑';
+                    micIcon.style.display = 'none';
+                    stopIcon.style.display = 'block';
                 } catch (err) {
                     alert('Не удалось получить доступ к микрофону: ' + err.message);
                 }
@@ -1392,7 +1555,8 @@
                 }
                 isRecording = false;
                 btn.classList.remove('recording');
-                btn.innerText = '🎙️';
+                micIcon.style.display = 'block';
+                stopIcon.style.display = 'none';
             }
         }
 
@@ -1401,11 +1565,10 @@
             const targetId = currentChatId;
             const sendBtn = document.getElementById('send-btn');
             sendBtn.disabled = true;
-            sendBtn.innerText = "Отправка...";
+            sendBtn.innerHTML = SVG_ICONS.sendPlane + " Отправка...";
             try {
                 const formData = new FormData();
                 formData.append('chat_id', targetId);
-                formData.append('voice', blob, 'voice.ogg');
                 if (replyToMessageId) formData.append('reply_to_message_id', replyToMessageId);
 
                 const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
@@ -1436,11 +1599,10 @@
                 alert(`Ошибка соединения: ${e.message}`);
             } finally {
                 sendBtn.disabled = false;
-                sendBtn.innerText = "Отправить";
+                sendBtn.innerHTML = SVG_ICONS.sendPlane + " Отправить";
             }
         }
 
-        // Улучшение 3 & 5 & 4: Отправка, Ответы и Изменение сообщений
         async function sendBotMessage() {
             const textarea = document.getElementById('message-text');
             const text = textarea.value.trim();
@@ -1454,13 +1616,12 @@
             textarea.style.height = "auto";
             const sendBtn = document.getElementById('send-btn');
             sendBtn.disabled = true;
-            sendBtn.innerText = "Отправка...";
+            sendBtn.innerHTML = SVG_ICONS.sendPlane + " Отправка...";
 
             try {
                 let response;
                 let data;
 
-                // СЦЕНАРИЙ А: Редактирование существующего сообщения
                 if (editingMessageId) {
                     response = await fetch(`https://api.telegram.org/bot${botToken}/editMessageText?chat_id=${targetId}&message_id=${editingMessageId}&text=${encodeURIComponent(text)}`);
                     data = await response.json();
@@ -1477,7 +1638,6 @@
                         alert(`Не удалось изменить: ${data.description}`);
                     }
                 } 
-                // СЦЕНАРИЙ Б: Отправка нового файла / фото / видео / документа
                 else if (selectedFile) {
                     let method;
                     const formData = new FormData();
@@ -1530,9 +1690,10 @@
                         chats[targetId].lastTime = Date.now();
                         cancelReplyMode();
                         removeFile();
+                    } else {
+                         alert(`Не удалось отправить файл: ${data.description}`);
                     }
                 } 
-                // СЦЕНАРИЙ В: Отправка текстового сообщения (с возможностью ответа)
                 else {
                     let url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${targetId}&text=${encodeURIComponent(text)}`;
                     if (replyToMessageId) {
@@ -1556,7 +1717,7 @@
                         chats[targetId].lastTime = Date.now();
                         cancelReplyMode();
                     } else {
-                        alert(`Не удалось отправить: ${data.description}`);
+                        alert(`Не удалось отправить сообщение: ${data.description}`);
                     }
                 }
 
@@ -1569,7 +1730,7 @@
                 alert(`Ошибка соединения во время отправки: ${e.message}`);
             } finally {
                 sendBtn.disabled = false;
-                sendBtn.innerText = "Отправить";
+                sendBtn.innerHTML = SVG_ICONS.sendPlane + " Отправить";
             }
         }
 
@@ -1583,7 +1744,6 @@
                 const base64Data = e.target.result;
                 safeStorage.set("av_data_" + currentChatId, base64Data);
                 
-                // Перерисовываем UI
                 updateAvatarUI(currentChatId, null, 'profile-modal-avatar');
                 updateAvatarUI(currentChatId, null, 'active-chat-avatar');
                 updateAvatarUI(currentChatId, null, `av-list-${currentChatId}`);
@@ -1690,20 +1850,16 @@
             document.getElementById('chat-window-pane').classList.add('active');
             document.getElementById('active-chat-name').innerText = chat.name;
             
-            // Динамический статус активности
             document.getElementById('active-chat-status').innerText = formatLastActivity(chat.id);
             document.getElementById('chat-input-bar').style.display = 'flex';
 
             updateAvatarUI(chat.id, chat.name, 'active-chat-avatar');
 
-            // Отрисовка закреплённого сообщения в шапке
-            renderPinnedBar();
-
+            renderPinnedBar(); // Render pinned message bar
             renderMessages();
-            renderChats();
+            renderChats(); // Re-render chat list to highlight active chat
         }
 
-        // Отрисовка закрепа
         function renderPinnedBar() {
             const chat = chats[currentChatId];
             const bar = document.getElementById('chat-pinned-bar');
@@ -1711,7 +1867,7 @@
                 const msg = chat.messages.find(m => m.messageId === chat.pinnedMessageId);
                 if (msg) {
                     bar.style.display = 'flex';
-                    document.getElementById('chat-pinned-text').innerText = `Закреплено: ${msg.text || "[Медиафайлы]"}`;
+                    document.getElementById('chat-pinned-text').innerText = `Закреплено: ${msg.text || "[Медиа/Файл]"}`;
                     return;
                 }
             }
@@ -1723,14 +1879,14 @@
             if (!audio) {
                 audio = new Audio(url);
                 btn.audioInstance = audio;
-                audio.addEventListener('ended', () => { btn.innerText = '▶'; });
+                audio.addEventListener('ended', () => { btn.innerHTML = SVG_ICONS.play; });
             }
             if (audio.paused) {
                 audio.play();
-                btn.innerText = '⏸';
+                btn.innerHTML = SVG_ICONS.pause;
             } else {
                 audio.pause();
-                btn.innerText = '▶';
+                btn.innerHTML = SVG_ICONS.play;
             }
         }
 
@@ -1759,7 +1915,6 @@
 
                 const timeStr = new Date(msg.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
 
-                // Обработка цитат (Улучшение 3)
                 if (msg.replyToId) {
                     const parentMsg = chat.messages.find(m => m.messageId === msg.replyToId);
                     if (parentMsg) {
@@ -1797,7 +1952,7 @@
                             docLink.target = '_blank';
                             docLink.className = 'document-link';
                             docLink.innerHTML = `
-                                <div class="document-icon">📄</div>
+                                <div class="document-icon">${SVG_ICONS.file}</div>
                                 <div style="display:flex; flex-direction:column; gap:2px; text-align:left;">
                                     <span>${escapeHtml(msg.text || "Файл")}</span>
                                     <span style="font-size:11px; color:var(--text-muted);">Нажмите, чтобы открыть</span>
@@ -1816,7 +1971,7 @@
                             playerDiv.className = 'voice-player';
                             const playBtn = document.createElement('button');
                             playBtn.className = 'voice-play-btn';
-                            playBtn.innerText = '▶';
+                            playBtn.innerHTML = SVG_ICONS.play;
                             playBtn.onclick = (e) => { e.stopPropagation(); playVoice(mediaUrl, playBtn); };
                             const metaDiv = document.createElement('div');
                             metaDiv.className = 'voice-meta';
@@ -1842,7 +1997,6 @@
                     bubble.appendChild(textSpan);
                 }
 
-                // Дополнительный статус редактирования
                 const isEdStr = msg.isEdited ? " (ред.)" : "";
 
                 const timeSpan = document.createElement('div');
@@ -1850,7 +2004,6 @@
                 timeSpan.innerText = timeStr + isEdStr;
                 bubble.appendChild(timeSpan);
 
-                // Отрисовка реакций (Бонус к Bot API)
                 if (msg.reactions && msg.reactions.length > 0) {
                     const reacDiv = document.createElement('div');
                     reacDiv.className = 'reactions-list';
@@ -1870,7 +2023,6 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // Навигация и скролл
         function scrollToMessage(id) {
             const el = document.getElementById(`bubble-${id}`);
             if (el) {
@@ -1887,27 +2039,37 @@
             }
         }
 
-        // Контекстные действия над сообщением
         function openContextMenu(e, msgId, out) {
             selectedMessageId = msgId;
             const menu = document.getElementById('msg-context-menu');
             
-            // Фильтр возможности редактирования (только свои)
             document.getElementById('menu-edit-btn').style.display = out ? 'flex' : 'none';
 
             menu.style.display = 'flex';
-            menu.style.left = `${Math.min(e.pageX, window.innerWidth - 180)}px`;
-            menu.style.top = `${Math.min(e.pageY, window.innerHeight - 250)}px`;
+            
+            // Positioning logic for context menu, adapting to mobile
+            const bubbleRect = e.target.closest('.bubble').getBoundingClientRect();
+            const menuWidth = menu.offsetWidth;
+            const menuHeight = menu.offsetHeight;
+
+            let top = bubbleRect.top + bubbleRect.height / 2 - menuHeight / 2;
+            let left = bubbleRect.left + bubbleRect.width / 2 - menuWidth / 2;
+
+            // Clamp to viewport
+            top = Math.max(10, Math.min(top, window.innerHeight - menuHeight - 10));
+            left = Math.max(10, Math.min(left, window.innerWidth - menuWidth - 10));
+
+            menu.style.top = `${top}px`;
+            menu.style.left = `${left}px`;
         }
 
         function closeContextMenu() {
             document.getElementById('msg-context-menu').style.display = 'none';
         }
 
-        // Улучшение 3: Локальный ответ в меню
         function triggerReply() {
             replyToMessageId = selectedMessageId;
-            editingMessageId = null; // убираем редактирование
+            editingMessageId = null;
             
             const msg = chats[currentChatId].messages.find(m => m.messageId === replyToMessageId);
             if (msg) {
@@ -1916,6 +2078,7 @@
                 document.getElementById('edit-info-banner').style.display = 'none';
             }
             closeContextMenu();
+            document.getElementById('message-text').focus();
         }
 
         function cancelReplyMode() {
@@ -1923,10 +2086,9 @@
             document.getElementById('reply-info-banner').style.display = 'none';
         }
 
-        // Улучшение 5: Локальное редактирование в меню
         function triggerEdit() {
             editingMessageId = selectedMessageId;
-            replyToMessageId = null; // убираем ответ
+            replyToMessageId = null;
 
             const msg = chats[currentChatId].messages.find(m => m.messageId === editingMessageId);
             if (msg) {
@@ -1947,7 +2109,6 @@
             adjustTextareaHeight();
         }
 
-        // Улучшение 4: Удаление сообщения
         async function deleteMessage() {
             if (!confirm("Вы уверены, что хотите удалить сообщение?")) return;
             const targetId = currentChatId;
@@ -1971,11 +2132,10 @@
                     alert(`Не удалось удалить: ${data.description}`);
                 }
             } catch (e) {
-                alert(`Ошибка при отправке запроса удаления.`);
+                alert(`Ошибка при отправке запроса удаления: ${e.message}`);
             }
         }
 
-        // Улучшение 6: Закрепление сообщений
         async function pinMessage() {
             const targetId = currentChatId;
             const msgId = selectedMessageId;
@@ -1993,22 +2153,27 @@
                     alert(`Не удалось закрепить: ${data.description}`);
                 }
             } catch(e) {
-                alert(`Ошибка сервера при закреплении.`);
+                alert(`Ошибка сервера при закреплении: ${e.message}`);
             }
         }
 
-        // Локальное открепление (Unpin)
         async function unpinChatMessageLocal() {
             const targetId = currentChatId;
             try {
-                await fetch(`https://api.telegram.org/bot${botToken}/unpinChatMessage?chat_id=${targetId}`);
-                chats[targetId].pinnedMessageId = null;
-                renderPinnedBar();
-                saveState();
-            } catch(e) {}
+                const response = await fetch(`https://api.telegram.org/bot${botToken}/unpinChatMessage?chat_id=${targetId}`);
+                const data = await response.json();
+                if (data.ok) {
+                    chats[targetId].pinnedMessageId = null;
+                    renderPinnedBar();
+                    saveState();
+                } else {
+                    alert(`Не удалось открепить: ${data.description}`);
+                }
+            } catch(e) {
+                alert(`Ошибка сервера при откреплении: ${e.message}`);
+            }
         }
 
-        // Бонус: Установка реакций через Bot API
         async function sendReaction(emoji) {
             const targetId = currentChatId;
             const msgId = selectedMessageId;
@@ -2016,18 +2181,25 @@
 
             try {
                 const reactionPayload = [{ type: 'emoji', emoji: emoji }];
-                const response = await fetch(`https://api.telegram.org/bot${botToken}/setMessageReaction?chat_id=${targetId}&message_id=${msgId}&reaction=${JSON.stringify(reactionPayload)}`);
+                // Note: Telegram API expects a stringified JSON for 'reaction'
+                const response = await fetch(`https://api.telegram.org/bot${botToken}/setMessageReaction?chat_id=${targetId}&message_id=${msgId}&reaction=${encodeURIComponent(JSON.stringify(reactionPayload))}`);
                 const data = await response.json();
 
                 if (data.ok) {
                     const msg = chats[targetId].messages.find(m => m.messageId === msgId);
                     if (msg) {
-                        msg.reactions = [emoji]; // Пока храним локально по одной реакции
+                        // For simplicity, we assume one reaction and update it.
+                        // For multi-reaction support, this logic would need to be more complex.
+                        msg.reactions = [emoji]; 
                     }
                     if (currentChatId === targetId) renderMessages();
                     saveState();
+                } else {
+                     console.error("Failed to send reaction:", data.description);
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error("Error sending reaction:", e);
+            }
         }
 
         function copyMessageText() {
@@ -2041,7 +2213,9 @@
         function adjustTextareaHeight() {
             const textarea = document.getElementById('message-text');
             textarea.style.height = 'auto';
-            textarea.style.height = Math.max(48, Math.min(textarea.scrollHeight, 120)) + 'px';
+            // Max height is lower on mobile
+            const maxHeight = window.innerWidth <= 768 ? 80 : 120;
+            textarea.style.height = Math.max(textarea.offsetHeight, Math.min(textarea.scrollHeight, maxHeight)) + 'px';
         }
         document.getElementById('message-text').addEventListener('input', adjustTextareaHeight);
 
@@ -2071,7 +2245,7 @@
                         updateAvatarUI(id, null, `av-list-${id}`);
                     }
                 }
-            } catch(e) {}
+            } catch(e) { console.warn(`Failed to fetch avatar for chat ${id}:`, e); }
         }
 
         function updateAvatarUI(id, fallbackName = null, forceElementId = null) {
@@ -2104,7 +2278,7 @@
                     safeStorage.set("media_url_" + fileId, url);
                     return url;
                 }
-            } catch (e) {}
+            } catch (e) { console.error("Error getting media file URL:", e); }
             return null;
         }
 
@@ -2166,8 +2340,8 @@
 
         function escapeHtml(text) {
             if (!text) return "";
-            return text.replace(/[&<>'"]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            return text.replace(/[&<>"']/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
             }[tag] || tag));
         }
 
@@ -2183,7 +2357,47 @@
             document.body.classList.remove('chat-opened');
             document.getElementById('chat-window-pane').classList.remove('active');
             currentChatId = null;
+            cancelReplyMode();
+            cancelEditMode();
+            closeContextMenu();
         }
+
+        // SVG Icons definitions
+        const SVG_ICONS = {
+            sendPlane: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 4L3 11.5L10 14L21 4ZM10.5 20.5L14 16L21 4L10.5 20.5Z" fill="currentColor"/></svg>`,
+            paperclip: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C8.68356 2 6 4.68356 6 8V14C6 16.2091 7.79086 18 10 18C12.2091 18 14 16.2091 14 14V8C14 6.89543 13.1046 6 12 6C10.8954 6 10 6.89543 10 8V13C10 13.5523 10.4477 14 11 14C11.5523 14 12 13.5523 12 13V8H14V13C14 17.3016 10.6015 20 6.5 20C2.39845 20 0 16.8016 0 13V8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8V14C16 17.866 12.866 21 9 21C5.13401 21 2 17.866 2 14V8H4V14C4 16.7614 6.23858 19 9 19C11.7614 19 14 16.7614 14 14V8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8V14C2 16.7614 4.23858 19 7 19H9C11.7614 19 14 16.7614 14 14V8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8V14C2 16.7614 4.23858 19 7 19H9C11.7614 19 14 16.7614 14 14V8C14 4.68629 11.3137 2 8 2Z" fill="currentColor"/></svg>`,
+            microphone: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 14C14.2091 14 16 12.2091 16 10V4C16 1.79086 14.2091 0 12 0C9.79086 0 8 1.79086 8 4V10C8 12.2091 9.79086 14 12 14ZM12 12C10.8954 12 10 11.1046 10 10V4C10 2.89543 10.8954 2 12 2C13.1046 2 14 2.89543 14 4V10C14 11.1046 13.1046 12 12 12ZM7 10C7 13.866 10.134 17 14 17V19C10.6863 19 8.00001 16.3137 8.00001 13V12H6V13C6 16.9038 8.94828 20.0766 12.7937 20.9715L12 22H10V24H14V22H13.2063C17.0517 21.0766 20 17.9038 20 13V12H18V13C18 16.3137 15.3137 19 12 19V17C15.134 17 17 13.866 17 10H19V10H20V10H22V10H24V10V4C24 1.79086 22.2091 0 20 0C17.7909 0 16 1.79086 16 4V10C16 12.2091 17.7909 14 20 14V17C20 18.0463 20 18.0463 20 18.0463V19H19.047C18.2435 19.8659 17.2023 20.5057 16.0371 20.8655L16 21V22H18V24H16V22H15.2063C11.3482 21.0772 8 17.866 8 14V10H7V10Z" fill="currentColor"/></svg>`,
+            stop: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0H24V24H0V0Z" fill="none"/><path d="M6 6H18V18H6V6Z" fill="currentColor"/></svg>`,
+            arrowLeft: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10.8284 12.0007L15.7782 16.9504L14.364 18.3646L8 12.0007L14.364 5.63672L15.7782 7.05093L10.8284 12.0007Z" fill="currentColor"/></svg>`,
+            reply: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 9L14 12L10 15V9ZM12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20Z" fill="currentColor"/></svg>`,
+            pencil: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 2L21 7L13 15L8 15L8 10L16 2ZM17.8284 3.82843L19.1716 5.17157L17.5 6.84315L16.1569 5.5L17.8284 3.82843ZM6 18H18V20H6V18Z" fill="currentColor"/></svg>`,
+            pin: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 14L18 17V22H16V19L14 17L11.5 19.5L12.9142 20.9142L14.3284 22.3284L12.9142 23.7426L10.0858 20.9142L9 22L7 20L8 19L5 16V11L14 2L22 10L15 14ZM14 4L7 11L10 14L17 7L14 4Z" fill="currentColor"/></svg>`,
+            copy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 6V4C7 3.44772 7.44772 3 8 3H18C18.5523 3 19 3.44772 19 4V16C19 16.5523 18.5523 17 18 17H16V19C16 19.5523 15.5523 20 15 20H6C5.44772 20 5 19.5523 5 19V8C5 7.44772 5.44772 7 6 7H7V6ZM17 5H9V7H16C16.5523 7 17 7.44772 17 8V15H18C18.5523 15 19 14.5523 19 14V6C19 5.44772 18.5523 5 18 5H17ZM7 9V18H14V9H7Z" fill="currentColor"/></svg>`,
+            trash: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H22V8H20V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V8H2V6H7V3C7 2.44772 7.44772 2 8 2H16C16.5523 2 17 2.44772 17 3V6ZM18 8H6V20H18V8ZM9 11H11V17H9V11ZM13 11H15V17H13V11ZM9 4V6H15V4H9Z" fill="currentColor"/></svg>`,
+            file: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 22H6C5.44772 22 5 21.5523 5 21V3C5 2.44772 5.44772 2 6 2H15C15.5523 2 16 2.44772 16 3V9H21C21.5523 9 22 9.44772 22 10V21C22 21.5523 21.5523 22 21 22H15ZM15 4V7C15 7.55228 15.4477 8 16 8H19L15 4ZM7 4V20H20V11H14V4H7Z" fill="currentColor"/></svg>`,
+            imageUpload: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 12L20 17V5L15 10L15 12ZM2 6C2 4.89543 2.89543 4 4 4H12C13.1046 4 14 4.89543 14 6V18C14 19.1046 13.1046 20 12 20H4C2.89543 20 2 19.1046 2 18V6ZM4 6V18H12V6H4ZM6 9L8.5 12.5L10 10.5L12 13H6L6 9Z" fill="currentColor"/></svg>`,
+            play: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 5L17 12L9 19V5Z" fill="currentColor"/></svg>`,
+            pause: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 5H8V19H6V5ZM16 5H18V19H16V5Z" fill="currentColor"/></svg>`
+        };
+
+        // Initialize elements with SVG icons
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('login-action-btn').innerHTML = SVG_ICONS.sendPlane + " ВОЙТИ";
+            document.getElementById('attachment-btn').innerHTML = SVG_ICONS.paperclip;
+            document.getElementById('mic-icon').outerHTML = SVG_ICONS.microphone;
+            document.getElementById('stop-icon').outerHTML = SVG_ICONS.stop;
+            document.getElementById('send-btn').innerHTML = SVG_ICONS.sendPlane + " Отправить";
+            document.getElementById('voice-btn').innerHTML = SVG_ICONS.microphone; // Ensure initial state is mic
+            
+            // Re-apply correct initial state for stop icon after DOMContentLoaded
+            if (isRecording) {
+                document.getElementById('mic-icon').style.display = 'none';
+                document.getElementById('stop-icon').style.display = 'block';
+            } else {
+                document.getElementById('mic-icon').style.display = 'block';
+                document.getElementById('stop-icon').style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
