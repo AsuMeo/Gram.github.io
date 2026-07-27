@@ -1459,16 +1459,8 @@
             }
         }
 
-        // Кэш last activity
-        const _activityCache = {};
-
         // Улучшение 2: "Был(а) в сети" (расчет по последней активности чата)
         function formatLastActivity(chatId) {
-            const now = Date.now();
-            if (_activityCache[chatId] && now - _activityCache[chatId].ts < 5000) {
-                return _activityCache[chatId].val;
-            }
-
             const chat = chats[chatId];
             if (!chat) return "не в сети";
             
@@ -1494,15 +1486,12 @@
             
             const today = new Date();
             if (date.toDateString() === today.toDateString()) {
-                let result;
-            if (date.toDateString() === today.toDateString()) {
-                result = `был(а) в сети сегодня в ${hours}:${minutes}`;
-            } else {
-                result = `был(а) в сети ${date.toLocaleDateString()} в ${hours}:${minutes}`;
+                return `был(а) в сети сегодня в ${hours}:${minutes}`;
             }
-            _activityCache[chatId] = { ts: Date.now(), val: result };
-            return result;
+            return `был(а) в сети ${date.toLocaleDateString()} в ${hours}:${minutes}`;
         }
+
+        
 
         async function toggleVideoNoteRecord() {
             const btn = document.getElementById('videonote-btn');
@@ -1896,6 +1885,7 @@
                     else if (lastMsg.mediaType === 'document') prefix += "Файл";
                     else if (lastMsg.mediaType === 'sticker') prefix += "Стикер";
                     else if (lastMsg.mediaType === 'voice') prefix += "Голосовое";
+                    else if (lastMsg.mediaType === 'video_note') prefix += "Кружочек";
                     else if (lastMsg.mediaType === 'video_note') prefix += "Кружочек";
                     msgText = prefix + (lastMsg.text ? " " + lastMsg.text : "");
                 }
