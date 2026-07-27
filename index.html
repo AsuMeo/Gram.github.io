@@ -308,8 +308,8 @@
         }
 
         .avatar {
-            width: 50px;
-            height: 50px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             background-color: var(--accent);
             color: white;
@@ -318,13 +318,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 14px;
+            margin-right: 15px;
             background-size: cover;
             background-position: center;
             flex-shrink: 0;
             position: relative;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            transition: box-shadow 0.2s ease;
         }
 
         .chat-details {
@@ -1028,6 +1027,10 @@
                 padding-bottom: max(16px, env(safe-area-inset-bottom, 0));
             }
         }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -1250,7 +1253,7 @@
 
             errorDiv.style.display = "none";
             loginBtn.disabled = true;
-            loginBtn.innerText = "ПОДКЛЮЧЕНИЕ...";
+            loginBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>';
 
             try {
                 const response = await fetch(`https://api.telegram.org/bot${token}/getMe`);
