@@ -1231,13 +1231,25 @@
 
             if (savedToken) {
                 document.getElementById('token-field').value = savedToken;
-                tryLogin(savedToken);
+                // Теперь вызываем tryLogin без токена, он сам прочитает его из поля
+                tryLogin();
             }
             adjustTextareaHeight();
         };
 
         function saveState() {
             safeStorage.set("saved_chats", JSON.stringify(chats));
+        }
+
+        // Обновленная функция для показа ошибок входа
+        function showLoginError(msg) {
+            const errorDiv = document.getElementById('login-error');
+            const loginBtn = document.getElementById('login-action-btn');
+            errorDiv.innerText = msg;
+            errorDiv.style.display = "block";
+            // Возвращаем кнопку в исходное состояние при ошибке
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = "ВОЙТИ";
         }
 
         async function tryLogin(tokenOverride = null) {
@@ -1253,12 +1265,19 @@
 
             errorDiv.style.display = "none";
             loginBtn.disabled = true;
-            loginBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>';
+            
+            // Статус: ВХОД...
+            loginBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> ВХОД...';
 
             try {
                 const response = await fetch(`https://api.telegram.org/bot${token}/getMe`);
                 if (!response.ok) {
-                    throw new Error(`HTTP ошибка: ${response.status}`);
+                    // Пытаемся получить более детальное описание ошибки от Telegram API
+                    const errorData = await response.json().catch(() => null);
+                    if (errorData && !errorData.ok && errorData.description) {
+                         throw new Error(`Ошибка Telegram API: ${errorData.description}`);
+                    }
+                    throw new Error(`HTTP ошибка: ${response.status} ${response.statusText}`);
                 }
 
                 const data = await response.json();
@@ -1268,31 +1287,34 @@
                     safeStorage.set("saved_token", token);
 
                     document.getElementById('bot-name-display').innerText = botInfo.first_name;
-                    document.getElementById('login-screen').style.opacity = 0;
-                    setTimeout(() => document.getElementById('login-screen').style.display = 'none', 300);
-
+                    
+                    // Статус: ПОДКЛЮЧЕНИЕ...
+                    loginBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> ПОДКЛЮЧЕНИЕ...';
+                    
                     updateAvatarUI(botInfo.id, botInfo.first_name, 'bot-avatar-img');
                     fetchAvatarFromServer(botInfo.id);
 
                     renderChats();
-                    // Загружаем всю историю сообщений со старта бота
-                    await fetchBotHistory();
+                    await fetchBotHistory(); 
                     startLongPolling();
+
+                    document.getElementById('login-screen').style.opacity = 0;
+                    setTimeout(() => document.getElementById('login-screen').style.display = 'none', 300);
+
                 } else {
-                    showLoginError(`Ошибка: ${data.description || 'Неизвестная ошибка'}`);
+                    showLoginError(`Ошибка API: ${data.description || 'Неизвестная ошибка'}`);
                 }
             } catch (e) {
-                showLoginError(`Не удалось связаться с сервером.`);
+                // Более детальная обработка ошибок
+                if (e.message.startsWith("HTTP ошибка") || e.message.startsWith("Ошибка Telegram API")) {
+                    showLoginError(e.message);
+                } else {
+                    showLoginError(`Не удалось связаться с сервером. Проверьте ваше подключение к интернету или токен.`);
+                }
             } finally {
-                loginBtn.disabled = false;
-                loginBtn.innerText = "ВОЙТИ";
+                // Если вход был успешен, экран скрывается, и кнопка не требует сброса.
+                // В противном случае, showLoginError уже сбросит кнопку.
             }
-        }
-
-        function showLoginError(msg) {
-            const errorDiv = document.getElementById('login-error');
-            errorDiv.innerText = msg;
-            errorDiv.style.display = "block";
         }
 
         async function startLongPolling() {
@@ -1303,7 +1325,7 @@
                 try {
                     const response = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?offset=${lastUpdateId}&limit=100&timeout=30`);
                     if (!response.ok) {
-                         throw new Error(`Polling error`);
+                         throw new Error(`Polling error: ${response.status}`);
                     }
 
                     const data = await response.json();
@@ -1331,9 +1353,10 @@
                         }
                     }
                 } catch (e) {
-                    await new Promise(r => setTimeout(r, 4000));
+                    console.error("Long polling error:", e); // Логирование ошибок polling
+                    await new Promise(r => setTimeout(r, 4000)); // Задержка перед повтором
                 }
-                await new Promise(r => setTimeout(r, 1000));
+                await new Promise(r => setTimeout(r, 1000)); // Небольшая задержка для предотвращения спама запросами
             }
         }
 
@@ -1493,7 +1516,7 @@
             const targetId = currentChatId;
             const sendBtn = document.getElementById('send-btn');
             sendBtn.disabled = true;
-            sendBtn.innerText = "Отправка...";
+            sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>'; // Spinner
             try {
                 const formData = new FormData();
                 formData.append('chat_id', targetId);
@@ -1528,7 +1551,7 @@
                 alert(`Ошибка соединения: ${e.message}`);
             } finally {
                 sendBtn.disabled = false;
-                sendBtn.innerText = "Отправить";
+                sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>'; // Reset button icon
             }
         }
 
@@ -1546,7 +1569,7 @@
             textarea.style.height = "auto";
             const sendBtn = document.getElementById('send-btn');
             sendBtn.disabled = true;
-            sendBtn.innerText = "Отправка...";
+            sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>'; // Spinner
 
             try {
                 let response;
@@ -1661,7 +1684,7 @@
                 alert(`Ошибка соединения во время отправки: ${e.message}`);
             } finally {
                 sendBtn.disabled = false;
-                sendBtn.innerText = "Отправить";
+                sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>'; // Reset button icon
             }
         }
 
@@ -1857,7 +1880,7 @@
                     if (parentMsg) {
                         const quote = document.createElement('div');
                         quote.className = 'reply-quote';
-                        quote.innerText = `<svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='#2481cc' stroke-width='2' style='vertical-align:middle; margin-right:4px;'><polyline points='9 14 4 9 9 4'/><path d='M20 20v-7a4 4 0 0 0-4-4H4'/></svg>${parentMsg.text || "[Медиа/Файл]"}`;
+                        quote.innerHTML = `<svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='#2481cc' stroke-width='2' style='vertical-align:middle; margin-right:4px;'><polyline points='9 14 4 9 9 4'/><path d='M20 20v-7a4 4 0 0 0-4-4H4'/></svg>${escapeHtml(parentMsg.text || "[Медиа/Файл]")}`;
                         quote.onclick = (e) => {
                             e.stopPropagation();
                             scrollToMessage(msg.replyToId);
@@ -2267,8 +2290,8 @@
 
         function escapeHtml(text) {
             if (!text) return "";
-            return text.replace(/[&<>'"]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            return text.replace(/[&<>'"/]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;', '/': '&#x2F;' // Добавлен / для большей безопасности
             }[tag] || tag));
         }
 
@@ -2283,7 +2306,7 @@
         function createNewFolder() {
             const name = prompt("Название новой папки:");
             if (name && name.trim()) {
-                alert("Папка "" + name.trim() + "" создана! (функционал фильтрации по папкам будет в следующем обновлении)");
+                alert("Папка \"" + name.trim() + "\" создана! (функционал фильтрации по папкам будет в следующем обновлении)");
             }
         }
 
@@ -2301,7 +2324,7 @@
                 let hasMore = true;
 
                 // Загружаем пачками по 100
-                while (hasMore && allUpdates.length < 5000) {
+                while (hasMore && allUpdates.length < 5000) { // Ограничение на 5000 обновлений для производительности
                     const resp = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?offset=${offset}&limit=100`);
                     const data = await resp.json();
 
