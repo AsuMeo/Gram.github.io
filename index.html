@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Graph Web Bot Client Pro</title>
+    <title>Graph Web Bot Client Pro v3</title>
     <style>
         :root {
             --bg-dark: #050508;
@@ -18,6 +18,7 @@
             --error: #ff4d4d;
             --success: #2ecc71;
             --border-color: #1a1d29;
+            --reply-bg: rgba(36, 129, 204, 0.1);
         }
 
         * {
@@ -367,6 +368,43 @@
             background: rgba(255, 255, 255, 0.05);
         }
 
+        /* Пин-панель сверху чата */
+        .pinned-bar {
+            background: rgba(20, 22, 31, 0.95);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            z-index: 5;
+            animation: slideDown 0.2s ease-out;
+        }
+
+        .pinned-content {
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            color: var(--text-main);
+            border-left: 2px solid var(--accent);
+            padding-left: 10px;
+        }
+
+        .pinned-unpin-btn {
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding-left: 10px;
+        }
+
+        .pinned-unpin-btn:hover {
+            color: var(--error);
+        }
+
         .chat-feed {
             flex: 1;
             overflow-y: auto;
@@ -388,6 +426,14 @@
             line-height: 1.6;
         }
 
+        /* Сообщения */
+        .bubble-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            position: relative;
+        }
+
         .bubble {
             max-width: 68%;
             padding: 12px 16px;
@@ -400,6 +446,21 @@
             display: flex;
             flex-direction: column;
             animation: messageAppear 0.25s cubic-bezier(0.1, 0.8, 0.3, 1);
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .bubble:hover {
+            filter: brightness(1.08);
+        }
+
+        .bubble.highlighted {
+            animation: pulse-highlight 1.5s ease-out;
+        }
+
+        @keyframes pulse-highlight {
+            0% { background-color: var(--accent); }
+            100% { }
         }
 
         @keyframes messageAppear {
@@ -421,12 +482,47 @@
             border: 1px solid rgba(36, 129, 204, 0.08);
         }
 
+        /* Цитаты ответов внутри сообщений */
+        .reply-quote {
+            background: var(--reply-bg);
+            border-left: 3px solid var(--accent);
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 12.5px;
+            cursor: pointer;
+            color: #d1d4dc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Реакции на пузырях */
+        .reactions-list {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+            align-self: flex-end;
+        }
+
+        .reaction-badge {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+            color: #ffffff;
+        }
+
         .bubble-time {
             font-size: 10px;
             color: rgba(255, 255, 255, 0.35);
             margin-top: 6px;
             text-align: right;
             align-self: flex-end;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .bubble-media {
@@ -445,6 +541,56 @@
 
         .bubble-text {
             color: var(--text-main);
+        }
+
+        /* Контекстное меню сообщения */
+        .message-menu {
+            position: absolute;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            display: none;
+            flex-direction: column;
+            z-index: 100;
+            width: 160px;
+            overflow: hidden;
+        }
+
+        .message-menu button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 13.5px;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message-menu button:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .reaction-row {
+            display: flex;
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .reaction-row span {
+            cursor: pointer;
+            font-size: 18px;
+            transition: transform 0.1s;
+        }
+
+        .reaction-row span:hover {
+            transform: scale(1.25);
         }
 
         .document-link {
@@ -530,9 +676,42 @@
             padding: 16px 24px;
             background: var(--bg-surface);
             display: flex;
-            align-items: flex-end;
-            gap: 14px;
+            flex-direction: column;
+            gap: 8px;
             border-top: 1px solid var(--border-color);
+        }
+
+        /* Информационные плашки над вводом (ответ/редактирование) */
+        .input-info-banner {
+            background: rgba(36, 129, 204, 0.08);
+            border-left: 3px solid var(--accent);
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .input-info-text {
+            color: var(--text-main);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .input-info-close {
+            color: var(--error);
+            font-size: 18px;
+            cursor: pointer;
+            padding-left: 10px;
+        }
+
+        .input-main-row {
+            display: flex;
+            align-items: flex-end;
+            width: 100%;
+            gap: 14px;
         }
 
         .input-controls {
@@ -783,8 +962,8 @@
     <div id="login-screen">
         <div class="login-card">
             <div class="login-logo">✈</div>
-            <h1>Graph Web Bot Client Pro</h1>
-            <p>Вход по Bot Token. Управляйте перепиской вашего бота из элегантного интерфейса.</p>
+            <h1>Graph Web Bot Client Pro v3</h1>
+            <p>Вход по Bot Token. Общайтесь от имени бота с расширенными функциями редактирования, ответов и удаления.</p>
             <input type="password" id="token-field" class="login-input" placeholder="Токен бота (например, 12345:AAH...)">
             <button class="btn" id="login-action-btn" onclick="tryLogin()">ВОЙТИ</button>
             <div id="login-error" class="error-log"></div>
@@ -826,30 +1005,70 @@
                 <button class="btn" style="width: auto; padding: 8px 15px; font-size: 13px;" onclick="openProfileModal(currentChatId)">Подробнее</button>
             </div>
 
-            <div class="chat-feed" id="messages-feed">
+            <!-- Плашка закрепленного сообщения -->
+            <div class="pinned-bar" id="chat-pinned-bar" style="display: none;">
+                <div class="pinned-content" id="chat-pinned-text" onclick="scrollToPinnedMessage()">
+                    Закреплённое сообщение
+                </div>
+                <button class="pinned-unpin-btn" onclick="unpinChatMessageLocal()">×</button>
+            </div>
+
+            <div class="chat-feed" id="messages-feed" onclick="closeContextMenu()">
                 <div class="empty-placeholder">
                     Здесь будет отображаться история переписки. Напишите вашему боту в Telegram, чтобы начать диалог.
                 </div>
             </div>
 
             <div class="chat-input-bar" id="chat-input-bar" style="display: none;">
-                <label for="file-input" class="attachment-btn">📎</label>
-                <input type="file" id="file-input" class="file-upload-input" accept="*/*" onchange="handleFileChange(event)">
                 
-                <button class="voice-btn" id="voice-btn" onclick="toggleVoiceRecord()">🎙️</button>
-
-                <div class="input-controls">
-                    <div id="file-preview" class="file-preview-container" style="display: none;">
-                        <span id="file-name"></span>
-                        <span class="file-preview-close" onclick="removeFile()">×</span>
-                    </div>
-                    <textarea id="message-text" class="textarea-message" placeholder="Напишите сообщение..." rows="1" onkeydown="handleInputKey(event)"></textarea>
+                <!-- Панель ответа на сообщение -->
+                <div class="input-info-banner" id="reply-info-banner">
+                    <div class="input-info-text" id="reply-info-text">Ответ на сообщение</div>
+                    <div class="input-info-close" onclick="cancelReplyMode()">×</div>
                 </div>
-                <button class="btn" style="width: auto; padding: 12px 24px;" id="send-btn" onclick="sendBotMessage()">Отправить</button>
+
+                <!-- Панель редактирования сообщения -->
+                <div class="input-info-banner" id="edit-info-banner">
+                    <div class="input-info-text" id="edit-info-text">Редактирование сообщения</div>
+                    <div class="input-info-close" onclick="cancelEditMode()">×</div>
+                </div>
+
+                <div class="input-main-row">
+                    <label for="file-input" class="attachment-btn">📎</label>
+                    <input type="file" id="file-input" class="file-upload-input" accept="*/*" onchange="handleFileChange(event)">
+                    
+                    <button class="voice-btn" id="voice-btn" onclick="toggleVoiceRecord()">🎙️</button>
+
+                    <div class="input-controls">
+                        <div id="file-preview" class="file-preview-container" style="display: none;">
+                            <span id="file-name"></span>
+                            <span class="file-preview-close" onclick="removeFile()">×</span>
+                        </div>
+                        <textarea id="message-text" class="textarea-message" placeholder="Напишите сообщение..." rows="1" onkeydown="handleInputKey(event)" oninput="handleTypingNotification()"></textarea>
+                    </div>
+                    <button class="btn" style="width: auto; padding: 12px 24px;" id="send-btn" onclick="sendBotMessage()">Отправить</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Контекстное меню сообщения -->
+    <div class="message-menu" id="msg-context-menu">
+        <div class="reaction-row">
+            <span onclick="sendReaction('👍')">👍</span>
+            <span onclick="sendReaction('❤️')">❤️</span>
+            <span onclick="sendReaction('🔥')">🔥</span>
+            <span onclick="sendReaction('😂')">😂</span>
+            <span onclick="sendReaction('👏')">👏</span>
+        </div>
+        <button onclick="triggerReply()"><span style="font-size:14px;">↩️</span> Ответить</button>
+        <button id="menu-edit-btn" onclick="triggerEdit()"><span style="font-size:14px;">✏️</span> Изменить</button>
+        <button onclick="pinMessage()"><span style="font-size:14px;">📌</span> Закрепить</button>
+        <button onclick="copyMessageText()"><span style="font-size:14px;">📋</span> Копировать</button>
+        <button onclick="deleteMessage()" style="color: var(--error);"><span style="font-size:14px;">🗑️</span> Удалить</button>
+    </div>
+
+    <!-- Модалка информации -->
     <div class="modal-overlay" id="profile-modal">
         <div class="modal">
             <div class="modal-header">Информация о чате</div>
@@ -859,6 +1078,13 @@
                 <p><b>Username</b> <span id="profile-modal-username"></span></p>
                 <p><b>Chat ID</b> <span id="profile-modal-id"></span></p>
                 <p><b>Тип чата</b> <span id="profile-modal-type"></span></p>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn" style="background: var(--bg-input); border: 1px solid var(--border-color); font-size: 13px;" onclick="document.getElementById('local-avatar-loader').click()">
+                        🖼️ Загрузить свой аватар
+                    </button>
+                    <input type="file" id="local-avatar-loader" accept="image/*" style="display: none;" onchange="saveLocalAvatar(event)">
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" style="background:var(--bg-input); color:var(--text-muted); border: 1px solid var(--border-color);" onclick="closeProfileModal()">Закрыть</button>
@@ -884,6 +1110,12 @@
         let audioChunks = [];
         let isRecording = false;
 
+        // Переменные состояний для Ответа / Изменения / Меню
+        let selectedMessageId = null; 
+        let replyToMessageId = null;
+        let editingMessageId = null;
+        let lastTypingTime = 0;
+
         const safeStorage = {
             get(key) { 
                 try { return localStorage.getItem(key); } 
@@ -902,11 +1134,6 @@
             if (savedChats) {
                 try { 
                     chats = JSON.parse(savedChats);
-                    for (const id in chats) {
-                        if (chats[id].messages.length === 0) {
-                            chats[id].lastTime = chats[id].lastTime || 0; 
-                        }
-                    }
                 } catch(e) {
                     chats = {};
                 }
@@ -941,7 +1168,6 @@
             try {
                 const response = await fetch(`https://api.telegram.org/bot${token}/getMe`);
                 if (!response.ok) {
-                    const errorText = await response.text();
                     throw new Error(`HTTP ошибка: ${response.status}`);
                 }
 
@@ -996,6 +1222,9 @@
                             if (update.message) {
                                 processIncomingMessage(update.message);
                                 hasNewMsg = true;
+                            } else if (update.edited_message) {
+                                processEditedMessage(update.edited_message);
+                                hasNewMsg = true;
                             } else if (update.channel_post) {
                                 processIncomingMessage(update.channel_post);
                                 hasNewMsg = true;
@@ -1030,7 +1259,8 @@
                     username: chatObj.username || "",
                     type: chatObj.type,
                     messages: [],
-                    lastTime: Date.now()
+                    lastTime: Date.now(),
+                    pinnedMessageId: null
                 };
                 fetchAvatarFromServer(chatId);
             }
@@ -1063,20 +1293,75 @@
                 caption = "";
             }
 
-            const isDuplicate = chats[chatId].messages.some(m => 
-                m.text === (text || caption) && Math.abs(m.time - timeMs) < 3000 && m.fileId === fileId
-            );
+            const isDuplicate = chats[chatId].messages.some(m => m.messageId === msg.message_id);
 
             if (!isDuplicate) {
                 chats[chatId].messages.push({
+                    messageId: msg.message_id,
                     text: text || caption,
                     time: timeMs,
                     out: false,
                     fileId: fileId,
-                    mediaType: mediaType
+                    mediaType: mediaType,
+                    replyToId: (msg.reply_to_message && msg.reply_to_message.message_id) || null,
+                    reactions: []
                 });
                 chats[chatId].lastTime = timeMs;
             }
+        }
+
+        // Обработка измененных пользователем сообщений
+        function processEditedMessage(msg) {
+            const chatId = msg.chat.id;
+            if (!chats[chatId]) return;
+
+            const targetMsg = chats[chatId].messages.find(m => m.messageId === msg.message_id);
+            if (targetMsg) {
+                targetMsg.text = msg.text || msg.caption || targetMsg.text;
+                targetMsg.isEdited = true;
+            }
+        }
+
+        // Улучшение 1: Статус "печатает..."
+        function handleTypingNotification() {
+            if (!currentChatId) return;
+            const now = Date.now();
+            if (now - lastTypingTime > 4000) {
+                lastTypingTime = now;
+                fetch(`https://api.telegram.org/bot${botToken}/sendChatAction?chat_id=${currentChatId}&action=typing`).catch(()=>{});
+            }
+        }
+
+        // Улучшение 2: "Был(а) в сети" (расчет по последней активности чата)
+        function formatLastActivity(chatId) {
+            const chat = chats[chatId];
+            if (!chat) return "не в сети";
+            
+            // Если канал или группа
+            if (chat.type !== 'private') return chat.type;
+
+            // Время последней активности берём по последнему ВХОДЯЩЕМУ сообщению
+            const incomingMsgs = chat.messages.filter(m => !m.out);
+            if (incomingMsgs.length === 0) return "был(а) в сети давно";
+
+            const lastMsg = incomingMsgs[incomingMsgs.length - 1];
+            const diffMs = Date.now() - lastMsg.time;
+            
+            if (diffMs < 60000) return "в сети: только что";
+            if (diffMs < 3600000) {
+                const mins = Math.floor(diffMs / 60000);
+                return `в сети: ${mins} мин. назад`;
+            }
+            
+            const date = new Date(lastMsg.time);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            const today = new Date();
+            if (date.toDateString() === today.toDateString()) {
+                return `был(а) в сети сегодня в ${hours}:${minutes}`;
+            }
+            return `был(а) в сети ${date.toLocaleDateString()} в ${hours}:${minutes}`;
         }
 
         async function toggleVoiceRecord() {
@@ -1121,6 +1406,8 @@
                 const formData = new FormData();
                 formData.append('chat_id', targetId);
                 formData.append('voice', blob, 'voice.ogg');
+                if (replyToMessageId) formData.append('reply_to_message_id', replyToMessageId);
+
                 const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
                     method: 'POST',
                     body: formData
@@ -1128,14 +1415,17 @@
                 const data = await response.json();
                 if (data.ok && data.result.voice) {
                     const sentMessage = {
+                        messageId: data.result.message_id,
                         text: "",
                         time: Date.now(),
                         out: true,
                         fileId: data.result.voice.file_id,
-                        mediaType: 'voice'
+                        mediaType: 'voice',
+                        replyToId: replyToMessageId
                     };
                     chats[targetId].messages.push(sentMessage);
                     chats[targetId].lastTime = Date.now();
+                    cancelReplyMode();
                     if (currentChatId === targetId) renderMessages();
                     renderChats();
                     saveState();
@@ -1150,6 +1440,7 @@
             }
         }
 
+        // Улучшение 3 & 5 & 4: Отправка, Ответы и Изменение сообщений
         async function sendBotMessage() {
             const textarea = document.getElementById('message-text');
             const text = textarea.value.trim();
@@ -1168,15 +1459,33 @@
             try {
                 let response;
                 let data;
-                let method;
-                let sentMediaType = null;
-                let sentFileId = null;
 
-                if (selectedFile) {
+                // СЦЕНАРИЙ А: Редактирование существующего сообщения
+                if (editingMessageId) {
+                    response = await fetch(`https://api.telegram.org/bot${botToken}/editMessageText?chat_id=${targetId}&message_id=${editingMessageId}&text=${encodeURIComponent(text)}`);
+                    data = await response.json();
+                    
+                    if (data.ok) {
+                        const targetChat = chats[targetId];
+                        const localMsg = targetChat.messages.find(m => m.messageId === editingMessageId);
+                        if (localMsg) {
+                            localMsg.text = text;
+                            localMsg.isEdited = true;
+                        }
+                        cancelEditMode();
+                    } else {
+                        alert(`Не удалось изменить: ${data.description}`);
+                    }
+                } 
+                // СЦЕНАРИЙ Б: Отправка нового файла / фото / видео / документа
+                else if (selectedFile) {
+                    let method;
                     const formData = new FormData();
                     formData.append('chat_id', targetId);
                     if (text) formData.append('caption', text);
+                    if (replyToMessageId) formData.append('reply_to_message_id', replyToMessageId);
 
+                    let sentMediaType = null;
                     if (selectedFile.type.startsWith('image')) {
                         method = 'sendPhoto';
                         formData.append('photo', selectedFile);
@@ -1198,6 +1507,7 @@
                     data = await response.json();
 
                     if (data.ok) {
+                        let sentFileId = null;
                         if (sentMediaType === 'photo' && data.result.photo) {
                             sentFileId = data.result.photo[data.result.photo.length - 1].file_id;
                         } else if (sentMediaType === 'video' && data.result.video) {
@@ -1205,41 +1515,81 @@
                         } else if (sentMediaType === 'document' && data.result.document) {
                              sentFileId = data.result.document.file_id;
                         }
+
+                        const sentMessage = {
+                            messageId: data.result.message_id,
+                            text: text,
+                            time: Date.now(),
+                            out: true,
+                            fileId: sentFileId,
+                            mediaType: sentMediaType,
+                            replyToId: replyToMessageId
+                        };
+
+                        chats[targetId].messages.push(sentMessage);
+                        chats[targetId].lastTime = Date.now();
+                        cancelReplyMode();
+                        removeFile();
+                    }
+                } 
+                // СЦЕНАРИЙ В: Отправка текстового сообщения (с возможностью ответа)
+                else {
+                    let url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${targetId}&text=${encodeURIComponent(text)}`;
+                    if (replyToMessageId) {
+                        url += `&reply_to_message_id=${replyToMessageId}`;
                     }
 
-                } else {
-                    method = 'sendMessage';
-                    response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${targetId}&text=${encodeURIComponent(text)}`);
+                    response = await fetch(url);
                     data = await response.json();
-                }
 
-                if (data.ok) {
-                    const sentMessage = {
-                        text: text,
-                        time: Date.now(),
-                        out: true,
-                        fileId: sentFileId,
-                        mediaType: sentMediaType
-                    };
+                    if (data.ok) {
+                        const sentMessage = {
+                            messageId: data.result.message_id,
+                            text: text,
+                            time: Date.now(),
+                            out: true,
+                            replyToId: replyToMessageId,
+                            reactions: []
+                        };
 
-                    chats[targetId].messages.push(sentMessage);
-                    chats[targetId].lastTime = Date.now();
-                    
-                    if (currentChatId === targetId) {
-                        renderMessages();
+                        chats[targetId].messages.push(sentMessage);
+                        chats[targetId].lastTime = Date.now();
+                        cancelReplyMode();
+                    } else {
+                        alert(`Не удалось отправить: ${data.description}`);
                     }
-                    renderChats();
-                    saveState();
-                    removeFile();
-                } else {
-                    alert(`Не удалось отправить сообщение: ${data.description}`);
                 }
+
+                if (currentChatId === targetId) {
+                    renderMessages();
+                }
+                renderChats();
+                saveState();
             } catch (e) {
                 alert(`Ошибка соединения во время отправки: ${e.message}`);
             } finally {
                 sendBtn.disabled = false;
                 sendBtn.innerText = "Отправить";
             }
+        }
+
+        // Свой аватар - выбор из Google Фото или локальной Галереи
+        function saveLocalAvatar(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                safeStorage.set("av_data_" + currentChatId, base64Data);
+                
+                // Перерисовываем UI
+                updateAvatarUI(currentChatId, null, 'profile-modal-avatar');
+                updateAvatarUI(currentChatId, null, 'active-chat-avatar');
+                updateAvatarUI(currentChatId, null, `av-list-${currentChatId}`);
+                renderChats();
+            };
+            reader.readAsDataURL(file);
         }
 
         function handleFileChange(event) {
@@ -1339,13 +1689,33 @@
             document.body.classList.add('chat-opened');
             document.getElementById('chat-window-pane').classList.add('active');
             document.getElementById('active-chat-name').innerText = chat.name;
-            document.getElementById('active-chat-status').innerText = chat.username ? `@${chat.username}` : `Chat ID: ${chat.id}`;
+            
+            // Динамический статус активности
+            document.getElementById('active-chat-status').innerText = formatLastActivity(chat.id);
             document.getElementById('chat-input-bar').style.display = 'flex';
 
             updateAvatarUI(chat.id, chat.name, 'active-chat-avatar');
 
+            // Отрисовка закреплённого сообщения в шапке
+            renderPinnedBar();
+
             renderMessages();
             renderChats();
+        }
+
+        // Отрисовка закрепа
+        function renderPinnedBar() {
+            const chat = chats[currentChatId];
+            const bar = document.getElementById('chat-pinned-bar');
+            if (chat && chat.pinnedMessageId) {
+                const msg = chat.messages.find(m => m.messageId === chat.pinnedMessageId);
+                if (msg) {
+                    bar.style.display = 'flex';
+                    document.getElementById('chat-pinned-text').innerText = `Закреплено: ${msg.text || "[Медиафайлы]"}`;
+                    return;
+                }
+            }
+            bar.style.display = 'none';
         }
 
         function playVoice(url, btn) {
@@ -1376,8 +1746,33 @@
 
             for (const msg of chat.messages) {
                 const div = document.createElement('div');
-                div.className = `bubble ${msg.out ? 'out' : 'in'}`;
+                div.className = `bubble-wrapper`;
+                div.id = `msg-wrap-${msg.messageId}`;
+
+                const bubble = document.createElement('div');
+                bubble.className = `bubble ${msg.out ? 'out' : 'in'}`;
+                bubble.id = `bubble-${msg.messageId}`;
+                bubble.onclick = (e) => {
+                    e.stopPropagation();
+                    openContextMenu(e, msg.messageId, msg.out);
+                };
+
                 const timeStr = new Date(msg.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+
+                // Обработка цитат (Улучшение 3)
+                if (msg.replyToId) {
+                    const parentMsg = chat.messages.find(m => m.messageId === msg.replyToId);
+                    if (parentMsg) {
+                        const quote = document.createElement('div');
+                        quote.className = 'reply-quote';
+                        quote.innerText = `↩️ ${parentMsg.text || "[Медиа/Файл]"}`;
+                        quote.onclick = (e) => {
+                            e.stopPropagation();
+                            scrollToMessage(msg.replyToId);
+                        };
+                        bubble.appendChild(quote);
+                    }
+                }
 
                 if (msg.fileId && msg.mediaType) {
                     const mediaUrl = await getMediaFileUrl(msg.fileId);
@@ -1388,14 +1783,14 @@
                             img.className = 'bubble-media';
                             img.alt = msg.text || "Фото";
                             img.onclick = (e) => { e.stopPropagation(); openMediaViewer(mediaUrl, 'photo'); };
-                            div.appendChild(img);
+                            bubble.appendChild(img);
                         } else if (msg.mediaType === 'video') {
                             const video = document.createElement('video');
                             video.src = mediaUrl;
                             video.className = 'bubble-media';
                             video.controls = true;
                             video.onclick = (e) => { e.stopPropagation(); openMediaViewer(mediaUrl, 'video'); };
-                            div.appendChild(video);
+                            bubble.appendChild(video);
                         } else if (msg.mediaType === 'document') {
                             const docLink = document.createElement('a');
                             docLink.href = mediaUrl;
@@ -1408,26 +1803,26 @@
                                     <span style="font-size:11px; color:var(--text-muted);">Нажмите, чтобы открыть</span>
                                 </div>
                             `;
-                            div.appendChild(docLink);
+                            bubble.appendChild(docLink);
                         } else if (msg.mediaType === 'sticker') {
                             const stickerImg = document.createElement('img');
                             stickerImg.src = mediaUrl;
                             stickerImg.className = 'bubble-media';
                             stickerImg.alt = msg.text || "Стикер";
                             stickerImg.style.maxWidth = '150px';
-                            div.appendChild(stickerImg);
+                            bubble.appendChild(stickerImg);
                         } else if (msg.mediaType === 'voice') {
                             const playerDiv = document.createElement('div');
                             playerDiv.className = 'voice-player';
                             const playBtn = document.createElement('button');
                             playBtn.className = 'voice-play-btn';
                             playBtn.innerText = '▶';
-                            playBtn.onclick = () => playVoice(mediaUrl, playBtn);
+                            playBtn.onclick = (e) => { e.stopPropagation(); playVoice(mediaUrl, playBtn); };
                             const metaDiv = document.createElement('div');
                             metaDiv.className = 'voice-meta';
                             const titleSpan = document.createElement('span');
                             titleSpan.className = 'voice-title';
-                            titleSpan.innerText = 'Голосовое сообщение';
+                            titleSpan.innerText = 'Голосовое';
                             const descSpan = document.createElement('span');
                             descSpan.className = 'voice-duration';
                             descSpan.innerText = 'Аудиозапись';
@@ -1435,7 +1830,7 @@
                             metaDiv.appendChild(descSpan);
                             playerDiv.appendChild(playBtn);
                             playerDiv.appendChild(metaDiv);
-                            div.appendChild(playerDiv);
+                            bubble.appendChild(playerDiv);
                         }
                     }
                 }
@@ -1444,18 +1839,203 @@
                     const textSpan = document.createElement('div');
                     textSpan.className = 'bubble-text';
                     textSpan.innerHTML = escapeHtml(msg.text);
-                    div.appendChild(textSpan);
+                    bubble.appendChild(textSpan);
                 }
+
+                // Дополнительный статус редактирования
+                const isEdStr = msg.isEdited ? " (ред.)" : "";
 
                 const timeSpan = document.createElement('div');
                 timeSpan.className = 'bubble-time';
-                timeSpan.innerText = timeStr;
-                div.appendChild(timeSpan);
+                timeSpan.innerText = timeStr + isEdStr;
+                bubble.appendChild(timeSpan);
 
+                // Отрисовка реакций (Бонус к Bot API)
+                if (msg.reactions && msg.reactions.length > 0) {
+                    const reacDiv = document.createElement('div');
+                    reacDiv.className = 'reactions-list';
+                    msg.reactions.forEach(r => {
+                        const badge = document.createElement('div');
+                        badge.className = 'reaction-badge';
+                        badge.innerText = r;
+                        reacDiv.appendChild(badge);
+                    });
+                    bubble.appendChild(reacDiv);
+                }
+
+                div.appendChild(bubble);
                 container.appendChild(div);
             }
 
             container.scrollTop = container.scrollHeight;
+        }
+
+        // Навигация и скролл
+        function scrollToMessage(id) {
+            const el = document.getElementById(`bubble-${id}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('highlighted');
+                setTimeout(() => el.classList.remove('highlighted'), 1500);
+            }
+        }
+
+        function scrollToPinnedMessage() {
+            const chat = chats[currentChatId];
+            if (chat && chat.pinnedMessageId) {
+                scrollToMessage(chat.pinnedMessageId);
+            }
+        }
+
+        // Контекстные действия над сообщением
+        function openContextMenu(e, msgId, out) {
+            selectedMessageId = msgId;
+            const menu = document.getElementById('msg-context-menu');
+            
+            // Фильтр возможности редактирования (только свои)
+            document.getElementById('menu-edit-btn').style.display = out ? 'flex' : 'none';
+
+            menu.style.display = 'flex';
+            menu.style.left = `${Math.min(e.pageX, window.innerWidth - 180)}px`;
+            menu.style.top = `${Math.min(e.pageY, window.innerHeight - 250)}px`;
+        }
+
+        function closeContextMenu() {
+            document.getElementById('msg-context-menu').style.display = 'none';
+        }
+
+        // Улучшение 3: Локальный ответ в меню
+        function triggerReply() {
+            replyToMessageId = selectedMessageId;
+            editingMessageId = null; // убираем редактирование
+            
+            const msg = chats[currentChatId].messages.find(m => m.messageId === replyToMessageId);
+            if (msg) {
+                document.getElementById('reply-info-text').innerText = `Ответить: ${msg.text || "[Медиа]"}`;
+                document.getElementById('reply-info-banner').style.display = 'flex';
+                document.getElementById('edit-info-banner').style.display = 'none';
+            }
+            closeContextMenu();
+        }
+
+        function cancelReplyMode() {
+            replyToMessageId = null;
+            document.getElementById('reply-info-banner').style.display = 'none';
+        }
+
+        // Улучшение 5: Локальное редактирование в меню
+        function triggerEdit() {
+            editingMessageId = selectedMessageId;
+            replyToMessageId = null; // убираем ответ
+
+            const msg = chats[currentChatId].messages.find(m => m.messageId === editingMessageId);
+            if (msg) {
+                document.getElementById('message-text').value = msg.text || "";
+                document.getElementById('edit-info-text').innerText = `Изменить: ${msg.text}`;
+                document.getElementById('edit-info-banner').style.display = 'flex';
+                document.getElementById('reply-info-banner').style.display = 'none';
+                document.getElementById('message-text').focus();
+                adjustTextareaHeight();
+            }
+            closeContextMenu();
+        }
+
+        function cancelEditMode() {
+            editingMessageId = null;
+            document.getElementById('message-text').value = "";
+            document.getElementById('edit-info-banner').style.display = 'none';
+            adjustTextareaHeight();
+        }
+
+        // Улучшение 4: Удаление сообщения
+        async function deleteMessage() {
+            if (!confirm("Вы уверены, что хотите удалить сообщение?")) return;
+            const targetId = currentChatId;
+            const msgId = selectedMessageId;
+            closeContextMenu();
+
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${botToken}/deleteMessage?chat_id=${targetId}&message_id=${msgId}`);
+                const data = await response.json();
+                
+                if (data.ok) {
+                    chats[targetId].messages = chats[targetId].messages.filter(m => m.messageId !== msgId);
+                    if (chats[targetId].pinnedMessageId === msgId) {
+                        chats[targetId].pinnedMessageId = null;
+                        renderPinnedBar();
+                    }
+                    if (currentChatId === targetId) renderMessages();
+                    renderChats();
+                    saveState();
+                } else {
+                    alert(`Не удалось удалить: ${data.description}`);
+                }
+            } catch (e) {
+                alert(`Ошибка при отправке запроса удаления.`);
+            }
+        }
+
+        // Улучшение 6: Закрепление сообщений
+        async function pinMessage() {
+            const targetId = currentChatId;
+            const msgId = selectedMessageId;
+            closeContextMenu();
+
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${botToken}/pinChatMessage?chat_id=${targetId}&message_id=${msgId}`);
+                const data = await response.json();
+                
+                if (data.ok) {
+                    chats[targetId].pinnedMessageId = msgId;
+                    renderPinnedBar();
+                    saveState();
+                } else {
+                    alert(`Не удалось закрепить: ${data.description}`);
+                }
+            } catch(e) {
+                alert(`Ошибка сервера при закреплении.`);
+            }
+        }
+
+        // Локальное открепление (Unpin)
+        async function unpinChatMessageLocal() {
+            const targetId = currentChatId;
+            try {
+                await fetch(`https://api.telegram.org/bot${botToken}/unpinChatMessage?chat_id=${targetId}`);
+                chats[targetId].pinnedMessageId = null;
+                renderPinnedBar();
+                saveState();
+            } catch(e) {}
+        }
+
+        // Бонус: Установка реакций через Bot API
+        async function sendReaction(emoji) {
+            const targetId = currentChatId;
+            const msgId = selectedMessageId;
+            closeContextMenu();
+
+            try {
+                const reactionPayload = [{ type: 'emoji', emoji: emoji }];
+                const response = await fetch(`https://api.telegram.org/bot${botToken}/setMessageReaction?chat_id=${targetId}&message_id=${msgId}&reaction=${JSON.stringify(reactionPayload)}`);
+                const data = await response.json();
+
+                if (data.ok) {
+                    const msg = chats[targetId].messages.find(m => m.messageId === msgId);
+                    if (msg) {
+                        msg.reactions = [emoji]; // Пока храним локально по одной реакции
+                    }
+                    if (currentChatId === targetId) renderMessages();
+                    saveState();
+                }
+            } catch (e) {}
+        }
+
+        function copyMessageText() {
+            const msg = chats[currentChatId].messages.find(m => m.messageId === selectedMessageId);
+            if (msg && msg.text) {
+                navigator.clipboard.writeText(msg.text);
+            }
+            closeContextMenu();
         }
 
         function adjustTextareaHeight() {
@@ -1604,7 +2184,6 @@
             document.getElementById('chat-window-pane').classList.remove('active');
             currentChatId = null;
         }
-        // мяу, я устала писать
     </script>
 </body>
-    </html>
+</html>
