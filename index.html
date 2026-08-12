@@ -3,2487 +3,1838 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Graph Web Bot Client Pro v3</title>
+    <title>🔥 ANIME LEGENDS 3D — Android Only</title>
     <style>
-        :root {
-            --bg-dark: #050508;
-            --bg-surface: #0c0d12;
-            --bg-input: #14161f;
-            --accent: #2481cc;          
-            --accent-hover: #2f94e3;
-            --text-main: #f0f2f5;
-            --text-muted: #70798a;
-            --msg-in: #161822;
-            --msg-out: #1c2b3d;
-            --error: #ff4d4d;
-            --success: #2ecc71;
-            --border-color: #1a1d29;
-            --reply-bg: rgba(36, 129, 204, 0.1);
-        }
-
         * {
             box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            height: 100vh;
-            height: 100dvh;
-            padding-bottom: env(safe-area-inset-bottom, 0);
-            display: flex;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .dev-link {
-            position: fixed;
-            top: 15px;
-            right: 20px;
-            font-size: 13px;
-            color: #2481cc;
-            text-decoration: none;
-            z-index: 2000;
-            font-weight: 600;
-            background: rgba(12, 13, 18, 0.85);
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid var(--border-color);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .dev-link:hover {
-            color: #2f94e3;
-            border-color: var(--accent);
-            box-shadow: 0 0 12px rgba(36, 129, 204, 0.4);
-            transform: translateY(-1px);
-        }
-
-        #login-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #101424 0%, var(--bg-dark) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .login-card {
-            width: 90%;
-            max-width: 400px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            padding: 40px 30px;
-            border-radius: 24px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-        }
-
-        .login-logo {
-            font-size: 72px;
-            margin-bottom: 20px;
-            color: var(--accent);
-            display: inline-block;
-            animation: float 4s ease-in-out infinite;
-            text-shadow: 0 0 20px rgba(36, 129, 204, 0.3);
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-12px); }
-        }
-
-        .login-card h1 {
-            font-size: 26px;
-            font-weight: 800;
-            margin-bottom: 12px;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #fff 0%, #a0a5b5 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .login-card p {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-bottom: 30px;
-            line-height: 1.5;
-        }
-
-        .login-input {
-            width: 100%;
-            padding: 16px 20px;
-            border-radius: 14px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-input);
-            color: white;
-            font-size: 15px;
-            outline: none;
-            margin-bottom: 20px;
-            transition: all 0.25s ease;
-        }
-
-        .login-input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 14px rgba(36, 129, 204, 0.25);
-            background: #181b26;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 14px;
-            border: none;
-            background: var(--accent);
-            color: white;
-            font-weight: 700;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(36, 129, 204, 0.3);
-        }
-
-        .btn:hover { 
-            background: var(--accent-hover);
-            box-shadow: 0 6px 20px rgba(36, 129, 204, 0.45);
-        }
-        .btn:active { transform: scale(0.98); }
-        .btn:disabled { background: #2c3245; color: #5a627a; cursor: not-allowed; box-shadow: none; }
-
-        .error-log {
-            color: var(--error);
-            font-size: 13px;
-            margin-top: 15px;
-            background: rgba(255, 77, 77, 0.08);
-            padding: 14px;
-            border-radius: 10px;
-            display: none;
-            word-break: break-all;
-            text-align: left;
-            border: 1px solid rgba(255, 77, 77, 0.2);
-        }
-
-        .wrapper {
-            display: flex;
+        body, html {
             width: 100%;
             height: 100%;
-        }
-
-        .sidebar {
-            width: 380px;
-            background: var(--bg-surface);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            position: relative;
-        }
-
-        .bot-header {
-            padding: 12px 20px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            background: rgba(12, 13, 18, 0.5);
-            backdrop-filter: blur(10px);
-        }
-
-        .search-area {
-            padding: 12px 16px 8px 16px;
-        }
-
-        .search-wrapper {
-            position: relative;
-            display: flex;
-            gap: 10px;
-        }
-
-        .search-field {
-            flex: 1;
-            padding: 10px 14px 10px 38px;
-            border-radius: 22px;
-            border: 1px solid transparent;
-            background: var(--bg-input);
-            color: white;
-            font-size: 14px;
-            outline: none;
-            transition: all 0.2s ease;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2370798a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: 12px center;
-        }
-
-        .search-field:focus {
-            background: #181b26;
-            border-color: rgba(36, 129, 204, 0.5);
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232481cc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: 12px center;
-        }
-
-        .tabs {
-            display: flex;
-            padding: 8px 16px 14px 16px;
-            gap: 6px;
-            border-bottom: 1px solid var(--border-color);
-            overflow-x: auto;
-            scrollbar-width: none;
-        }
-
-        .tabs::-webkit-scrollbar { display: none; }
-
-        .tab-btn {
-            flex-shrink: 0;
-            padding: 8px 14px;
-            border-radius: 16px;
-            background: var(--bg-input);
-            border: none;
-            color: var(--text-muted);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-        }
-
-        .tab-btn:hover {
-            background: rgba(255,255,255,0.05);
-            color: var(--text-main);
-        }
-
-        .tab-btn.active {
-            background: var(--accent);
-            color: white;
-            box-shadow: 0 4px 12px rgba(36, 129, 204, 0.25);
-        }
-
-        .chats-container {
-            flex: 1;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,0.05) transparent;
-        }
-
-        .chats-container::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .chats-container::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.05);
-            border-radius: 2px;
-        }
-
-        .chat-row {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            border-bottom: 1px solid rgba(255,255,255,0.02);
-            border-radius: 0;
-        }
-
-        .chat-row:hover { 
-            background: rgba(255, 255, 255, 0.035); 
-        }
-        .chat-row.active { 
-            background: rgba(36, 129, 204, 0.08); 
-        }
-        .chat-row.active .chat-title { color: var(--accent); }
-        .chat-row.active .avatar { 
-            box-shadow: 0 0 0 2px var(--accent); 
-        }
-
-        .avatar {
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            background-color: var(--accent);
-            color: white;
-            font-weight: 700;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            background-size: cover;
-            background-position: center;
-            flex-shrink: 0;
-            position: relative;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        .chat-details {
-            flex: 1;
             overflow: hidden;
+            background-color: #0c0f1d;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            touch-action: manipulation;
         }
 
-        .chat-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-
-        .chat-title {
-            font-weight: 700;
-            font-size: 15px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: #ffffff;
-        }
-
-        .chat-time {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .chat-last-message {
-            font-size: 13px;
-            color: var(--text-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-window {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background-color: var(--bg-dark);
-            position: relative;
-        }
-
-        .chat-window-header {
-            height: 75px;
-            padding: 10px 24px;
-            display: flex;
-            align-items: center;
-            background: var(--bg-surface);
-            border-bottom: 1px solid var(--border-color);
-            z-index: 10;
-        }
-
-        .back-btn {
-            display: none;
-            font-size: 22px;
-            color: var(--accent);
-            cursor: pointer;
-            margin-right: 18px;
-            width: 36px;
-            height: 36px;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: var(--bg-input);
-            transition: background 0.2s;
-        }
-
-        .back-btn:active {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        /* Пин-панель сверху чата */
-        .pinned-bar {
-            background: rgba(20, 22, 31, 0.95);
-            border-bottom: 1px solid var(--border-color);
-            padding: 10px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 13px;
-            z-index: 5;
-            animation: slideDown 0.2s ease-out;
-        }
-
-        .pinned-content {
-            cursor: pointer;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex: 1;
-            color: var(--text-main);
-            border-left: 2px solid var(--accent);
-            padding-left: 10px;
-        }
-
-        .pinned-unpin-btn {
-            color: var(--text-muted);
-            background: none;
-            border: none;
-            font-size: 16px;
-            cursor: pointer;
-            padding-left: 10px;
-        }
-
-        .pinned-unpin-btn:hover {
-            color: var(--error);
-        }
-
-        .chat-feed {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background-image: radial-gradient(rgba(255,255,255,0.015) 1.2px, transparent 0);
-            background-size: 28px 28px;
-            scrollbar-width: thin;
-        }
-
-        .empty-placeholder {
-            margin: auto;
-            text-align: center;
-            max-width: 320px;
-            color: var(--text-muted);
-            font-size: 14.5px;
-            line-height: 1.6;
-        }
-
-        /* Сообщения */
-        .bubble-wrapper {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            position: relative;
-        }
-
-        .bubble {
-            max-width: 68%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 14.5px;
-            line-height: 1.5;
-            word-wrap: break-word;
-            position: relative;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            animation: messageAppear 0.25s cubic-bezier(0.1, 0.8, 0.3, 1);
-            cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
-        }
-
-        .bubble:hover {
-            filter: brightness(1.08);
-        }
-
-        .bubble.highlighted {
-            animation: pulse-highlight 1.5s ease-out;
-        }
-
-        @keyframes pulse-highlight {
-            0% { background-color: var(--accent); }
-            100% { }
-        }
-
-        @keyframes messageAppear {
-            from { transform: translateY(8px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .bubble.in {
-            align-self: flex-start;
-            background-color: var(--msg-in);
-            border-bottom-left-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.015);
-        }
-
-        .bubble.out {
-            align-self: flex-end;
-            background-color: var(--msg-out);
-            border-bottom-right-radius: 4px;
-            border: 1px solid rgba(36, 129, 204, 0.08);
-        }
-
-        /* Цитаты ответов внутри сообщений */
-        .reply-quote {
-            background: var(--reply-bg);
-            border-left: 3px solid var(--accent);
-            padding: 6px 10px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            font-size: 12.5px;
-            cursor: pointer;
-            color: #d1d4dc;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Реакции на пузырях */
-        .reactions-list {
-            display: flex;
-            gap: 4px;
-            margin-top: 4px;
-            align-self: flex-end;
-        }
-
-        .reaction-badge {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 11px;
-            color: #ffffff;
-        }
-
-        .bubble-time {
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.35);
-            margin-top: 6px;
-            text-align: right;
-            align-self: flex-end;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .bubble-media {
-            max-width: 100%;
-            height: auto;
-            border-radius: 12px;
-            margin-bottom: 6px;
-            display: block;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        .bubble-media:hover {
-            opacity: 0.9;
-        }
-
-        .bubble-text {
-            color: var(--text-main);
-        }
-
-        /* Контекстное меню сообщения */
-        .message-menu {
-            position: fixed;
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            display: none;
-            flex-direction: column;
-            z-index: 2000;
-            width: min(200px, 90vw);
-            overflow: hidden;
-        }
-
-        .message-menu button {
-            background: none;
-            border: none;
-            color: white;
-            padding: 10px 14px;
-            text-align: left;
-            font-size: 13.5px;
-            cursor: pointer;
-            transition: background 0.15s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .message-menu button:hover {
-            background: rgba(255,255,255,0.05);
-        }
-
-        .reaction-row {
-            display: flex;
-            padding: 8px;
-            border-bottom: 1px solid var(--border-color);
-            justify-content: space-around;
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .reaction-row span {
-            cursor: pointer;
-            font-size: 18px;
-            transition: transform 0.1s;
-        }
-
-        .reaction-row span:hover {
-            transform: scale(1.25);
-        }
-
-        .document-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(255, 255, 255, 0.04);
-            padding: 12px 16px;
-            border-radius: 12px;
-            color: #ffffff;
-            text-decoration: none;
-            font-size: 14px;
-            word-break: break-all;
-            border: 1px solid rgba(255,255,255,0.03);
-            transition: all 0.2s;
-        }
-
-        .document-link:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(36, 129, 204, 0.3);
-        }
-
-        .document-icon {
-            font-size: 24px;
-            background: rgba(36, 129, 204, 0.15);
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            color: var(--accent);
-        }
-
-        .voice-player {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            min-width: 220px;
-            padding: 4px 0;
-        }
-
-        .voice-play-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--accent);
-            border: none;
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            transition: background 0.2s;
-        }
-
-        .voice-play-btn:hover {
-            background: var(--accent-hover);
-        }
-
-        .voice-meta {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            flex: 1;
-        }
-
-        .voice-title {
-            font-size: 13.5px;
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        .voice-duration {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        .chat-input-bar {
-            padding: 16px 24px;
-            background: var(--bg-surface);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            border-top: 1px solid var(--border-color);
-            padding-bottom: max(16px, env(safe-area-inset-bottom, 0));
-        }
-
-        /* Информационные плашки над вводом (ответ/редактирование) */
-        .input-info-banner {
-            background: rgba(36, 129, 204, 0.08);
-            border-left: 3px solid var(--accent);
-            padding: 8px 16px;
-            border-radius: 8px;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 13px;
-        }
-
-        .input-info-text {
-            color: var(--text-main);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .input-info-close {
-            color: var(--error);
-            font-size: 18px;
-            cursor: pointer;
-            padding-left: 10px;
-        }
-
-        .input-main-row {
-            display: flex;
-            align-items: flex-end;
-            width: 100%;
-            gap: 14px;
-        }
-
-        .input-controls {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            position: relative;
-        }
-
-        .textarea-message {
-            flex: 1;
-            padding: 14px 18px;
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            color: white;
-            outline: none;
-            font-size: 14.5px;
-            resize: none;
-            max-height: 120px;
-            min-height: 48px;
-            overflow-y: auto;
-            transition: border-color 0.2s;
-        }
-
-        .textarea-message:focus {
-            border-color: rgba(36, 129, 204, 0.4);
-        }
-
-        .attachment-btn, .voice-btn {
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            color: #a0a5b5;
-            font-size: 18px;
-            cursor: pointer;
-            width: 48px;
-            height: 48px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            transition: all 0.2s ease;
-        }
-
-        .attachment-btn:hover, .voice-btn:hover {
-            color: white;
-            background: rgba(255,255,255,0.04);
-            border-color: rgba(255,255,255,0.1);
-        }
-
-        .voice-btn.recording {
-            color: white;
-            background: var(--error);
-            border-color: var(--error);
-            animation: pulse-red 1.5s infinite;
-        }
-
-        @keyframes pulse-red {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
-        }
-
-        .file-upload-input {
-            display: none;
-        }
-
-        .file-preview-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #181c2b;
-            padding: 10px 16px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            font-size: 13.5px;
-            color: var(--text-main);
-            border: 1px solid rgba(36, 129, 204, 0.2);
-            animation: slideDown 0.2s ease-out;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-10px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .file-preview-close {
-            color: var(--error);
-            font-size: 20px;
-            cursor: pointer;
-            margin-left: auto;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-overlay {
+        /* ===== LOADING SCREEN ===== */
+        #loader {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            align-items: center;
+            background: radial-gradient(circle at center, #1a2238 0%, #0a0c16 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
-            z-index: 1100;
-            backdrop-filter: blur(8px);
+            align-items: center;
+            color: #f3e5c8;
+            transition: opacity 0.8s ease;
+        }
+        .loader-title {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(243, 229, 200, 0.8);
+            animation: titlePulse 2s ease-in-out infinite;
+        }
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); text-shadow: 0 0 30px rgba(243, 229, 200, 1); }
+        }
+        .loader-subtitle {
+            font-size: 12px;
+            color: #8c97ac;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+        }
+        .bar-container {
+            width: 260px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(243, 229, 200, 0.25);
+        }
+        .bar-progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #f3e5c8, #e0b36c, #ff6b6b);
+            box-shadow: 0 0 15px rgba(243, 229, 200, 0.6);
+            transition: width 0.15s ease;
+        }
+        .loader-status {
+            margin-top: 12px;
+            font-size: 11px;
+            color: #e0b36c;
+            letter-spacing: 1px;
         }
 
-        .modal-overlay.active { display: flex; }
-
-        .modal {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            width: 90%;
-            max-width: 420px;
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            animation: modalZoom 0.25s cubic-bezier(0.1, 0.8, 0.3, 1);
+        /* ===== 3D CANVAS ===== */
+        #game-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            display: block;
         }
 
-        @keyframes modalZoom {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        /* ===== UI OVERLAY ===== */
+        #ui-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .interactive { pointer-events: auto; }
+        .interactive * { pointer-events: auto; }
+        button, .btn-attack, .btn-sub, .btn-dance, .icon-btn {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(224, 179, 108, 0.4);
+            cursor: pointer;
         }
 
-        .modal-header {
+        /* ===== PLAYER PANEL ===== */
+        .player-panel {
+            position: absolute;
+            top: 10px; left: 10px;
+            display: flex;
+            align-items: center;
+            background: rgba(10, 15, 26, 0.8);
+            padding: 6px 12px;
+            border-radius: 35px;
+            border: 1px solid rgba(243, 229, 200, 0.3);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #a8edea 100%);
+            border: 2px solid #e0b36c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             font-size: 20px;
-            font-weight: 800;
-            margin-bottom: 18px;
-            color: white;
+            box-shadow: 0 0 10px rgba(224, 179, 108, 0.5);
+            margin-right: 8px;
+        }
+        .stats-col {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .player-name {
+            color: #f3e5c8;
+            font-size: 11px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+        }
+        .bar-wrapper {
+            width: 100px;
+            height: 6px;
+            background: #1e1e24;
+            border-radius: 3px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .hp-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #4ef27d, #25ba50);
+            box-shadow: 0 0 5px rgba(78, 242, 125, 0.5);
+            transition: width 0.3s ease;
+        }
+        .stamina-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #ffd000, #ff8c00);
+            box-shadow: 0 0 5px rgba(255, 208, 0, 0.5);
+            transition: width 0.15s ease;
         }
 
-        .modal-content-scroll {
-            max-height: 70vh;
+        /* ===== TOP RIGHT ===== */
+        .top-right {
+            position: absolute;
+            top: 10px; right: 10px;
+            display: flex;
+            gap: 6px;
+        }
+        .icon-btn {
+            width: 36px; height: 36px;
+            background: rgba(10, 15, 26, 0.7);
+            border: 1px solid rgba(243, 229, 200, 0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #f3e5c8;
+            font-size: 14px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            cursor: pointer;
+        }
+        .icon-btn:active { transform: scale(0.88); background: rgba(224, 179, 108, 0.5); }
+
+        /* ===== MINIMAP ===== */
+        #minimap {
+            position: absolute;
+            top: 55px; right: 10px;
+            width: 80px; height: 80px;
+            background: rgba(10, 15, 26, 0.6);
+            border: 1px solid rgba(243, 229, 200, 0.25);
+            border-radius: 50%;
+            backdrop-filter: blur(4px);
+            overflow: hidden;
+        }
+        #minimap-canvas { width: 100%; height: 100%; }
+
+        /* ===== JOYSTICK (LEFT) ===== */
+        #joystick-zone {
+            position: absolute;
+            bottom: 20px; left: 20px;
+            width: 120px; height: 120px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(243, 229, 200, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            touch-action: none;
+            z-index: 20;
+        }
+        #joystick-handle {
+            width: 48px; height: 48px;
+            background: radial-gradient(circle, #f3e5c8 0%, #b2853a 100%);
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.5);
+            pointer-events: none;
+            transition: transform 0.02s;
+        }
+
+        /* ===== CAMERA ZONE (RIGHT HALF) ===== */
+        #camera-zone {
+            position: absolute;
+            top: 0; right: 0;
+            width: 50%; height: 100%;
+            z-index: 15;
+            touch-action: none;
+        }
+
+        /* ===== ACTION BUTTONS ===== */
+        .action-group {
+            position: absolute;
+            bottom: 15px; right: 15px;
+            display: grid;
+            grid-template-columns: repeat(3, 55px);
+            grid-template-rows: repeat(2, 55px);
+            gap: 8px;
+            z-index: 20;
+            align-items: center;
+            justify-items: center;
+        }
+        .btn-attack {
+            grid-column: 3; grid-row: 2;
+            width: 72px; height: 72px;
+            margin-left: -6px; margin-top: -6px;
+            background: radial-gradient(circle, #ffe29f 0%, #cfa353 100%);
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            color: #1a2238;
+            box-shadow: 0 0 20px rgba(243, 229, 200, 0.7), 0 4px 10px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+        .btn-attack:active { transform: scale(0.85); background: #b88d3d; }
+        .btn-sub {
+            width: 50px; height: 50px;
+            background: rgba(10, 15, 26, 0.7);
+            border: 2px solid rgba(243, 229, 200, 0.4);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            color: #f3e5c8;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        }
+        .btn-sub:active { transform: scale(0.88); background: rgba(224, 179, 108, 0.5); }
+        .btn-sub.active { background: #e0b36c; color: #000; }
+        .btn-jump { grid-column: 2; grid-row: 2; }
+        .btn-dash { grid-column: 3; grid-row: 1; }
+
+        /* ===== DANCE PANEL ===== */
+        .dance-panel {
+            position: absolute;
+            bottom: 140px; right: 15px;
+            display: flex;
+            gap: 6px;
+            z-index: 20;
+        }
+        .btn-dance {
+            width: 40px; height: 40px;
+            font-size: 13px;
+            background: rgba(20, 25, 45, 0.8);
+            border: 1px solid rgba(243, 229, 200, 0.4);
+            border-radius: 50%;
+            color: #f3e5c8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+        }
+        .btn-dance:active { transform: scale(0.9); background: rgba(224, 179, 108, 0.5); }
+
+        /* ===== COMBO INDICATOR ===== */
+        #combo-indicator {
+            position: absolute;
+            bottom: 90px; right: 160px;
+            font-size: 18px;
+            font-weight: 900;
+            color: #ffda79;
+            text-shadow: 0 0 10px #ff9f1a, 2px 2px 4px black;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        /* ===== ALERT BOX ===== */
+        #alert-box {
+            position: absolute;
+            top: 70px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 15, 26, 0.9);
+            border: 1px solid #e0b36c;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: #f3e5c8;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 25;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        /* ===== MODEL LOADER PANEL ===== */
+        #model-panel {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 15, 26, 0.95);
+            border: 2px solid #e0b36c;
+            border-radius: 20px;
+            padding: 20px;
+            width: 300px;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 0 40px rgba(224, 179, 108, 0.3);
+        }
+        #model-panel h3 {
+            color: #f3e5c8;
+            margin-bottom: 12px;
+            text-align: center;
+            font-size: 15px;
+        }
+        #model-panel .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        #model-panel input[type="file"] {
+            position: absolute;
+            left: 0; top: 0;
+            opacity: 0;
+            width: 100%; height: 100%;
+            cursor: pointer;
+        }
+        #model-panel .file-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #e0b36c, #f3e5c8);
+            border: none;
+            border-radius: 8px;
+            color: #1a2238;
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+            display: block;
+        }
+        #model-panel .close-btn {
+            position: absolute;
+            top: 8px; right: 12px;
+            background: none;
+            border: none;
+            color: #f3e5c8;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        #model-panel .model-list {
+            margin-top: 15px;
+            max-height: 150px;
             overflow-y: auto;
         }
-
-        .modal-footer {
-            display: flex;
-            gap: 12px;
-            margin-top: 24px;
-        }
-        
-        .modal-profile-info p {
-            margin-bottom: 12px;
-            font-size: 14.5px;
-            display: flex;
-            justify-content: space-between;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.02);
-        }
-
-        .modal-profile-info b { color: var(--text-muted); font-weight: 500; }
-        .modal-profile-info span { color: white; font-weight: 600; }
-
-        .modal-profile-info .avatar {
-            width: 90px; height: 90px; font-size: 32px; margin: 0 auto 24px auto;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .modal-media-viewer {
-            max-width: 95vw;
-            max-height: 85vh;
-            object-fit: contain;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-        }
-
-        @media (max-width: 768px) {
-            .dev-link {
-                top: 15px;
-                right: 15px;
-                font-size: 12px;
-                padding: 6px 12px;
-            }
-            body.chat-opened .dev-link {
-                display: none !important;
-            }
-            .sidebar { 
-                width: 100%; 
-                height: 100%;
-            }
-            .chat-window {
-                display: none;
-                position: fixed;
-                top: 0; left: 0; width: 100%; height: 100%;
-                z-index: 500;
-                background-color: var(--bg-dark);
-            }
-            .chat-window.active { display: flex; }
-            .back-btn { display: flex; }
-            .chat-feed {
-                padding: 16px;
-                gap: 10px;
-            }
-            .bubble {
-                max-width: 85%;
-                font-size: 14px;
-                padding: 10px 14px;
-                border-radius: 16px;
-            }
-            .chat-input-bar {
-                padding: 10px 14px;
-                gap: 8px;
-            }
-            .textarea-message {
-                padding: 11px 14px;
-                font-size: 14px;
-                min-height: 40px;
-            }
-            .attachment-btn, .voice-btn {
-                width: 40px;
-                height: 40px;
-                border-radius: 12px;
-                font-size: 16px;
-            }
-            .btn {
-                padding: 11px 18px;
-                font-size: 14px;
-                border-radius: 12px;
-            }
-            .chat-row {
-                padding: 16px 20px;
-            }
-            .avatar {
-                width: 46px;
-                height: 46px;
-                font-size: 16px;
-            }
-            .bot-header {
-                height: 70px;
-                padding: 10px 16px;
-            }
-            .chat-window-header {
-                height: 70px;
-                padding: 10px 16px;
-            }
-            .input-main-row { gap: 8px; }
-            .attachment-btn, .voice-btn {
-                width: 38px;
-                height: 38px;
-                min-width: 38px;
-                min-height: 38px;
-                border-radius: 10px;
-            }
-            .textarea-message {
-                padding: 10px 12px;
-                font-size: 14px;
-                min-height: 38px;
-            }
-            #send-btn {
-                padding: 8px !important;
-                min-width: 38px;
-                min-height: 38px;
-                border-radius: 50% !important;
-                display: flex !important;
-                align-items: center;
-                justify-content: center;
-            }
-            #send-btn svg {
-                width: 18px;
-                height: 18px;
-            }
-            .file-preview-container {
-                padding: 8px 12px;
-                font-size: 12px;
-            }
-            .message-menu {
-                width: min(220px, 85vw);
-                border-radius: 16px;
-            }
-            .reaction-row span {
-                font-size: 16px;
-                padding: 4px;
-            }
-            .chat-input-bar {
-                padding-bottom: max(10px, env(safe-area-inset-bottom, 0));
-            }
-            .chat-feed {
-                padding-bottom: max(16px, env(safe-area-inset-bottom, 0));
-            }
-        }
-        .video-note {
-            width: 240px;
-            height: 240px;
-            border-radius: 50%;
-            object-fit: cover;
-            display: block;
+        #model-panel .model-item {
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            margin-bottom: 5px;
+            color: #f3e5c8;
+            font-size: 11px;
             cursor: pointer;
-            border: 2px solid rgba(255,255,255,0.08);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(243, 229, 200, 0.2);
         }
-        .video-note:hover {
-            transform: scale(1.02);
-            box-shadow: 0 6px 30px rgba(0,0,0,0.5);
+        #model-panel .model-item:active { background: rgba(224, 179, 108, 0.3); }
+        #model-panel .model-item .name { font-weight: bold; color: #e0b36c; }
+        #model-panel .model-item .source { color: #8c97ac; font-size: 10px; }
+
+        /* ===== DAMAGE TEXT ===== */
+        .damage-text {
+            position: absolute;
+            font-size: 20px;
+            font-weight: 900;
+            color: #ff4444;
+            text-shadow: 0 0 10px #ff0000, 2px 2px 4px black;
+            pointer-events: none;
+            z-index: 30;
+            animation: damageFloat 1s ease forwards;
         }
-        @media (max-width: 768px) {
-            .video-note { width: 180px; height: 180px; }
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        @keyframes damageFloat {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            50% { transform: translateY(-30px) scale(1.3); opacity: 1; }
+            100% { transform: translateY(-60px) scale(0.8); opacity: 0; }
         }
     </style>
 </head>
 <body>
 
-    <a href="https://t.me/AsuMeo" target="_blank" class="dev-link">Разработчик</a>
-
-    <div id="login-screen">
-        <div class="login-card">
-            <div class="login-logo">✈</div>
-            <h1>Graph Web Bot Client Pro v3</h1>
-            <p>Вход по Bot Token. Общайтесь от имени бота с расширенными функциями редактирования, ответов и удаления.</p>
-            <input type="password" id="token-field" class="login-input" placeholder="Токен бота (например, 12345:AAH...)">
-            <button class="btn" id="login-action-btn" onclick="tryLogin()">ВОЙТИ</button>
-            <div id="login-error" class="error-log"></div>
-        </div>
+    <div id="loader">
+        <div class="loader-title">🔥 ANIME LEGENDS 3D</div>
+        <div class="loader-subtitle">ANDROID EXCLUSIVE</div>
+        <div class="bar-container"><div id="loading-bar" class="bar-progress"></div></div>
+        <div id="loading-status" class="loader-status">Загрузка... 0%</div>
     </div>
 
-    <div class="wrapper">
-        <div class="sidebar">
-            <div class="bot-header">
-                <div class="avatar" id="bot-avatar-img">?</div>
-                <div class="chat-details">
-                    <div class="chat-title" id="bot-name-display">Загрузка...</div>
-                    
-                </div>
+    <canvas id="game-canvas"></canvas>
+
+    <div id="ui-container">
+        <div class="player-panel interactive">
+            <div class="avatar">👧</div>
+            <div class="stats-col">
+                <div class="player-name">Тянка</div>
+                <div class="bar-wrapper"><div class="hp-fill" id="hp-bar"></div></div>
+                <div class="bar-wrapper"><div class="stamina-fill" id="stamina-bar"></div></div>
             </div>
-
-            <div class="search-area">
-                <div class="search-wrapper">
-                    <input type="text" id="search-input" class="search-field" placeholder="Поиск по имени или ID..." oninput="renderChats()">
-                </div>
-            </div>
-
-            
-
-            <div class="chats-container" id="chats-list"></div>
         </div>
 
-        <div class="chat-window" id="chat-window-pane">
-            <div class="chat-window-header">
-                <div class="back-btn" onclick="backToSidebar()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></div>
-                <div class="avatar" id="active-chat-avatar">?</div>
-                <div class="chat-details" style="flex:1;">
-                    <div class="chat-title" id="active-chat-name">Выберите чат</div>
-                    <div class="chat-last-message" id="active-chat-status">и начнется общение</div>
-                </div>
-                <button class="btn" style="width: auto; padding: 8px 15px; font-size: 13px;" onclick="openProfileModal(currentChatId)">Подробнее</button>
+        <div class="top-right interactive">
+            <button class="icon-btn" id="btn-sound" >🔊</button>
+            <button class="icon-btn" id="btn-fullscreen">📺</button>
+            <button class="icon-btn" id="btn-respawn">👾</button>
+            <button class="icon-btn" id="btn-model">🎭</button>
+        </div>
+
+        <div id="minimap"><canvas id="minimap-canvas"></canvas></div>
+
+        <div class="dance-panel interactive">
+            <button class="btn-dance" id="btn-dance1">💃</button>
+            <button class="btn-dance" id="btn-dance2">✨</button>
+            <button class="btn-dance" id="btn-dance3">🌟</button>
+        </div>
+
+        <div id="joystick-zone" class="interactive">
+            <div id="joystick-handle"></div>
+        </div>
+
+        <div id="camera-zone" class="interactive"></div>
+
+        <div class="action-group interactive">
+            <button class="btn-sub btn-dash" id="btn-dash">💨</button>
+            <button class="btn-sub btn-jump" id="btn-jump">🦘</button>
+            <button class="btn-attack" id="btn-attack">⚔️</button>
+        </div>
+
+        <div id="combo-indicator">COMBO 1/3</div>
+        <div id="alert-box"></div>
+    </div>
+
+    <div id="model-panel">
+        <button class="close-btn" >✕</button>
+        <h3>🎭 Выбор 3D Модели</h3>
+
+        <div class="file-input-wrapper">
+            <div class="file-btn">📁 Выбрать .GLB файл</div>
+            <input type="file" id="file-input" accept=".glb,.gltf" onchange="handleFileSelect(event)">
+        </div>
+
+        <div style="color:#8c97ac;font-size:10px;text-align:center;margin-bottom:10px;">
+            Или выбери готовую модель:
+        </div>
+
+        <div class="model-list">
+            <div class="model-item" >
+                <div class="name">👩 Stacy (Девушка)</div>
+                <div class="source">Mixamo анимации • CDN</div>
             </div>
-
-            <!-- Плашка закрепленного сообщения -->
-            <div class="pinned-bar" id="chat-pinned-bar" style="display: none;">
-                <div class="pinned-content" id="chat-pinned-text" onclick="scrollToPinnedMessage()">
-                    Закреплённое сообщение
-                </div>
-                <button class="pinned-unpin-btn" onclick="unpinChatMessageLocal()">×</button>
+            <div class="model-item" >
+                <div class="name">🦊 Fox (Лиса)</div>
+                <div class="source">Khronos • Анимации: Walk/Run/Survey</div>
             </div>
-
-            <div class="chat-feed" id="messages-feed" onclick="closeContextMenu()">
-                <div class="empty-placeholder">
-                    Здесь будет отображаться история переписки. Напишите вашему боту в Telegram, чтобы начать диалог.
-                </div>
+            <div class="model-item" >
+                <div class="name">🧑‍🚀 Astronaut (Космонавт)</div>
+                <div class="source">ModelViewer • Без анимаций</div>
             </div>
-
-            <div class="chat-input-bar" id="chat-input-bar" style="display: none;">
-                
-                <!-- Панель ответа на сообщение -->
-                <div class="input-info-banner" id="reply-info-banner">
-                    <div class="input-info-text" id="reply-info-text">Ответ на сообщение</div>
-                    <div class="input-info-close" onclick="cancelReplyMode()">×</div>
-                </div>
-
-                <!-- Панель редактирования сообщения -->
-                <div class="input-info-banner" id="edit-info-banner">
-                    <div class="input-info-text" id="edit-info-text">Редактирование сообщения</div>
-                    <div class="input-info-close" onclick="cancelEditMode()">×</div>
-                </div>
-
-                <div class="input-main-row">
-                    <label for="file-input" class="attachment-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></label>
-                    <input type="file" id="file-input" class="file-upload-input" accept="*/*" onchange="handleFileChange(event)">
-                    
-                    <button class="voice-btn" id="voice-btn" onclick="toggleVoiceRecord()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
-                    <button class="voice-btn" id="videonote-btn" onclick="toggleVideoNoteRecord()" title="Кружочек" style="background: var(--bg-input);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></button>
-
-                    <div class="input-controls">
-                        <div id="file-preview" class="file-preview-container" style="display: none;">
-                            <span id="file-name"></span>
-                            <span class="file-preview-close" onclick="removeFile()">×</span>
-                        </div>
-                        <textarea id="message-text" class="textarea-message" placeholder="Сообщение" rows="1" onkeydown="handleInputKey(event)" oninput="handleTypingNotification()"></textarea>
-                    </div>
-                    <button class="btn" style="width: auto; padding: 12px; border-radius: 50%; min-width: 48px; min-height: 48px; display: flex; align-items: center; justify-content: center;" id="send-btn" onclick="sendBotMessage()">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
-                </div>
+            <div class="model-item" >
+                <div class="name">🎨 Процедурная Тянка</div>
+                <div class="source">Встроенная • Все анимации</div>
             </div>
         </div>
     </div>
 
-    <!-- Контекстное меню сообщения -->
-    <div class="message-menu" id="msg-context-menu">
-        <div class="reaction-row">
-            <span onclick="sendReaction('👍')" title="Like">👍</span>
-            <span onclick="sendReaction('❤️')" title="Love">❤️</span>
-            <span onclick="sendReaction('🔥')" title="Fire">🔥</span>
-            <span onclick="sendReaction('😂')" title="Haha">😂</span>
-            <span onclick="sendReaction('👏')" title="Clap">👏</span>
-        </div>
-        <button onclick="triggerReply()"><span style="font-size:14px; display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></span> Ответить</button>
-        <button id="menu-edit-btn" onclick="triggerEdit()"><span style="font-size:14px; display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span> Изменить</button>
-        <button onclick="pinMessage()"><span style="font-size:14px; display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17z"/></svg></span> Закрепить</button>
-        <button onclick="copyMessageText()"><span style="font-size:14px; display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span> Копировать</button>
-        <button onclick="deleteMessage()" style="color: var(--error);"><span style="font-size:14px; display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span> Удалить</button>
-    </div>
-
-    <!-- Модалка информации -->
-    <div class="modal-overlay" id="profile-modal">
-        <div class="modal">
-            <div class="modal-header">Информация о чате</div>
-            <div class="modal-content-scroll modal-profile-info">
-                <div class="avatar" id="profile-modal-avatar">?</div>
-                <p><b>Имя</b> <span id="profile-modal-name"></span></p>
-                <p><b>Username</b> <span id="profile-modal-username"></span></p>
-                <p><b>Chat ID</b> <span id="profile-modal-id"></span></p>
-                <p><b>Тип чата</b> <span id="profile-modal-type"></span></p>
-                
-                <div style="margin-top: 20px; text-align: center;">
-                    <button class="btn" style="background: var(--bg-input); border: 1px solid var(--border-color); font-size: 13px;" onclick="document.getElementById('local-avatar-loader').click()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Загрузить свой аватар
-                    </button>
-                    <input type="file" id="local-avatar-loader" accept="image/*" style="display: none;" onchange="saveLocalAvatar(event)">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn" style="background:var(--bg-input); color:var(--text-muted); border: 1px solid var(--border-color);" onclick="closeProfileModal()">Закрыть</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="media-viewer-modal" onclick="closeMediaViewer()">
-        <img id="media-viewer-img" class="modal-media-viewer" style="display:none;">
-        <video id="media-viewer-video" class="modal-media-viewer" style="display:none;" controls></video>
-    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- GLTFLoader не нужен — только Тянка -->
 
     <script>
-        let botToken = "";
-        let botInfo = {};
-        let chats = {};
-        let currentChatId = null;
-        let lastUpdateId = 0;
-        let currentTab = "all";
-        let isPolling = false;
-        let selectedFile = null;
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let isRecording = false;
-        let recordMode = 'voice'; // 'voice' | 'video_note'
-        let videoRecorder = null;
-        let videoChunks = [];
 
-        // Переменные состояний для Ответа / Изменения / Меню
-        let selectedMessageId = null; 
-        let replyToMessageId = null;
-        let editingMessageId = null;
-        let lastTypingTime = 0;
+        // ==================== AUDIO ENGINE ====================
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let isAudioMuted = false;
 
-        const safeStorage = {
-            get(key) { 
-                try { return localStorage.getItem(key); } 
-                catch(e) { return null; } 
-            },
-            set(key, val) { 
-                try { localStorage.setItem(key, val); } 
-                catch(e) {} 
-            }
-        };
-
-        window.onload = function() {
-            const savedToken = safeStorage.get("saved_token");
-            const savedChats = safeStorage.get("saved_chats");
-            
-            if (savedChats) {
-                try { 
-                    chats = JSON.parse(savedChats);
-                } catch(e) {
-                    chats = {};
-                }
-            }
-
-            if (savedToken) {
-                document.getElementById('token-field').value = savedToken;
-                // Теперь вызываем tryLogin без токена, он сам прочитает его из поля
-                tryLogin();
-            }
-            adjustTextareaHeight();
-        };
-
-        function saveState() {
-            safeStorage.set("saved_chats", JSON.stringify(chats));
-        }
-
-        // Обновленная функция для показа ошибок входа
-        function showLoginError(msg) {
-            const errorDiv = document.getElementById('login-error');
-            const loginBtn = document.getElementById('login-action-btn');
-            errorDiv.innerText = msg;
-            errorDiv.style.display = "block";
-            // Возвращаем кнопку в исходное состояние при ошибке
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = "ВОЙТИ";
-        }
-
-        async function tryLogin(tokenOverride = null) {
-            const inputField = document.getElementById('token-field');
-            const loginBtn = document.getElementById('login-action-btn');
-            const errorDiv = document.getElementById('login-error');
-            const token = tokenOverride || inputField.value.trim();
-
-            if (!token) {
-                showLoginError("Пожалуйста, введите токен вашего бота.");
-                return;
-            }
-
-            errorDiv.style.display = "none";
-            loginBtn.disabled = true;
-            
-            // Статус: ВХОД...
-            loginBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> ВХОД...';
-
+        function playSynth(freq, type, duration, vol, slide) {
+            if (isAudioMuted) return;
             try {
-                const response = await fetch(`https://api.telegram.org/bot${token}/getMe`);
-                if (!response.ok) {
-                    // Пытаемся получить более детальное описание ошибки от Telegram API
-                    const errorData = await response.json().catch(() => null);
-                    if (errorData && !errorData.ok && errorData.description) {
-                         throw new Error(`Ошибка Telegram API: ${errorData.description}`);
-                    }
-                    throw new Error(`HTTP ошибка: ${response.status} ${response.statusText}`);
-                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                if (slide) osc.frequency.exponentialRampToValueAtTime(slide, audioCtx.currentTime + duration);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
 
-                const data = await response.json();
-                if (data.ok) {
-                    botToken = token;
-                    botInfo = data.result;
-                    safeStorage.set("saved_token", token);
-
-                    document.getElementById('bot-name-display').innerText = botInfo.first_name;
-                    
-                    // Статус: ПОДКЛЮЧЕНИЕ...
-                    loginBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> ПОДКЛЮЧЕНИЕ...';
-                    
-                    updateAvatarUI(botInfo.id, botInfo.first_name, 'bot-avatar-img');
-                    fetchAvatarFromServer(botInfo.id, 'bot-avatar-img');
-
-                    renderChats();
-                    await fetchBotHistory(); 
-                    startLongPolling();
-
-                    document.getElementById('login-screen').style.opacity = 0;
-                    setTimeout(() => document.getElementById('login-screen').style.display = 'none', 300);
-
-                } else {
-                    showLoginError(`Ошибка API: ${data.description || 'Неизвестная ошибка'}`);
-                }
-            } catch (e) {
-                // Более детальная обработка ошибок
-                if (e.message.startsWith("HTTP ошибка") || e.message.startsWith("Ошибка Telegram API")) {
-                    showLoginError(e.message);
-                } else {
-                    showLoginError(`Не удалось связаться с сервером. Проверьте ваше подключение к интернету или токен.`);
-                }
-            } finally {
-                // Если вход был успешен, экран скрывается, и кнопка не требует сброса.
-                // В противном случае, showLoginError уже сбросит кнопку.
+        function playSound(type) {
+            if (type === 'slash1') { playSynth(600, 'sine', 0.15, 0.15); playSynth(300, 'triangle', 0.1, 0.1); }
+            else if (type === 'slash2') { playSynth(800, 'sine', 0.18, 0.18); playSynth(450, 'square', 0.1, 0.08); }
+            else if (type === 'slash3') { playSynth(1000, 'sawtooth', 0.3, 0.25); playSynth(150, 'triangle', 0.4, 0.3); }
+            else if (type === 'hit') { playSynth(220, 'square', 0.12, 0.2); playSynth(440, 'sine', 0.08, 0.1); }
+            else if (type === 'jump') { playSynth(400, 'sine', 0.15, 0.12, 600); }
+            else if (type === 'dash') { playSynth(700, 'sine', 0.1, 0.1, 900); }
+            else if (type === 'step') { playSynth(80, 'triangle', 0.05, 0.05); }
+            else if (type === 'levelup') {
+                playSynth(523, 'sine', 0.2, 0.15);
+                setTimeout(() => playSynth(659, 'sine', 0.2, 0.15), 100);
+                setTimeout(() => playSynth(784, 'sine', 0.3, 0.2), 200);
             }
         }
 
-        async function startLongPolling() {
-            if (isPolling) return;
-            isPolling = true;
-            
-            while (isPolling) {
-                try {
-                    const response = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?offset=${lastUpdateId}&limit=100&timeout=10`);
-                    if (!response.ok) {
-                         throw new Error(`Polling error: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    if (data.ok && data.result.length > 0) {
-                        let hasNewMsg = false;
-                        
-                        data.result.forEach(update => {
-                            if (update.message) {
-                                processIncomingMessage(update.message);
-                                hasNewMsg = true;
-                            } else if (update.edited_message) {
-                                processEditedMessage(update.edited_message);
-                                hasNewMsg = true;
-                            } else if (update.channel_post) {
-                                processIncomingMessage(update.channel_post);
-                                hasNewMsg = true;
-                            }
-                            lastUpdateId = Math.max(lastUpdateId, update.update_id + 1);
-                        });
-
-                        if (hasNewMsg) {
-                            renderChats();
-                            if (currentChatId) renderMessages();
-                            saveState();
-                        }
-                    }
-                } catch (e) {
-                    console.error("Long polling error:", e); // Логирование ошибок polling
-                    await new Promise(r => setTimeout(r, 4000)); // Задержка перед повтором
-                }
-            }
+        function toggleSound() {
+            isAudioMuted = !isAudioMuted;
+            document.getElementById('btn-sound').innerText = isAudioMuted ? '🔇' : '🔊';
         }
 
-        function processIncomingMessage(msg) {
-            const chatObj = msg.chat;
-            const chatId = chatObj.id;
-            
-            if (!chats[chatId]) {
-                let name = chatObj.first_name || chatObj.title || `Чат ${chatId}`;
-                if (chatObj.last_name) name += " " + chatObj.last_name;
+        // ==================== 3D ENGINE ====================
+        let scene, camera, renderer, clock;
+        let characterGroup, bodyRig = {};
+        let swordMesh, slashArcMesh;
+        let enemies = [];
+        let particles = [];
+        let loadedModel = null;
+        let mixer = null;
+        let modelAnimations = {};
+        let useExternalModel = false;
+        let currentModelType = 'procedural';
 
-                chats[chatId] = {
-                    id: chatId,
-                    name: name,
-                    username: chatObj.username || "",
-                    type: chatObj.type,
-                    messages: [],
-                    lastTime: Date.now(),
-                    pinnedMessageId: null
-                };
-                fetchAvatarFromServer(chatId);
+        let camRadius = 5.5;
+        let camTheta = Math.PI / 4;
+        let camPhi = Math.PI / 2.6;
+        const minPhi = 0.15, maxPhi = Math.PI / 2 - 0.05;
+
+        let playerPos = new THREE.Vector3(0, 0, 0);
+        let playerVelY = 0;
+        let isGrounded = true;
+        let moveDir = new THREE.Vector2(0, 0);
+        let currentSpeed = 0;
+        let isSprinting = false;
+        let playerHP = 100;
+        let playerStamina = 100;
+        let playerLevel = 1;
+        let playerXP = 0;
+
+        let animState = 'idle';
+        let animTime = 0;
+        let comboStep = 0;
+        let comboResetTimer = null;
+        let isAttacking = false;
+        let stepTimer = 0;
+
+        const loadingBar = document.getElementById('loading-bar');
+        const loadingStatus = document.getElementById('loading-status');
+        const joystickZone = document.getElementById('joystick-zone');
+        const joystickHandle = document.getElementById('joystick-handle');
+        const comboIndicator = document.getElementById('combo-indicator');
+
+        function setLoader(pct, text) {
+            loadingBar.style.width = pct + '%';
+            loadingStatus.innerText = text + '... ' + Math.round(pct) + '%';
+        }
+
+        // ==================== PRESET MODELS ====================
+        const PRESET_MODELS = {};
+
+        // ==================== INIT ====================
+        function init3D() {
+            setLoader(10, "Запуск движка");
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color('#87CEEB');
+            scene.fog = new THREE.FogExp2('#87CEEB', 0.008);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            clock = new THREE.Clock();
+
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-canvas'), antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.1;
+
+            const ambient = new THREE.AmbientLight('#ffffff', 0.5);
+            scene.add(ambient);
+
+            const sun = new THREE.DirectionalLight('#fff5db', 1.3);
+            sun.position.set(30, 60, 20);
+            sun.castShadow = true;
+            sun.shadow.mapSize.width = 2048;
+            sun.shadow.mapSize.height = 2048;
+            sun.shadow.camera.near = 0.5;
+            sun.shadow.camera.far = 200;
+            sun.shadow.camera.left = -60;
+            sun.shadow.camera.right = 60;
+            sun.shadow.camera.top = 60;
+            sun.shadow.camera.bottom = -60;
+            sun.shadow.bias = -0.0005;
+            scene.add(sun);
+
+            const hemi = new THREE.HemisphereLight('#87CEEB', '#2d5016', 0.4);
+            scene.add(hemi);
+
+            setLoader(30, "Генерация мира");
+            buildWorld();
+
+            setLoader(50, "Создание персонажа");
+            buildCharacter();
+
+            setLoader(70, "Спавн врагов");
+            spawnEnemies();
+
+            setLoader(85, "Настройка управления");
+            setupControls();
+            setupMinimap();
+            window.addEventListener('resize', onWindowResize);
+
+            // Розовая Тянка готова!
+
+            setLoader(100, "Готово!");
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 800);
+            }, 1500);
+
+            animate();
+        }
+
+        // ==================== WORLD ====================
+        function buildWorld() {
+            const groundGeo = new THREE.PlaneGeometry(300, 300, 80, 80);
+            const pos = groundGeo.attributes.position;
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const y = pos.getY(i);
+                const h = Math.sin(x * 0.03) * Math.cos(y * 0.03) * 1.5 +
+                          Math.sin(x * 0.08 + y * 0.05) * 0.5 +
+                          Math.sin(x * 0.15) * 0.2;
+                pos.setZ(i, h);
+            }
+            groundGeo.computeVertexNormals();
+
+            const groundMat = new THREE.MeshStandardMaterial({ color: '#4a8c59', roughness: 0.9, metalness: 0.05 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            const grassGeo = new THREE.ConeGeometry(0.04, 0.25, 3);
+            const grassMat = new THREE.MeshStandardMaterial({ color: '#5a9c69' });
+            for (let i = 0; i < 3000; i++) {
+                const grass = new THREE.Mesh(grassGeo, grassMat);
+                grass.position.set((Math.random() - 0.5) * 120, 0.12, (Math.random() - 0.5) * 120);
+                grass.rotation.y = Math.random() * Math.PI;
+                grass.rotation.z = (Math.random() - 0.5) * 0.3;
+                grass.scale.setScalar(0.5 + Math.random() * 1);
+                scene.add(grass);
             }
 
-            const text = msg.text || "";
-            const timeMs = msg.date * 1000;
-            let fileId = null;
-            let mediaType = null;
-            let caption = null;
-
-            if (msg.photo) {
-                fileId = msg.photo[msg.photo.length - 1].file_id;
-                mediaType = 'photo';
-                caption = msg.caption || "";
-            } else if (msg.video) {
-                fileId = msg.video.file_id;
-                mediaType = 'video';
-                caption = msg.caption || "";
-            } else if (msg.document) {
-                fileId = msg.document.file_id;
-                mediaType = 'document';
-                caption = msg.caption || msg.document.file_name || "";
-            } else if (msg.sticker) {
-                fileId = msg.sticker.file_id;
-                mediaType = 'sticker';
-                caption = msg.sticker.emoji || "[Стикер]";
-            } else if (msg.voice) {
-                fileId = msg.voice.file_id;
-                mediaType = 'voice';
-                caption = "";
-            } else if (msg.video_note) {
-                fileId = msg.video_note.file_id;
-                mediaType = 'video_note';
-                caption = "";
+            for (let i = 0; i < 15; i++) {
+                const hillGeo = new THREE.ConeGeometry(8 + Math.random() * 12, 6 + Math.random() * 10, 6);
+                const hillMat = new THREE.MeshStandardMaterial({ color: '#3a8c49', roughness: 0.95 });
+                const hill = new THREE.Mesh(hillGeo, hillMat);
+                const ang = Math.random() * Math.PI * 2;
+                const rad = 40 + Math.random() * 80;
+                hill.position.set(Math.cos(ang) * rad, 3, Math.sin(ang) * rad);
+                hill.receiveShadow = true;
+                scene.add(hill);
             }
 
-            const isDuplicate = chats[chatId].messages.some(m => m.messageId === msg.message_id);
+            const trunkGeo = new THREE.CylinderGeometry(0.25, 0.5, 4, 6);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: '#5a3d28' });
+            const leavesGeo = new THREE.DodecahedronGeometry(2, 1);
+            const leavesMat = new THREE.MeshStandardMaterial({ color: '#ff6b9d', roughness: 0.7 });
 
-            if (!isDuplicate) {
-                chats[chatId].messages.push({
-                    messageId: msg.message_id,
-                    text: text || caption,
-                    time: timeMs,
-                    out: false,
-                    fileId: fileId,
-                    mediaType: mediaType,
-                    replyToId: (msg.reply_to_message && msg.reply_to_message.message_id) || null,
-                    reactions: []
+            for (let i = 0; i < 30; i++) {
+                const tree = new THREE.Group();
+                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                trunk.position.y = 2;
+                trunk.castShadow = true;
+                tree.add(trunk);
+                for (let j = 0; j < 4; j++) {
+                    const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+                    leaves.position.set((Math.random() - 0.5) * 2, 4 + Math.random() * 2, (Math.random() - 0.5) * 2);
+                    leaves.scale.setScalar(0.7 + Math.random() * 0.5);
+                    leaves.castShadow = true;
+                    tree.add(leaves);
+                }
+                const ang = Math.random() * Math.PI * 2;
+                const rad = 15 + Math.random() * 90;
+                tree.position.set(Math.cos(ang) * rad, 0, Math.sin(ang) * rad);
+                const sc = 0.7 + Math.random() * 0.6;
+                tree.scale.set(sc, sc, sc);
+                scene.add(tree);
+            }
+
+            for (let i = 0; i < 20; i++) {
+                const size = 0.4 + Math.random() * 1.5;
+                const rockGeo = new THREE.DodecahedronGeometry(size, 0);
+                const rockMat = new THREE.MeshStandardMaterial({ color: '#777777', roughness: 0.95, metalness: 0.1 });
+                const rock = new THREE.Mesh(rockGeo, rockMat);
+                rock.position.set((Math.random() - 0.5) * 100, size * 0.4, (Math.random() - 0.5) * 100);
+                rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+                rock.castShadow = true;
+                rock.receiveShadow = true;
+                scene.add(rock);
+            }
+
+            const flowerColors = [0xff69b4, 0xffd700, 0xff6347, 0x9370db, 0x00ced1, 0xff1493];
+            const flowerGeo = new THREE.SphereGeometry(0.08, 6, 4);
+            for (let i = 0; i < 400; i++) {
+                const flowerMat = new THREE.MeshStandardMaterial({
+                    color: flowerColors[Math.floor(Math.random() * flowerColors.length)],
+                    emissive: flowerColors[Math.floor(Math.random() * flowerColors.length)],
+                    emissiveIntensity: 0.15
                 });
-                chats[chatId].lastTime = timeMs;
+                const flower = new THREE.Mesh(flowerGeo, flowerMat);
+                flower.position.set((Math.random() - 0.5) * 80, 0.08, (Math.random() - 0.5) * 80);
+                scene.add(flower);
             }
+
+            const waterGeo = new THREE.CircleGeometry(10, 32);
+            const waterMat = new THREE.MeshStandardMaterial({ color: '#0099ff', transparent: true, opacity: 0.65, roughness: 0.05, metalness: 0.4 });
+            const water = new THREE.Mesh(waterGeo, waterMat);
+            water.rotation.x = -Math.PI / 2;
+            water.position.set(-25, 0.02, -25);
+            scene.add(water);
+
+            const skyGeo = new THREE.SphereGeometry(400, 32, 32);
+            const skyMat = new THREE.MeshBasicMaterial({ color: '#87CEEB', side: THREE.BackSide, fog: false });
+            const sky = new THREE.Mesh(skyGeo, skyMat);
+            scene.add(sky);
+
+            for (let i = 0; i < 20; i++) {
+                const cloudGeo = new THREE.SphereGeometry(4 + Math.random() * 4, 8, 6);
+                const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 + Math.random() * 0.3 });
+                const cloud = new THREE.Mesh(cloudGeo, cloudMat);
+                cloud.position.set((Math.random() - 0.5) * 300, 35 + Math.random() * 25, (Math.random() - 0.5) * 300);
+                cloud.scale.set(2 + Math.random(), 0.4 + Math.random() * 0.3, 1 + Math.random());
+                scene.add(cloud);
+            }
+
+            const partGeo = new THREE.BufferGeometry();
+            const count = 150;
+            const positions = new Float32Array(count * 3);
+            for (let i = 0; i < count * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 100;
+                positions[i + 1] = 0.5 + Math.random() * 15;
+                positions[i + 2] = (Math.random() - 0.5) * 100;
+            }
+            partGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const partMat = new THREE.PointsMaterial({ size: 0.2, color: '#fff0a6', transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending });
+            const particleSystem = new THREE.Points(partGeo, partMat);
+            scene.add(particleSystem);
         }
 
-        // Обработка измененных пользователем сообщений
-        function processEditedMessage(msg) {
-            const chatId = msg.chat.id;
-            if (!chats[chatId]) return;
+        // ==================== PROCEDURAL CHARACTER (FALLBACK) ====================
+        function buildCharacter() {
+            characterGroup = new THREE.Group();
 
-            const targetMsg = chats[chatId].messages.find(m => m.messageId === msg.message_id);
-            if (targetMsg) {
-                targetMsg.text = msg.text || msg.caption || targetMsg.text;
-                targetMsg.isEdited = true;
+            // === МАТЕРИАЛЫ ===
+            const skinMat = new THREE.MeshStandardMaterial({ color: '#ffe8d6', roughness: 0.3 });
+            const hairMat = new THREE.MeshStandardMaterial({ color: '#ffb7c5', roughness: 0.45 });
+            const hairLightMat = new THREE.MeshStandardMaterial({ color: '#ffd1dc', roughness: 0.4 });
+            const hairDarkMat = new THREE.MeshStandardMaterial({ color: '#e89bb5', roughness: 0.45 });
+
+            const dressWhiteMat = new THREE.MeshStandardMaterial({ color: '#fff5f7', roughness: 0.4 });
+            const dressPinkMat = new THREE.MeshStandardMaterial({ color: '#ffe4ec', roughness: 0.4 });
+            const dressLayerMat = new THREE.MeshStandardMaterial({ color: '#f8e0e8', roughness: 0.42, transparent: true, opacity: 0.85 });
+            const laceMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.3 });
+
+            const beltMat = new THREE.MeshStandardMaterial({ color: '#8b5a2b', roughness: 0.6 });
+            const beltDarkMat = new THREE.MeshStandardMaterial({ color: '#5c3a1e', roughness: 0.65 });
+            const goldMat = new THREE.MeshStandardMaterial({ color: '#d4af37', metalness: 0.85, roughness: 0.2 });
+            const roseGoldMat = new THREE.MeshStandardMaterial({ color: '#e8a0bf', metalness: 0.7, roughness: 0.25 });
+            const gemMat = new THREE.MeshStandardMaterial({ color: '#ff69b4', metalness: 0.4, roughness: 0.15, emissive: '#ff1493', emissiveIntensity: 0.2 });
+            const chokerMat = new THREE.MeshStandardMaterial({ color: '#ffb7c5', roughness: 0.35 });
+            const shoeMat = new THREE.MeshStandardMaterial({ color: '#ffb7c5', roughness: 0.4 });
+            const shoeDarkMat = new THREE.MeshStandardMaterial({ color: '#e89bb5', roughness: 0.45 });
+            const bowShoeMat = new THREE.MeshStandardMaterial({ color: '#ff8da1', roughness: 0.4 });
+
+            const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.1 });
+            const eyeIrisMat = new THREE.MeshStandardMaterial({ color: '#ff8fa3', roughness: 0.1, metalness: 0.2 });
+            const eyePupilMat = new THREE.MeshBasicMaterial({ color: '#4a1a2e' });
+            const eyeHighlightMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+            const lashMat = new THREE.MeshBasicMaterial({ color: '#2d1b2e' });
+            const blushMat = new THREE.MeshStandardMaterial({ color: '#ffb6c1', roughness: 0.5, transparent: true, opacity: 0.4 });
+            const lipMat = new THREE.MeshStandardMaterial({ color: '#ff8fa3', roughness: 0.4 });
+            const heartMat = new THREE.MeshStandardMaterial({ color: '#ff69b4', metalness: 0.3, roughness: 0.3 });
+
+            // === ТОРС ===
+            const torsoGroup = new THREE.Group();
+            torsoGroup.position.y = 1.38;
+            characterGroup.add(torsoGroup);
+            bodyRig.torso = torsoGroup;
+
+            // Корсет
+            const corset = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.2, 0.5, 12), dressWhiteMat);
+            corset.castShadow = true;
+            torsoGroup.add(corset);
+
+            // Грудь
+            const chest = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), dressWhiteMat);
+            chest.position.set(0, 0.18, 0.05);
+            chest.scale.set(1, 0.7, 0.8);
+            torsoGroup.add(chest);
+
+            // Кружево
+            const laceTrim = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.025, 8, 16, Math.PI), laceMat);
+            laceTrim.position.set(0, 0.22, 0.12);
+            laceTrim.rotation.x = 0.3;
+            torsoGroup.add(laceTrim);
+
+            // Плечи
+            const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), skinMat);
+            shoulderL.position.set(0.32, 0.15, 0);
+            torsoGroup.add(shoulderL);
+            const shoulderR = shoulderL.clone();
+            shoulderR.position.x = -0.32;
+            torsoGroup.add(shoulderR);
+
+            // === ПОЯС ===
+            const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 12), beltMat);
+            belt.position.y = -0.12;
+            torsoGroup.add(belt);
+            const belt2 = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.04, 12), beltDarkMat);
+            belt2.position.y = -0.2;
+            torsoGroup.add(belt2);
+            const beltGem = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), gemMat);
+            beltGem.position.set(0, -0.16, 0.22);
+            beltGem.scale.set(1, 1.2, 0.6);
+            torsoGroup.add(beltGem);
+            const gemFrame = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.015, 6, 12), goldMat);
+            gemFrame.position.set(0, -0.16, 0.23);
+            gemFrame.rotation.x = 0.2;
+            torsoGroup.add(gemFrame);
+            const pendant1 = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.08, 4), goldMat);
+            pendant1.position.set(0.08, -0.28, 0.2);
+            pendant1.rotation.x = Math.PI;
+            torsoGroup.add(pendant1);
+            const pendant2 = pendant1.clone();
+            pendant2.position.x = -0.08;
+            torsoGroup.add(pendant2);
+
+            // === ЮБКА ===
+            const skirtTop = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.25, 12), dressWhiteMat);
+            skirtTop.position.y = -0.32;
+            torsoGroup.add(skirtTop);
+            const skirtMid = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.2, 12), dressPinkMat);
+            skirtMid.position.y = -0.42;
+            torsoGroup.add(skirtMid);
+            const skirtBot = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.2, 12), dressLayerMat);
+            skirtBot.position.y = -0.5;
+            torsoGroup.add(skirtBot);
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const ruffle = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), laceMat);
+                ruffle.position.set(Math.cos(angle) * 0.62, -0.58, Math.sin(angle) * 0.62);
+                torsoGroup.add(ruffle);
             }
+
+            // Хвосты платья
+            const dressTailL = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.6, 6), dressLayerMat);
+            dressTailL.position.set(0.2, -0.6, -0.25);
+            dressTailL.rotation.x = 0.4;
+            dressTailL.rotation.z = -0.15;
+            torsoGroup.add(dressTailL);
+            bodyRig.dressTailL = dressTailL;
+            const dressTailR = dressTailL.clone();
+            dressTailR.position.x = -0.2;
+            dressTailR.rotation.z = 0.15;
+            torsoGroup.add(dressTailR);
+            bodyRig.dressTailR = dressTailR;
+
+            // Сердечки на хвостах (сферы в форме сердца)
+            const heartGeo = new THREE.SphereGeometry(0.025, 6, 6);
+            const heartL = new THREE.Mesh(heartGeo, heartMat);
+            heartL.position.set(0.2, -0.92, -0.45);
+            heartL.scale.set(1, 1.3, 0.6);
+            torsoGroup.add(heartL);
+            const heartR = heartL.clone();
+            heartR.position.x = -0.2;
+            torsoGroup.add(heartR);
+
+            // === ЧОКЕР ===
+            const choker = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.025, 8, 16), chokerMat);
+            choker.position.y = 0.42;
+            choker.rotation.x = Math.PI / 2;
+            torsoGroup.add(choker);
+            const chokerHeart = new THREE.Mesh(heartGeo, heartMat);
+            chokerHeart.position.set(0, 0.4, 0.2);
+            chokerHeart.scale.set(1.5, 1.8, 0.8);
+            torsoGroup.add(chokerHeart);
+
+            // === ГОЛОВА ===
+            const headGroup = new THREE.Group();
+            headGroup.position.y = 0.62;
+            torsoGroup.add(headGroup);
+            bodyRig.head = headGroup;
+
+            const face = new THREE.Mesh(new THREE.SphereGeometry(0.33, 16, 16), skinMat);
+            face.scale.set(0.95, 1.08, 0.92);
+            face.castShadow = true;
+            headGroup.add(face);
+
+            const blushL = new THREE.Mesh(new THREE.CircleGeometry(0.055, 8), blushMat);
+            blushL.position.set(0.11, -0.04, 0.29);
+            blushL.rotation.y = -0.25;
+            headGroup.add(blushL);
+            const blushR = blushL.clone();
+            blushR.position.x = -0.11;
+            blushR.rotation.y = 0.25;
+            headGroup.add(blushR);
+
+            // === ГЛАЗА ===
+            const lashGeo = new THREE.TorusGeometry(0.065, 0.008, 6, 12, Math.PI);
+            const lashL = new THREE.Mesh(lashGeo, lashMat);
+            lashL.position.set(0.1, 0.06, 0.3);
+            lashL.rotation.z = Math.PI;
+            headGroup.add(lashL);
+            const lashR = lashL.clone();
+            lashR.position.x = -0.1;
+            headGroup.add(lashR);
+
+            const eyeWhiteGeo = new THREE.SphereGeometry(0.065, 12, 12);
+            const eyeWhiteL = new THREE.Mesh(eyeWhiteGeo, eyeWhiteMat);
+            eyeWhiteL.position.set(0.1, 0.02, 0.28);
+            eyeWhiteL.scale.set(1, 1.25, 0.55);
+            headGroup.add(eyeWhiteL);
+            const eyeWhiteR = eyeWhiteL.clone();
+            eyeWhiteR.position.x = -0.1;
+            headGroup.add(eyeWhiteR);
+
+            const irisGeo = new THREE.SphereGeometry(0.048, 12, 12);
+            const irisL = new THREE.Mesh(irisGeo, eyeIrisMat);
+            irisL.position.set(0.1, 0.02, 0.31);
+            irisL.scale.set(1, 1.25, 0.5);
+            headGroup.add(irisL);
+            const irisR = irisL.clone();
+            irisR.position.x = -0.1;
+            headGroup.add(irisR);
+
+            const pupilGeo = new THREE.SphereGeometry(0.022, 8, 8);
+            const pupilL = new THREE.Mesh(pupilGeo, eyePupilMat);
+            pupilL.position.set(0.1, 0.02, 0.325);
+            headGroup.add(pupilL);
+            const pupilR = pupilL.clone();
+            pupilR.position.x = -0.1;
+            headGroup.add(pupilR);
+
+            const highlightGeo = new THREE.SphereGeometry(0.018, 6, 6);
+            const highlightL = new THREE.Mesh(highlightGeo, eyeHighlightMat);
+            highlightL.position.set(0.115, 0.05, 0.33);
+            headGroup.add(highlightL);
+            const highlightR = highlightL.clone();
+            highlightR.position.x = -0.085;
+            headGroup.add(highlightR);
+
+            const highlight2Geo = new THREE.SphereGeometry(0.008, 6, 6);
+            const highlight2L = new THREE.Mesh(highlight2Geo, eyeHighlightMat);
+            highlight2L.position.set(0.08, -0.01, 0.335);
+            headGroup.add(highlight2L);
+            const highlight2R = highlight2L.clone();
+            highlight2R.position.x = -0.12;
+            headGroup.add(highlight2R);
+
+            const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.025, 0.006, 6, 8, Math.PI), lipMat);
+            mouth.position.set(0, -0.1, 0.29);
+            mouth.rotation.x = Math.PI;
+            headGroup.add(mouth);
+
+            // === ВОЛОСЫ ===
+            const hairBase = new THREE.Mesh(new THREE.SphereGeometry(0.36, 16, 16), hairMat);
+            hairBase.position.set(0, 0.08, -0.03);
+            hairBase.scale.set(1.08, 1.05, 1.05);
+            headGroup.add(hairBase);
+
+            // Чёлка — цилиндры вместо капсул
+            const bangGeo = new THREE.CylinderGeometry(0.045, 0.035, 0.18, 8);
+            for (let i = -2; i <= 2; i++) {
+                const bang = new THREE.Mesh(bangGeo, hairMat);
+                bang.position.set(i * 0.07, 0.2, 0.26);
+                bang.rotation.x = -0.4;
+                bang.rotation.z = i * 0.1;
+                headGroup.add(bang);
+            }
+
+            const bangSideGeo = new THREE.CylinderGeometry(0.04, 0.03, 0.22, 8);
+            const bangSideL = new THREE.Mesh(bangSideGeo, hairMat);
+            bangSideL.position.set(0.22, 0.12, 0.2);
+            bangSideL.rotation.z = -0.5;
+            bangSideL.rotation.x = -0.2;
+            headGroup.add(bangSideL);
+            const bangSideR = bangSideL.clone();
+            bangSideR.position.x = -0.22;
+            bangSideR.rotation.z = 0.5;
+            headGroup.add(bangSideR);
+
+            // Длинные волосы сзади
+            const hairBackGeo = new THREE.CylinderGeometry(0.22, 0.32, 1.0, 8);
+            const hairBack = new THREE.Mesh(hairBackGeo, hairMat);
+            hairBack.position.set(0, -0.35, -0.12);
+            hairBack.rotation.x = 0.2;
+            headGroup.add(hairBack);
+            bodyRig.hairBack = hairBack;
+
+            const hairBack2 = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.28, 0.9, 8), hairLightMat);
+            hairBack2.position.set(0, -0.3, -0.18);
+            hairBack2.rotation.x = 0.25;
+            headGroup.add(hairBack2);
+            bodyRig.hairBack2 = hairBack2;
+
+            // Боковые пряди
+            const hairSideLongGeo = new THREE.CylinderGeometry(0.055, 0.04, 0.85, 8);
+            const hairSideL = new THREE.Mesh(hairSideLongGeo, hairMat);
+            hairSideL.position.set(0.3, -0.4, 0.05);
+            hairSideL.rotation.z = -0.15;
+            hairSideL.rotation.x = 0.1;
+            headGroup.add(hairSideL);
+            bodyRig.hairSideL = hairSideL;
+            const hairSideR = hairSideL.clone();
+            hairSideR.position.x = -0.3;
+            hairSideR.rotation.z = 0.15;
+            headGroup.add(hairSideR);
+            bodyRig.hairSideR = hairSideR;
+
+            // Кончики
+            const curlL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), hairDarkMat);
+            curlL.position.set(0.32, -0.85, 0.08);
+            headGroup.add(curlL);
+            const curlR = curlL.clone();
+            curlR.position.x = -0.32;
+            headGroup.add(curlR);
+
+            // === РУКИ ===
+            const armLGroup = new THREE.Group();
+            armLGroup.position.set(0.34, 0.12, 0);
+            const shoulderPadL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), skinMat);
+            shoulderPadL.position.y = 0.02;
+            armLGroup.add(shoulderPadL);
+            const sleeveL = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.3, 8), dressWhiteMat);
+            sleeveL.position.y = -0.15;
+            armLGroup.add(sleeveL);
+            const sleeveTrimL = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 6, 12), laceMat);
+            sleeveTrimL.position.y = -0.28;
+            sleeveTrimL.rotation.x = Math.PI / 2;
+            armLGroup.add(sleeveTrimL);
+            const forearmL = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.25, 8), skinMat);
+            forearmL.position.y = -0.45;
+            armLGroup.add(forearmL);
+            const handL = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), skinMat);
+            handL.position.y = -0.58;
+            armLGroup.add(handL);
+            torsoGroup.add(armLGroup);
+            bodyRig.armL = armLGroup;
+
+            const armRGroup = new THREE.Group();
+            armRGroup.position.set(-0.34, 0.12, 0);
+            const shoulderPadR = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), skinMat);
+            shoulderPadR.position.y = 0.02;
+            armRGroup.add(shoulderPadR);
+            const sleeveR = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.3, 8), dressWhiteMat);
+            sleeveR.position.y = -0.15;
+            armRGroup.add(sleeveR);
+            const sleeveTrimR = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 6, 12), laceMat);
+            sleeveTrimR.position.y = -0.28;
+            sleeveTrimR.rotation.x = Math.PI / 2;
+            armRGroup.add(sleeveTrimR);
+            const forearmR = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.25, 8), skinMat);
+            forearmR.position.y = -0.45;
+            armRGroup.add(forearmR);
+            const handR = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), skinMat);
+            handR.position.y = -0.58;
+            armRGroup.add(handR);
+            torsoGroup.add(armRGroup);
+            bodyRig.armR = armRGroup;
+
+            // === НОГИ ===
+            const legLGroup = new THREE.Group();
+            legLGroup.position.set(0.12, -0.55, 0);
+            const thighL = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.075, 0.38, 8), skinMat);
+            thighL.position.y = -0.19;
+            legLGroup.add(thighL);
+            const shinL = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.05, 0.35, 8), skinMat);
+            shinL.position.y = -0.52;
+            legLGroup.add(shinL);
+            const shoeBaseL = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), shoeMat);
+            shoeBaseL.position.set(0, -0.72, 0.02);
+            shoeBaseL.scale.set(1, 0.7, 1.3);
+            legLGroup.add(shoeBaseL);
+            const soleL = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 0.03, 8), shoeDarkMat);
+            soleL.position.y = -0.76;
+            legLGroup.add(soleL);
+            const shoeBowL = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), bowShoeMat);
+            shoeBowL.position.set(0, -0.68, 0.06);
+            legLGroup.add(shoeBowL);
+            torsoGroup.add(legLGroup);
+            bodyRig.legL = legLGroup;
+
+            const legRGroup = new THREE.Group();
+            legRGroup.position.set(-0.12, -0.55, 0);
+            const thighR = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.075, 0.38, 8), skinMat);
+            thighR.position.y = -0.19;
+            legRGroup.add(thighR);
+            const shinR = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.05, 0.35, 8), skinMat);
+            shinR.position.y = -0.52;
+            legRGroup.add(shinR);
+            const shoeBaseR = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), shoeMat);
+            shoeBaseR.position.set(0, -0.72, 0.02);
+            shoeBaseR.scale.set(1, 0.7, 1.3);
+            legRGroup.add(shoeBaseR);
+            const soleR = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 0.03, 8), shoeDarkMat);
+            soleR.position.y = -0.76;
+            legRGroup.add(soleR);
+            const shoeBowR = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), bowShoeMat);
+            shoeBowR.position.set(0, -0.68, 0.06);
+            legRGroup.add(shoeBowR);
+            torsoGroup.add(legRGroup);
+            bodyRig.legR = legRGroup;
+
+            // === МЕЧ ===
+            swordMesh = new THREE.Group();
+            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.3, 8), roseGoldMat);
+            handle.position.y = -0.12;
+            swordMesh.add(handle);
+            const guard = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.025, 6), goldMat);
+            guard.position.y = 0.02;
+            swordMesh.add(guard);
+            const guardGem = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), gemMat);
+            guardGem.position.set(0, 0.02, 0.06);
+            swordMesh.add(guardGem);
+            const bladeMat = new THREE.MeshStandardMaterial({ 
+                color: '#ffe4ec', emissive: '#ff69b4', emissiveIntensity: 0.15,
+                metalness: 0.9, roughness: 0.08 
+            });
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.9, 0.01), bladeMat);
+            blade.position.y = 0.48;
+            swordMesh.add(blade);
+            const tip = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.08, 4), bladeMat);
+            tip.position.y = 0.97;
+            swordMesh.add(tip);
+            swordMesh.position.set(0, -0.52, 0.08);
+            swordMesh.rotation.x = Math.PI / 2;
+            armRGroup.add(swordMesh);
+
+            // === ЭФФЕКТ УДАРА ===
+            const arcGeo = new THREE.RingGeometry(0.6, 1.4, 16, 1, 0, Math.PI * 0.8);
+            const arcMat = new THREE.MeshBasicMaterial({ color: '#ff69b4', side: THREE.DoubleSide, transparent: true, opacity: 0 });
+            slashArcMesh = new THREE.Mesh(arcGeo, arcMat);
+            slashArcMesh.rotation.x = Math.PI / 2;
+            slashArcMesh.position.set(0, 1.0, 0.6);
+            characterGroup.add(slashArcMesh);
+
+            // === АУРА ===
+            const auraGeo = new THREE.SphereGeometry(0.55, 16, 16);
+            const auraMat = new THREE.MeshBasicMaterial({ 
+                color: '#ffb7c5', transparent: true, opacity: 0.06, side: THREE.BackSide
+            });
+            const aura = new THREE.Mesh(auraGeo, auraMat);
+            aura.position.y = 0.9;
+            characterGroup.add(aura);
+            bodyRig.aura = aura;
+
+            // Частицы сердечек
+            for (let i = 0; i < 5; i++) {
+                const heartParticle = new THREE.Mesh(heartGeo, heartMat);
+                const angle = (i / 5) * Math.PI * 2;
+                heartParticle.position.set(Math.cos(angle) * 0.5, 1.2 + Math.sin(i) * 0.2, Math.sin(angle) * 0.5);
+                heartParticle.scale.set(0.8, 1.2, 0.6);
+                characterGroup.add(heartParticle);
+            }
+
+            scene.add(characterGroup);
         }
 
-        // Улучшение 1: Статус "печатает..."
-        function handleTypingNotification() {
-            if (!currentChatId) return;
-            const now = Date.now();
-            if (now - lastTypingTime > 4000) {
-                lastTypingTime = now;
-                fetch(`https://api.telegram.org/bot${botToken}/sendChatAction?chat_id=${currentChatId}&action=typing`).catch(()=>{});
-            }
+        // ==================== LOAD PRESET MODEL ====================
+        function loadPresetModel(type, silent) {
+            showAlert("🎀 Только Розовая Тянка!");
         }
 
-        // Улучшение 2: "Был(а) в сети" (расчет по последней активности чата)
-        function formatLastActivity(chatId) {
-            const chat = chats[chatId];
-            if (!chat) return "не в сети";
-            
-            // Если канал или группа
-            if (chat.type !== 'private') return chat.type;
-
-            // Время последней активности берём по последнему ВХОДЯЩЕМУ сообщению
-            const incomingMsgs = chat.messages.filter(m => !m.out);
-            if (incomingMsgs.length === 0) return "был(а) в сети давно";
-
-            const lastMsg = incomingMsgs[incomingMsgs.length - 1];
-            const diffMs = Date.now() - lastMsg.time;
-            
-            if (diffMs < 60000) return "в сети: только что";
-            if (diffMs < 3600000) {
-                const mins = Math.floor(diffMs / 60000);
-                return `в сети: ${mins} мин. назад`;
-            }
-            
-            const date = new Date(lastMsg.time);
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            
-            const today = new Date();
-            if (date.toDateString() === today.toDateString()) {
-                return `был(а) в сети сегодня в ${hours}:${minutes}`;
-            }
-            return `был(а) в сети ${date.toLocaleDateString()} в ${hours}:${minutes}`;
+        // ==================== FILE UPLOAD ====================
+        function handleFileSelect(event) {
+            showAlert("🎀 Только Розовая Тянка!");
         }
 
-        
+        function switchToProcedural() {
+            if (characterGroup) scene.remove(characterGroup);
+            useExternalModel = false;
+            currentModelType = 'procedural';
+            buildCharacter();
+            characterGroup.position.copy(playerPos);
+        }
 
-        async function toggleVideoNoteRecord() {
-            const btn = document.getElementById('videonote-btn');
-            const voiceBtn = document.getElementById('voice-btn');
-            if (!isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 480, height: 480 }, audio: true });
-                    videoRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' });
-                    videoChunks = [];
-                    videoRecorder.ondataavailable = e => {
-                        if (e.data.size > 0) videoChunks.push(e.data);
-                    };
-                    videoRecorder.onstop = async () => {
-                        const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
-                        await sendVideoNote(videoBlob);
-                        stream.getTracks().forEach(track => track.stop());
-                    };
-                    videoRecorder.start();
-                    isRecording = true;
-                    recordMode = 'video_note';
-                    btn.classList.add('recording');
-                    btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
-                    voiceBtn.style.opacity = '0.3';
-                    voiceBtn.style.pointerEvents = 'none';
-                } catch (err) {
-                    alert('Не удалось получить доступ к камере: ' + err.message);
+        function toggleModelPanel() {
+            const panel = document.getElementById('model-panel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // ==================== ENEMIES ====================
+        function spawnEnemies() {
+            enemies.forEach(e => scene.remove(e.mesh));
+            enemies = [];
+
+            const slimeColors = ['#38ef7d', '#ff6b6b', '#6b9fff', '#ffdb4d'];
+
+            for (let i = 0; i < 5; i++) {
+                const slimeGroup = new THREE.Group();
+                const color = slimeColors[Math.floor(Math.random() * slimeColors.length)];
+                const slimeMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.2, transparent: true, opacity: 0.85 });
+
+                const body = new THREE.Mesh(new THREE.SphereGeometry(0.65, 16, 12), slimeMat);
+                body.scale.set(1, 0.85, 1);
+                body.position.y = 0.55;
+                body.castShadow = true;
+                slimeGroup.add(body);
+
+                const eyeWhite = new THREE.MeshBasicMaterial({ color: '#fff' });
+                const eyeBlack = new THREE.MeshBasicMaterial({ color: '#000' });
+
+                const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), eyeWhite);
+                eyeL.position.set(0.2, 0.65, 0.5);
+                const eyeR = eyeL.clone(); eyeR.position.x = -0.2;
+                const pupilL = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), eyeBlack);
+                pupilL.position.set(0.2, 0.65, 0.55);
+                const pupilR = pupilL.clone(); pupilR.position.x = -0.2;
+
+                slimeGroup.add(eyeL, eyeR, pupilL, pupilR);
+
+                const ang = (i / 5) * Math.PI * 2 + Math.random() * 0.5;
+                const rad = 8 + Math.random() * 12;
+                slimeGroup.position.set(Math.cos(ang) * rad, 0, Math.sin(ang) * rad);
+
+                scene.add(slimeGroup);
+                enemies.push({ mesh: slimeGroup, hp: 100, maxHp: 100, isHit: false, hitTimer: 0, color: color });
+            }
+            showAlert("👾 Враги появились!");
+        }
+
+        function respawnEnemies() {
+            spawnEnemies();
+            playSound('levelup');
+        }
+
+        // ==================== MULTITOUCH CONTROLS ====================
+        function setupControls() {
+            const joystickRadius = joystickZone.clientWidth / 2;
+            let joyTouchId = null;
+            let joyStartX = 0, joyStartY = 0;
+
+            // Joystick - LEFT side
+            joystickZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                joyTouchId = touch.identifier;
+                const rect = joystickZone.getBoundingClientRect();
+                joyStartX = rect.left + joystickRadius;
+                joyStartY = rect.top + joystickRadius;
+                updateJoystick(touch);
+            }, { passive: false });
+
+            joystickZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = Array.from(e.touches).find(t => t.identifier === joyTouchId);
+                if (touch) updateJoystick(touch);
+            }, { passive: false });
+
+            joystickZone.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const touch = Array.from(e.changedTouches).find(t => t.identifier === joyTouchId);
+                if (touch) {
+                    joyTouchId = null;
+                    joystickHandle.style.transform = 'translate(0px, 0px)';
+                    moveDir.set(0, 0);
                 }
-            } else {
-                if (videoRecorder && videoRecorder.state !== 'inactive') {
-                    videoRecorder.stop();
+            }, { passive: false });
+
+            function updateJoystick(touch) {
+                let x = touch.clientX - joyStartX;
+                let y = touch.clientY - joyStartY;
+                const dist = Math.sqrt(x * x + y * y);
+                if (dist > joystickRadius) {
+                    x = (x / dist) * joystickRadius;
+                    y = (y / dist) * joystickRadius;
                 }
-                isRecording = false;
-                recordMode = 'voice';
-                btn.classList.remove('recording');
-                btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>';
-                voiceBtn.style.opacity = '1';
-                voiceBtn.style.pointerEvents = 'auto';
+                joystickHandle.style.transform = `translate(${x}px, ${y}px)`;
+                moveDir.set(x / joystickRadius, -y / joystickRadius);
             }
+
+            // Camera - RIGHT side (independent multitouch!)
+            const camZone = document.getElementById('camera-zone');
+            let camTouchId = null;
+            let camLastX = 0, camLastY = 0;
+
+            camZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                // Find a touch that's NOT on the joystick
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const t = e.changedTouches[i];
+                    if (t.identifier !== joyTouchId && camTouchId === null) {
+                        camTouchId = t.identifier;
+                        camLastX = t.clientX;
+                        camLastY = t.clientY;
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            camZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = Array.from(e.touches).find(t => t.identifier === camTouchId);
+                if (!touch) return;
+
+                const dx = touch.clientX - camLastX;
+                const dy = touch.clientY - camLastY;
+                camTheta -= dx * 0.008;
+                camPhi -= dy * 0.008;
+                camPhi = Math.max(minPhi, Math.min(maxPhi, camPhi));
+                camLastX = touch.clientX;
+                camLastY = touch.clientY;
+            }, { passive: false });
+
+            camZone.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const touch = Array.from(e.changedTouches).find(t => t.identifier === camTouchId);
+                if (touch) camTouchId = null;
+            }, { passive: false });
         }
 
-        async function sendVideoNote(blob) {
-            if (!currentChatId) return;
-            const targetId = currentChatId;
-            const sendBtn = document.getElementById('send-btn');
-            sendBtn.disabled = true;
-            sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>';
-            try {
-                const formData = new FormData();
-                formData.append('chat_id', targetId);
-                formData.append('video_note', blob, 'note.webm');
-                const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVideoNote`, {
-                    method: 'POST',
-                    body: formData
+        // ==================== MINIMAP ====================
+        function setupMinimap() {
+            const canvas = document.getElementById('minimap-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 80; canvas.height = 80;
+
+            window.updateMinimap = function() {
+                ctx.clearRect(0, 0, 80, 80);
+                ctx.fillStyle = 'rgba(10, 15, 26, 0.8)';
+                ctx.beginPath(); ctx.arc(40, 40, 38, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = 'rgba(243, 229, 200, 0.3)';
+                ctx.lineWidth = 2; ctx.stroke();
+
+                ctx.fillStyle = '#4ef27d';
+                ctx.beginPath(); ctx.arc(40, 40, 3, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#4ef27d'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(40, 40);
+                ctx.lineTo(40 + Math.sin(characterGroup.rotation.y) * 7, 40 - Math.cos(characterGroup.rotation.y) * 7);
+                ctx.stroke();
+
+                enemies.forEach(e => {
+                    const dx = (e.mesh.position.x - playerPos.x) * 0.4;
+                    const dz = (e.mesh.position.z - playerPos.z) * 0.4;
+                    const ex = 40 + dx, ey = 40 + dz;
+                    if (ex > 5 && ex < 75 && ey > 5 && ey < 75) {
+                        ctx.fillStyle = '#ff6b6b';
+                        ctx.beginPath(); ctx.arc(ex, ey, 2.5, 0, Math.PI * 2); ctx.fill();
+                    }
                 });
-                const data = await response.json();
-                if (data.ok && data.result.video_note) {
-                    const sentMessage = {
-                        messageId: data.result.message_id,
-                        text: "",
-                        time: Date.now(),
-                        out: true,
-                        fileId: data.result.video_note.file_id,
-                        mediaType: 'video_note'
-                    };
-                    chats[targetId].messages.push(sentMessage);
-                    chats[targetId].lastTime = Date.now();
-                    if (currentChatId === targetId) renderMessages();
-                    renderChats();
-                    saveState();
-                } else {
-                    alert(`Ошибка отправки кружочка: ${data.description}`);
-                }
-            } catch (e) {
-                alert(`Ошибка соединения: ${e.message}`);
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
-            }
-        }
-
-        async function toggleVoiceRecord() {
-            const btn = document.getElementById('voice-btn');
-            if (!isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-                    mediaRecorder.ondataavailable = e => {
-                        if (e.data.size > 0) audioChunks.push(e.data);
-                    };
-                    mediaRecorder.onstop = async () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/ogg; codecs=opus' });
-                        await sendVoiceMessage(audioBlob);
-                        stream.getTracks().forEach(track => track.stop());
-                    };
-                    mediaRecorder.start();
-                    isRecording = true;
-                    btn.classList.add('recording');
-                    btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
-                } catch (err) {
-                    alert('Не удалось получить доступ к микрофону: ' + err.message);
-                }
-            } else {
-                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    mediaRecorder.stop();
-                }
-                isRecording = false;
-                btn.classList.remove('recording');
-                btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
-            }
-        }
-
-        async function sendVoiceMessage(blob) {
-            if (!currentChatId) return;
-            const targetId = currentChatId;
-            const sendBtn = document.getElementById('send-btn');
-            sendBtn.disabled = true;
-            sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>'; // Spinner
-            try {
-                const formData = new FormData();
-                formData.append('chat_id', targetId);
-                formData.append('voice', blob, 'voice.ogg');
-                if (replyToMessageId) formData.append('reply_to_message_id', replyToMessageId);
-
-                const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-                if (data.ok && data.result.voice) {
-                    const sentMessage = {
-                        messageId: data.result.message_id,
-                        text: "",
-                        time: Date.now(),
-                        out: true,
-                        fileId: data.result.voice.file_id,
-                        mediaType: 'voice',
-                        replyToId: replyToMessageId
-                    };
-                    chats[targetId].messages.push(sentMessage);
-                    chats[targetId].lastTime = Date.now();
-                    cancelReplyMode();
-                    if (currentChatId === targetId) renderMessages();
-                    renderChats();
-                    saveState();
-                } else {
-                    alert(`Ошибка отправки голосового: ${data.description}`);
-                }
-            } catch (e) {
-                alert(`Ошибка соединения: ${e.message}`);
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>'; // Reset button icon
-            }
-        }
-
-        // Улучшение 3 & 5 & 4: Отправка, Ответы и Изменение сообщений
-        async function sendBotMessage() {
-            const textarea = document.getElementById('message-text');
-            const text = textarea.value.trim();
-            if ((!text && !selectedFile) || !currentChatId) {
-                alert("Напишите сообщение или прикрепите файл.");
-                return;
-            }
-
-            const targetId = currentChatId;
-            textarea.value = "";
-            textarea.style.height = "auto";
-            const sendBtn = document.getElementById('send-btn');
-            sendBtn.disabled = true;
-            sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>'; // Spinner
-
-            try {
-                let response;
-                let data;
-
-                // СЦЕНАРИЙ А: Редактирование существующего сообщения
-                if (editingMessageId) {
-                    response = await fetch(`https://api.telegram.org/bot${botToken}/editMessageText?chat_id=${targetId}&message_id=${editingMessageId}&text=${encodeURIComponent(text)}`);
-                    data = await response.json();
-                    
-                    if (data.ok) {
-                        const targetChat = chats[targetId];
-                        const localMsg = targetChat.messages.find(m => m.messageId === editingMessageId);
-                        if (localMsg) {
-                            localMsg.text = text;
-                            localMsg.isEdited = true;
-                        }
-                        cancelEditMode();
-                    } else {
-                        alert(`Не удалось изменить: ${data.description}`);
-                    }
-                } 
-                // СЦЕНАРИЙ Б: Отправка нового файла / фото / видео / документа
-                else if (selectedFile) {
-                    let method;
-                    const formData = new FormData();
-                    formData.append('chat_id', targetId);
-                    if (text) formData.append('caption', text);
-                    if (replyToMessageId) formData.append('reply_to_message_id', replyToMessageId);
-
-                    let sentMediaType = null;
-                    if (selectedFile.type.startsWith('image')) {
-                        method = 'sendPhoto';
-                        formData.append('photo', selectedFile);
-                        sentMediaType = 'photo';
-                    } else if (selectedFile.type.startsWith('video')) {
-                        method = 'sendVideo';
-                        formData.append('video', selectedFile);
-                        sentMediaType = 'video';
-                    } else {
-                        method = 'sendDocument';
-                        formData.append('document', selectedFile);
-                        sentMediaType = 'document';
-                    }
-
-                    response = await fetch(`https://api.telegram.org/bot${botToken}/${method}`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    data = await response.json();
-
-                    if (data.ok) {
-                        let sentFileId = null;
-                        if (sentMediaType === 'photo' && data.result.photo) {
-                            sentFileId = data.result.photo[data.result.photo.length - 1].file_id;
-                        } else if (sentMediaType === 'video' && data.result.video) {
-                            sentFileId = data.result.video.file_id;
-                        } else if (sentMediaType === 'document' && data.result.document) {
-                             sentFileId = data.result.document.file_id;
-                        }
-
-                        const sentMessage = {
-                            messageId: data.result.message_id,
-                            text: text,
-                            time: Date.now(),
-                            out: true,
-                            fileId: sentFileId,
-                            mediaType: sentMediaType,
-                            replyToId: replyToMessageId
-                        };
-
-                        chats[targetId].messages.push(sentMessage);
-                        chats[targetId].lastTime = Date.now();
-                        cancelReplyMode();
-                        removeFile();
-                    }
-                } 
-                // СЦЕНАРИЙ В: Отправка текстового сообщения (с возможностью ответа)
-                else {
-                    // Optimistic UI: показываем сообщение сразу
-                    const tempId = 'temp_' + Date.now();
-                    const optimisticMsg = {
-                        messageId: tempId,
-                        text: text,
-                        time: Date.now(),
-                        out: true,
-                        replyToId: replyToMessageId,
-                        reactions: [],
-                        pending: true
-                    };
-                    chats[targetId].messages.push(optimisticMsg);
-                    chats[targetId].lastTime = Date.now();
-                    if (currentChatId === targetId) renderMessages();
-                    renderChats();
-                    cancelReplyMode();
-
-                    let url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${targetId}&text=${encodeURIComponent(text)}`;
-                    if (replyToMessageId) {
-                        url += `&reply_to_message_id=${replyToMessageId}`;
-                    }
-
-                    response = await fetch(url);
-                    data = await response.json();
-
-                    if (data.ok) {
-                        // Заменяем optimistic на реальное
-                        const idx = chats[targetId].messages.findIndex(m => m.messageId === tempId);
-                        if (idx !== -1) {
-                            chats[targetId].messages[idx] = {
-                                messageId: data.result.message_id,
-                                text: text,
-                                time: Date.now(),
-                                out: true,
-                                replyToId: replyToMessageId,
-                                reactions: []
-                            };
-                        }
-                    } else {
-                        // Удаляем optimistic при ошибке
-                        chats[targetId].messages = chats[targetId].messages.filter(m => m.messageId !== tempId);
-                        alert(`Не удалось отправить: ${data.description}`);
-                    }
-                }
-
-                if (currentChatId === targetId) {
-                    renderMessages();
-                }
-                renderChats();
-                saveState();
-            } catch (e) {
-                alert(`Ошибка соединения во время отправки: ${e.message}`);
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>'; // Reset button icon
-            }
-        }
-
-        // Свой аватар - выбор из Google Фото или локальной Галереи
-        function saveLocalAvatar(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Data = e.target.result;
-                safeStorage.set("av_data_" + currentChatId, base64Data);
-                
-                // Перерисовываем UI
-                updateAvatarUI(currentChatId, null, 'profile-modal-avatar');
-                updateAvatarUI(currentChatId, null, 'active-chat-avatar');
-                updateAvatarUI(currentChatId, null, `av-list-${currentChatId}`);
-                renderChats();
             };
-            reader.readAsDataURL(file);
         }
 
-        function handleFileChange(event) {
-            const fileInput = event.target;
-            const previewContainer = document.getElementById('file-preview');
-            const fileNameSpan = document.getElementById('file-name');
-
-            if (fileInput.files.length > 0) {
-                selectedFile = fileInput.files[0];
-                fileNameSpan.innerText = selectedFile.name;
-                previewContainer.style.display = 'flex';
-                adjustTextareaHeight();
-            } else {
-                removeFile();
+        // ==================== ACTIONS ====================
+        function doJump() {
+            if (isGrounded) {
+                playerVelY = 8.5;
+                isGrounded = false;
+                animState = 'jump';
+                playSound('jump');
+                for (let i = 0; i < 6; i++) spawnParticle(playerPos.clone().add(new THREE.Vector3(0, 0.1, 0)), '#ffffff', 0.3);
             }
         }
 
-        function removeFile() {
-            selectedFile = null;
-            document.getElementById('file-input').value = '';
-            document.getElementById('file-preview').style.display = 'none';
-            adjustTextareaHeight();
+        function toggleSprint() {
+            isSprinting = !isSprinting;
+            const btn = document.getElementById('btn-dash');
+            if (isSprinting) { btn.classList.add('active'); playSound('dash'); }
+            else btn.classList.remove('active');
         }
 
-        function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            renderChats();
+        function playDance(type) {
+            if (isAttacking) return;
+            animState = type; animTime = 0;
+            if (type === 'dance') showAlert("💃 Танец!");
+            if (type === 'waltz') showAlert("✨ Вальс!");
+            if (type === 'emote') showAlert("🌟 Привет!");
         }
 
-        function renderChats() {
-            const container = document.getElementById('chats-list');
-            const searchVal = document.getElementById('search-input').value.toLowerCase();
-            container.innerHTML = "";
+        // ==================== COMBAT ====================
+        function doAttack() {
+            if (playerStamina < 10) { showAlert("Недостаточно энергии!"); return; }
 
-            const sorted = Object.values(chats).sort((a,b) => b.lastTime - a.lastTime);
+            playerStamina = Math.max(0, playerStamina - 12);
+            document.getElementById('stamina-bar').style.width = playerStamina + '%';
 
-            if (sorted.length === 0) {
-                 container.innerHTML = `<div class="empty-placeholder" style="margin-top: 50px;">Нет активных диалогов.</div>`;
-                 return;
+            isAttacking = true; animTime = 0;
+            if (comboResetTimer) clearTimeout(comboResetTimer);
+
+            comboStep++;
+            if (comboStep > 3) comboStep = 1;
+
+            if (!useExternalModel) animState = 'attack' + comboStep;
+            playSound('slash' + comboStep);
+
+            comboIndicator.innerText = 'COMBO ' + comboStep + '/3';
+            comboIndicator.style.opacity = '1';
+            comboIndicator.style.transform = 'scale(1.2)';
+            setTimeout(() => comboIndicator.style.transform = 'scale(1)', 100);
+
+            if (slashArcMesh) {
+                slashArcMesh.material.opacity = 0.9;
+                slashArcMesh.scale.set(1, 1, 1);
             }
 
-            sorted.forEach(chat => {
-                const isUser = chat.type === "private";
+            checkHitEnemies(comboStep);
 
-                if (currentTab === "users" && !isUser) return;
+            comboResetTimer = setTimeout(() => {
+                comboStep = 0;
+                comboIndicator.style.opacity = '0';
+            }, 1200);
 
-                if (searchVal) {
-                    const matchName = chat.name.toLowerCase().includes(searchVal);
-                    const matchUser = chat.username && chat.username.toLowerCase().includes(searchVal);
-                    const matchId = String(chat.id).includes(searchVal);
-                    if (!matchName && !matchUser && !matchId) return;
+            setTimeout(() => {
+                isAttacking = false;
+                if (slashArcMesh) slashArcMesh.material.opacity = 0;
+                if (moveDir.lengthSq() === 0 && isGrounded && !useExternalModel) animState = 'idle';
+            }, 500);
+        }
+
+        function checkHitEnemies(step) {
+            const attackRange = 2.8;
+            enemies.forEach(enemy => {
+                let dist = characterGroup.position.distanceTo(enemy.mesh.position);
+                if (dist < attackRange) {
+                    let damage = step === 1 ? 25 : (step === 2 ? 35 : 50);
+                    enemy.hp -= damage;
+                    enemy.isHit = true;
+                    enemy.hitTimer = 0.2;
+
+                    playSound('hit');
+                    showDamageText(enemy.mesh.position.clone().add(new THREE.Vector3(0, 1.5, 0)), damage);
+
+                    let pushDir = enemy.mesh.position.clone().sub(characterGroup.position).normalize();
+                    enemy.mesh.position.addScaledVector(pushDir, step * 0.8);
+
+                    spawnDamageParticles(enemy.mesh.position.clone().add(new THREE.Vector3(0, 1, 0)), enemy.color);
+
+                    if (enemy.hp <= 0) {
+                        scene.remove(enemy.mesh);
+                        enemies = enemies.filter(e => e !== enemy);
+                        showAlert("💀 Враг уничтожен! +50 Энергии!");
+                        playerStamina = Math.min(100, playerStamina + 50);
+                        document.getElementById('stamina-bar').style.width = playerStamina + '%';
+                        playerXP += 25;
+                        if (playerXP >= 100) { playerXP = 0; playerLevel++; showAlert("🎉 УРОВЕНЬ " + playerLevel + "!"); playSound('levelup'); }
+                    }
                 }
-
-                const item = document.createElement('div');
-                item.className = `chat-row ${currentChatId === chat.id ? 'active' : ''}`;
-                item.onclick = () => openChat(chat.id);
-
-                const lastMsg = chat.messages[chat.messages.length - 1];
-                let msgText = "История переписки пуста";
-                if (lastMsg) {
-                    let prefix = lastMsg.out ? "Вы: " : "";
-                    if (lastMsg.mediaType === 'photo') prefix += "Фото";
-                    else if (lastMsg.mediaType === 'video') prefix += "Видео";
-                    else if (lastMsg.mediaType === 'document') prefix += "Файл";
-                    else if (lastMsg.mediaType === 'sticker') prefix += "Стикер";
-                    else if (lastMsg.mediaType === 'voice') prefix += "Голосовое";
-                    else if (lastMsg.mediaType === 'video_note') prefix += "Кружочек";
-                    else if (lastMsg.mediaType === 'video_note') prefix += "Кружочек";
-                    msgText = prefix + (lastMsg.text ? " " + lastMsg.text : "");
-                }
-               
-                const isChan = (chat.type === 'channel' || chat.type === 'supergroup');
-
-                const timeStr = lastMsg ? new Date(lastMsg.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
-                const cachedImg = safeStorage.get("av_data_" + chat.id);
-
-                item.innerHTML = `
-                    <div class="avatar ${isChan ? 'channel' : ''}" id="av-list-${chat.id}" style="${cachedImg ? `background-image:url(${cachedImg}); font-size:0;` : `background-color: ${getPastelColor(chat.id)}`}">
-                        ${chat.name[0] ? chat.name[0].toUpperCase() : '?'}
-                    </div>
-                    <div class="chat-details">
-                        <div class="chat-meta">
-                            <div class="chat-title">${escapeHtml(chat.name)}</div>
-                            <div class="chat-time">${timeStr}</div>
-                        </div>
-                        <div class="chat-last-message">${escapeHtml(msgText.trim())}</div>
-                    </div>
-                `;
-                container.appendChild(item);
             });
         }
 
-        function openChat(id) {
-            currentChatId = id;
-            const chat = chats[id];
-            
-            document.body.classList.add('chat-opened');
-            document.getElementById('chat-window-pane').classList.add('active');
-            document.getElementById('active-chat-name').innerText = chat.name;
-            
-            // Динамический статус активности
-            document.getElementById('active-chat-status').innerText = formatLastActivity(chat.id);
-            document.getElementById('chat-input-bar').style.display = 'flex';
+        function showDamageText(pos, damage) {
+            const el = document.createElement('div');
+            el.className = 'damage-text';
+            el.innerText = '-' + damage;
+            document.getElementById('ui-container').appendChild(el);
 
-            updateAvatarUI(chat.id, chat.name, 'active-chat-avatar');
+            const vector = pos.clone().project(camera);
+            const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
 
-            // Отрисовка закреплённого сообщения в шапке
-            renderPinnedBar();
-
-            renderMessages();
-            renderChats();
+            setTimeout(() => el.remove(), 1000);
         }
 
-        // Отрисовка закрепа
-        function renderPinnedBar() {
-            const chat = chats[currentChatId];
-            const bar = document.getElementById('chat-pinned-bar');
-            if (chat && chat.pinnedMessageId) {
-                const msg = chat.messages.find(m => m.messageId === chat.pinnedMessageId);
-                if (msg) {
-                    bar.style.display = 'flex';
-                    document.getElementById('chat-pinned-text').innerText = `Закреплено: ${msg.text || "[Медиафайлы]"}`;
-                    return;
-                }
-            }
-            bar.style.display = 'none';
-        }
-
-        function playVoice(url, btn) {
-            let audio = btn.audioInstance;
-            if (!audio) {
-                audio = new Audio(url);
-                btn.audioInstance = audio;
-                audio.addEventListener('ended', () => { btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>'; });
-            }
-            if (audio.paused) {
-                audio.play();
-                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
-            } else {
-                audio.pause();
-                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
-            }
-        }
-
-        async function renderMessages() {
-            const container = document.getElementById('messages-feed');
-            const chat = chats[currentChatId];
-            container.innerHTML = "";
-
-            if (!chat || chat.messages.length === 0) {
-                container.innerHTML = `<div class="empty-placeholder">Переписка пуста. Напишите первое сообщение от лица вашего бота!</div>`;
-                return;
-            }
-
-            for (const msg of chat.messages) {
-                const div = document.createElement('div');
-                div.className = `bubble-wrapper`;
-                div.id = `msg-wrap-${msg.messageId}`;
-
-                const bubble = document.createElement('div');
-                bubble.className = `bubble ${msg.out ? 'out' : 'in'}`;
-                bubble.id = `bubble-${msg.messageId}`;
-                bubble.onclick = (e) => {
-                    e.stopPropagation();
-                    openContextMenu(e, msg.messageId, msg.out);
+        function spawnDamageParticles(pos, color) {
+            for (let i = 0; i < 8; i++) {
+                const p = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.12, 0.12, 0.12),
+                    new THREE.MeshBasicMaterial({ color: color || '#ffda79' })
+                );
+                p.position.copy(pos);
+                p.userData = {
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 4, Math.random() * 4 + 2, (Math.random() - 0.5) * 4),
+                    life: 0.4
                 };
+                scene.add(p);
+                particles.push(p);
+            }
+        }
 
-                const timeStr = new Date(msg.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        function spawnParticle(pos, color, life) {
+            const p = new THREE.Mesh(
+                new THREE.SphereGeometry(0.06, 4, 4),
+                new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8 })
+            );
+            p.position.copy(pos);
+            p.userData = { vel: new THREE.Vector3((Math.random() - 0.5) * 2, Math.random() * 2, (Math.random() - 0.5) * 2), life: life || 0.5 };
+            scene.add(p);
+            particles.push(p);
+        }
 
-                // Обработка цитат (Улучшение 3)
-                if (msg.replyToId) {
-                    const parentMsg = chat.messages.find(m => m.messageId === msg.replyToId);
-                    if (parentMsg) {
-                        const quote = document.createElement('div');
-                        quote.className = 'reply-quote';
-                        quote.innerHTML = `<svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='#2481cc' stroke-width='2' style='vertical-align:middle; margin-right:4px;'><polyline points='9 14 4 9 9 4'/><path d='M20 20v-7a4 4 0 0 0-4-4H4'/></svg>${escapeHtml(parentMsg.text || "[Медиа/Файл]")}`;
-                        quote.onclick = (e) => {
-                            e.stopPropagation();
-                            scrollToMessage(msg.replyToId);
-                        };
-                        bubble.appendChild(quote);
+        function showAlert(msg) {
+            const box = document.getElementById('alert-box');
+            box.innerText = msg;
+            box.style.display = 'block';
+            setTimeout(() => box.style.display = 'none', 2500);
+        }
+
+        // ==================== PROCEDURAL ANIMATIONS ====================
+        function updateProceduralAnimations(dt) {
+            animTime += dt;
+            const t = animTime;
+            const r = bodyRig;
+            if (!r.torso) return;
+
+            r.torso.rotation.set(0, 0, 0);
+            r.torso.position.y = 1.38;
+            if (r.head) r.head.rotation.set(0, 0, 0);
+            r.armL.rotation.set(0, 0, 0);
+            r.armR.rotation.set(0, 0, 0);
+            r.legL.rotation.set(0, 0, 0);
+            r.legR.rotation.set(0, 0, 0);
+
+            if (r.aura) {
+                r.aura.scale.setScalar(1 + Math.sin(t * 2.5) * 0.08);
+                r.aura.material.opacity = 0.04 + Math.sin(t * 2) * 0.02;
+            }
+            if (r.dressTailL) r.dressTailL.rotation.z = -0.15 + Math.sin(t * 2) * 0.05;
+            if (r.dressTailR) r.dressTailR.rotation.z = 0.15 - Math.sin(t * 2) * 0.05;
+
+            if (animState === 'idle') {
+                r.torso.position.y = 1.38 + Math.sin(t * 1.8) * 0.015;
+                r.armL.rotation.z = 0.06 + Math.sin(t * 1.5) * 0.03;
+                r.armR.rotation.z = -0.06 - Math.sin(t * 1.5) * 0.03;
+                if (r.head) { r.head.rotation.y = Math.sin(t * 0.4) * 0.06; r.head.rotation.x = Math.sin(t * 1.0) * 0.02; }
+                if (r.hairBack) r.hairBack.rotation.x = 0.2 + Math.sin(t * 1.8) * 0.04;
+                if (r.hairBack2) r.hairBack2.rotation.x = 0.25 + Math.sin(t * 1.8) * 0.03;
+                if (r.hairSideL) r.hairSideL.rotation.z = -0.15 + Math.sin(t * 2) * 0.06;
+                if (r.hairSideR) r.hairSideR.rotation.z = 0.15 - Math.sin(t * 2) * 0.06;
+            } 
+            else if (animState === 'walk') {
+                let freq = 6;
+                r.torso.position.y = 1.38 + Math.abs(Math.sin(t * freq)) * 0.04;
+                r.torso.rotation.z = Math.sin(t * freq * 0.5) * 0.02;
+                r.legL.rotation.x = Math.sin(t * freq) * 0.55;
+                r.legR.rotation.x = -Math.sin(t * freq) * 0.55;
+                r.armL.rotation.x = -Math.sin(t * freq) * 0.4;
+                r.armR.rotation.x = Math.sin(t * freq) * 0.4;
+                if (r.hairBack) r.hairBack.rotation.x = 0.2 + Math.sin(t * freq) * 0.12;
+                if (r.hairBack2) r.hairBack2.rotation.x = 0.25 + Math.sin(t * freq) * 0.1;
+                if (r.hairSideL) { r.hairSideL.rotation.z = -0.15 + Math.sin(t * freq) * 0.1; r.hairSideL.rotation.x = Math.sin(t * freq) * 0.08; }
+                if (r.hairSideR) { r.hairSideR.rotation.z = 0.15 - Math.sin(t * freq) * 0.1; r.hairSideR.rotation.x = Math.sin(t * freq) * 0.08; }
+                if (r.dressTailL) r.dressTailL.rotation.x = 0.4 + Math.sin(t * freq) * 0.1;
+                if (r.dressTailR) r.dressTailR.rotation.x = 0.4 + Math.sin(t * freq) * 0.1;
+            } 
+            else if (animState === 'run') {
+                let freq = 11;
+                r.torso.rotation.x = 0.15;
+                r.torso.position.y = 1.38 + Math.abs(Math.sin(t * freq)) * 0.07;
+                r.legL.rotation.x = Math.sin(t * freq) * 0.9;
+                r.legR.rotation.x = -Math.sin(t * freq) * 0.9;
+                r.armL.rotation.x = -Math.sin(t * freq) * 0.7;
+                r.armR.rotation.x = Math.sin(t * freq) * 0.7;
+                if (r.hairBack) r.hairBack.rotation.x = 0.35 + Math.sin(t * freq) * 0.18;
+                if (r.hairBack2) r.hairBack2.rotation.x = 0.4 + Math.sin(t * freq) * 0.15;
+                if (r.hairSideL) { r.hairSideL.rotation.z = -0.25 + Math.sin(t * freq) * 0.12; r.hairSideL.rotation.x = 0.15; }
+                if (r.hairSideR) { r.hairSideR.rotation.z = 0.25 - Math.sin(t * freq) * 0.12; r.hairSideR.rotation.x = 0.15; }
+                if (r.dressTailL) r.dressTailL.rotation.x = 0.5 + Math.sin(t * freq) * 0.15;
+                if (r.dressTailR) r.dressTailR.rotation.x = 0.5 + Math.sin(t * freq) * 0.15;
+            } 
+            else if (animState === 'jump') {
+                r.legL.rotation.x = -0.45;
+                r.legR.rotation.x = 0.25;
+                r.armL.rotation.z = 1.2;
+                r.armR.rotation.z = -1.2;
+                if (r.head) r.head.rotation.x = -0.12;
+                if (r.hairBack) r.hairBack.rotation.x = -0.15;
+                if (r.hairBack2) r.hairBack2.rotation.x = -0.1;
+                if (r.dressTailL) r.dressTailL.rotation.x = 0.6;
+                if (r.dressTailR) r.dressTailR.rotation.x = 0.6;
+            } 
+            else if (animState === 'attack1') {
+                r.torso.rotation.y = Math.sin(t * 16) * 0.6;
+                r.armR.rotation.x = -Math.PI / 2;
+                r.armR.rotation.y = Math.sin(t * 16) * 1.2;
+                if (r.head) r.head.rotation.y = -Math.sin(t * 16) * 0.25;
+            } 
+            else if (animState === 'attack2') {
+                characterGroup.rotation.y += dt * 16;
+                r.armR.rotation.x = -Math.PI / 2;
+                r.armR.rotation.z = -0.9;
+                r.torso.rotation.z = Math.sin(t * 18) * 0.08;
+            } 
+            else if (animState === 'attack3') {
+                r.torso.position.y = 1.38 + Math.sin(t * 10) * 0.35;
+                r.armR.rotation.x = -Math.PI + Math.sin(t * 10) * 0.9;
+                if (r.head) r.head.rotation.x = -0.15;
+            } 
+            else if (animState === 'dance') {
+                r.torso.position.y = 1.38 + Math.abs(Math.sin(t * 4.5)) * 0.06;
+                r.torso.rotation.z = Math.sin(t * 4.5) * 0.12;
+                r.armL.rotation.z = 1.2 + Math.sin(t * 4.5) * 0.2;
+                r.armR.rotation.z = -1.2 - Math.sin(t * 4.5) * 0.2;
+                if (r.head) r.head.rotation.y = Math.sin(t * 2.5) * 0.12;
+                if (r.hairBack) r.hairBack.rotation.z = Math.sin(t * 4.5) * 0.08;
+                if (r.dressTailL) r.dressTailL.rotation.z = -0.15 + Math.sin(t * 4) * 0.1;
+                if (r.dressTailR) r.dressTailR.rotation.z = 0.15 - Math.sin(t * 4) * 0.1;
+            } 
+            else if (animState === 'waltz') {
+                characterGroup.rotation.y += dt * 2.5;
+                r.armL.rotation.z = 1.2;
+                r.armR.rotation.x = -Math.PI / 3;
+                r.torso.position.y = 1.38 + Math.sin(t * 3) * 0.03;
+                if (r.head) r.head.rotation.y = Math.sin(t * 1.5) * 0.08;
+                if (r.dressTailL) r.dressTailL.rotation.x = 0.5;
+                if (r.dressTailR) r.dressTailR.rotation.x = 0.5;
+            } 
+            else if (animState === 'emote') {
+                r.armL.rotation.z = 1.8 + Math.sin(t * 7) * 0.12;
+                if (r.head) { r.head.rotation.z = Math.sin(t * 3) * 0.04; r.head.rotation.x = -0.1 + Math.sin(t * 4) * 0.03; }
+                r.torso.position.y = 1.38 + Math.sin(t * 5) * 0.015;
+            }
+        }
+
+        // ==================== EXTERNAL MODEL ANIMATIONS ====================
+        function updateExternalModelAnimations() {
+            // Только Тянка
+        }
+
+        // ==================== MAIN GAME LOOP ====================
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.1);
+
+            // Только Тянка
+
+            // Stamina regen
+            if (!isSprinting && playerStamina < 100) {
+                playerStamina = Math.min(100, playerStamina + dt * 15);
+                document.getElementById('stamina-bar').style.width = playerStamina + '%';
+            }
+
+            // Movement
+            if (characterGroup) {
+                const camForward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), camTheta).normalize();
+                const camRight = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), camTheta).normalize();
+
+                const moveVec = new THREE.Vector3().addScaledVector(camRight, moveDir.x).addScaledVector(camForward, moveDir.y);
+                moveVec.y = 0;
+
+                const hasInput = moveDir.lengthSq() > 0.01;
+
+                if (hasInput && !isAttacking) {
+                    let targetSpeed = 3.8;
+                    if (isSprinting && playerStamina > 5) {
+                        targetSpeed = 7.5;
+                        playerStamina = Math.max(0, playerStamina - dt * 20);
+                        document.getElementById('stamina-bar').style.width = playerStamina + '%';
+                        animState = 'run';
+                    } else {
+                        animState = 'walk';
                     }
-                }
 
-                if (msg.fileId && msg.mediaType) {
-                    const mediaUrl = await getMediaFileUrl(msg.fileId);
-                    if (mediaUrl) {
-                        if (msg.mediaType === 'photo') {
-                            const img = document.createElement('img');
-                            img.src = mediaUrl;
-                            img.className = 'bubble-media';
-                            img.alt = msg.text || "Фото";
-                            img.onclick = (e) => { e.stopPropagation(); openMediaViewer(mediaUrl, 'photo'); };
-                            bubble.appendChild(img);
-                        } else if (msg.mediaType === 'video') {
-                            const video = document.createElement('video');
-                            video.src = mediaUrl;
-                            video.className = 'bubble-media';
-                            video.controls = true;
-                            video.onclick = (e) => { e.stopPropagation(); openMediaViewer(mediaUrl, 'video'); };
-                            bubble.appendChild(video);
-                        } else if (msg.mediaType === 'document') {
-                            const docLink = document.createElement('a');
-                            docLink.href = mediaUrl;
-                            docLink.target = '_blank';
-                            docLink.className = 'document-link';
-                            docLink.innerHTML = `
-                                <div class="document-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
-                                <div style="display:flex; flex-direction:column; gap:2px; text-align:left;">
-                                    <span>${escapeHtml(msg.text || "Файл")}</span>
-                                    <span style="font-size:11px; color:var(--text-muted);">Нажмите, чтобы открыть</span>
-                                </div>
-                            `;
-                            bubble.appendChild(docLink);
-                        } else if (msg.mediaType === 'sticker') {
-                            const stickerImg = document.createElement('img');
-                            stickerImg.src = mediaUrl;
-                            stickerImg.className = 'bubble-media';
-                            stickerImg.alt = msg.text || "Стикер";
-                            stickerImg.style.maxWidth = '150px';
-                            bubble.appendChild(stickerImg);
-                        } else if (msg.mediaType === 'video_note') {
-                            const videoNote = document.createElement('video');
-                            videoNote.src = mediaUrl;
-                            videoNote.className = 'video-note';
-                            videoNote.muted = false;
-                            videoNote.playsInline = true;
-                            videoNote.loop = true;
-                            videoNote.preload = 'metadata';
-                            videoNote.onclick = (e) => {
-                                e.stopPropagation();
-                                if (videoNote.paused) videoNote.play(); else videoNote.pause();
-                            };
-                            bubble.appendChild(videoNote);
-                        } else if (msg.mediaType === 'voice') {
-                            const playerDiv = document.createElement('div');
-                            playerDiv.className = 'voice-player';
-                            const playBtn = document.createElement('button');
-                            playBtn.className = 'voice-play-btn';
-                            playBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
-                            playBtn.onclick = (e) => { e.stopPropagation(); playVoice(mediaUrl, playBtn); };
-                            const metaDiv = document.createElement('div');
-                            metaDiv.className = 'voice-meta';
-                            const titleSpan = document.createElement('span');
-                            titleSpan.className = 'voice-title';
-                            titleSpan.innerText = 'Голосовое';
-                            const descSpan = document.createElement('span');
-                            descSpan.className = 'voice-duration';
-                            descSpan.innerText = 'Аудиозапись';
-                            metaDiv.appendChild(titleSpan);
-                            metaDiv.appendChild(descSpan);
-                            playerDiv.appendChild(playBtn);
-                            playerDiv.appendChild(metaDiv);
-                            bubble.appendChild(playerDiv);
-                        }
+                    currentSpeed = THREE.MathUtils.lerp(currentSpeed, targetSpeed, 10 * dt);
+                    playerPos.addScaledVector(moveVec, currentSpeed * dt);
+
+                    let targetAngle = Math.atan2(moveVec.x, moveVec.z);
+                    let diff = targetAngle - characterGroup.rotation.y;
+                    while (diff < -Math.PI) diff += Math.PI * 2;
+                    while (diff > Math.PI) diff -= Math.PI * 2;
+                    characterGroup.rotation.y += diff * 12 * dt;
+
+                    stepTimer += dt;
+                    if (stepTimer > (isSprinting ? 0.2 : 0.35)) {
+                        stepTimer = 0;
+                        playSound('step');
                     }
-                }
-                
-                if (msg.text && msg.mediaType !== 'document') {
-                    const textSpan = document.createElement('div');
-                    textSpan.className = 'bubble-text';
-                    textSpan.innerHTML = escapeHtml(msg.text);
-                    bubble.appendChild(textSpan);
-                }
-
-                // Дополнительный статус редактирования
-                const isEdStr = msg.isEdited ? " (ред.)" : "";
-
-                const timeSpan = document.createElement('div');
-                timeSpan.className = 'bubble-time';
-                timeSpan.innerText = timeStr + isEdStr;
-                bubble.appendChild(timeSpan);
-
-                // Отрисовка реакций (Бонус к Bot API)
-                if (msg.reactions && msg.reactions.length > 0) {
-                    const reacDiv = document.createElement('div');
-                    reacDiv.className = 'reactions-list';
-                    msg.reactions.forEach(r => {
-                        const badge = document.createElement('div');
-                        badge.className = 'reaction-badge';
-                        badge.innerText = r;
-                        reacDiv.appendChild(badge);
-                    });
-                    bubble.appendChild(reacDiv);
-                }
-
-                div.appendChild(bubble);
-                container.appendChild(div);
-            }
-
-            container.scrollTop = container.scrollHeight;
-        }
-
-        // Навигация и скролл
-        function scrollToMessage(id) {
-            const el = document.getElementById(`bubble-${id}`);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                el.classList.add('highlighted');
-                setTimeout(() => el.classList.remove('highlighted'), 1500);
-            }
-        }
-
-        function scrollToPinnedMessage() {
-            const chat = chats[currentChatId];
-            if (chat && chat.pinnedMessageId) {
-                scrollToMessage(chat.pinnedMessageId);
-            }
-        }
-
-        // Контекстные действия над сообщением
-        function openContextMenu(e, msgId, out) {
-            selectedMessageId = msgId;
-            const menu = document.getElementById('msg-context-menu');
-            
-            // Фильтр возможности редактирования (только свои)
-            document.getElementById('menu-edit-btn').style.display = out ? 'flex' : 'none';
-
-            menu.style.display = 'flex';
-            const menuW = menu.offsetWidth || 180;
-            const menuH = menu.offsetHeight || 220;
-            let left = e.clientX;
-            let top = e.clientY;
-            if (left + menuW > window.innerWidth - 10) left = window.innerWidth - menuW - 10;
-            if (left < 10) left = 10;
-            if (top + menuH > window.innerHeight - 10) top = window.innerHeight - menuH - 10;
-            if (top < 10) top = 10;
-            menu.style.left = `${left}px`;
-            menu.style.top = `${top}px`;
-            menu.style.top = `${Math.min(e.pageY, window.innerHeight - 250)}px`;
-        }
-
-        function closeContextMenu() {
-            document.getElementById('msg-context-menu').style.display = 'none';
-        }
-
-        // Улучшение 3: Локальный ответ в меню
-        function triggerReply() {
-            replyToMessageId = selectedMessageId;
-            editingMessageId = null; // убираем редактирование
-            
-            const msg = chats[currentChatId].messages.find(m => m.messageId === replyToMessageId);
-            if (msg) {
-                document.getElementById('reply-info-text').innerText = `Ответить: ${msg.text || "[Медиа]"}`;
-                document.getElementById('reply-info-banner').style.display = 'flex';
-                document.getElementById('edit-info-banner').style.display = 'none';
-            }
-            closeContextMenu();
-        }
-
-        function cancelReplyMode() {
-            replyToMessageId = null;
-            document.getElementById('reply-info-banner').style.display = 'none';
-        }
-
-        // Улучшение 5: Локальное редактирование в меню
-        function triggerEdit() {
-            editingMessageId = selectedMessageId;
-            replyToMessageId = null; // убираем ответ
-
-            const msg = chats[currentChatId].messages.find(m => m.messageId === editingMessageId);
-            if (msg) {
-                document.getElementById('message-text').value = msg.text || "";
-                document.getElementById('edit-info-text').innerText = `Изменить: ${msg.text}`;
-                document.getElementById('edit-info-banner').style.display = 'flex';
-                document.getElementById('reply-info-banner').style.display = 'none';
-                document.getElementById('message-text').focus();
-                adjustTextareaHeight();
-            }
-            closeContextMenu();
-        }
-
-        function cancelEditMode() {
-            editingMessageId = null;
-            document.getElementById('message-text').value = "";
-            document.getElementById('edit-info-banner').style.display = 'none';
-            adjustTextareaHeight();
-        }
-
-        // Улучшение 4: Удаление сообщения
-        async function deleteMessage() {
-            if (!confirm("Вы уверены, что хотите удалить сообщение?")) return;
-            const targetId = currentChatId;
-            const msgId = selectedMessageId;
-            closeContextMenu();
-
-            try {
-                const response = await fetch(`https://api.telegram.org/bot${botToken}/deleteMessage?chat_id=${targetId}&message_id=${msgId}`);
-                const data = await response.json();
-                
-                if (data.ok) {
-                    chats[targetId].messages = chats[targetId].messages.filter(m => m.messageId !== msgId);
-                    if (chats[targetId].pinnedMessageId === msgId) {
-                        chats[targetId].pinnedMessageId = null;
-                        renderPinnedBar();
-                    }
-                    if (currentChatId === targetId) renderMessages();
-                    renderChats();
-                    saveState();
                 } else {
-                    alert(`Не удалось удалить: ${data.description}`);
+                    currentSpeed = THREE.MathUtils.lerp(currentSpeed, 0, 12 * dt);
+                    if (isGrounded && !isAttacking && !useExternalModel && ['walk', 'run'].includes(animState)) {
+                        animState = 'idle';
+                    }
                 }
-            } catch (e) {
-                alert(`Ошибка при отправке запроса удаления.`);
+
+                // Gravity
+                playerVelY -= 20.0 * dt;
+                playerPos.y += playerVelY * dt;
+
+                if (playerPos.y <= 0) {
+                    playerPos.y = 0;
+                    playerVelY = 0;
+                    if (!isGrounded) {
+                        isGrounded = true;
+                        if (!isAttacking) animState = 'idle';
+                    }
+                }
+
+                characterGroup.position.copy(playerPos);
+
+                // Camera
+                let cx = playerPos.x + camRadius * Math.sin(camTheta) * Math.sin(camPhi);
+                let cy = playerPos.y + camRadius * Math.cos(camPhi) + 1.2;
+                let cz = playerPos.z + camRadius * Math.cos(camTheta) * Math.sin(camPhi);
+                camera.position.set(cx, cy, cz);
+                camera.lookAt(playerPos.x, playerPos.y + 1.2, playerPos.z);
             }
-        }
 
-        // Улучшение 6: Закрепление сообщений
-        async function pinMessage() {
-            const targetId = currentChatId;
-            const msgId = selectedMessageId;
-            closeContextMenu();
+            // Анимации Тянки
+            updateProceduralAnimations(dt);
 
-            try {
-                const response = await fetch(`https://api.telegram.org/bot${botToken}/pinChatMessage?chat_id=${targetId}&message_id=${msgId}`);
-                const data = await response.json();
-                
-                if (data.ok) {
-                    chats[targetId].pinnedMessageId = msgId;
-                    renderPinnedBar();
-                    saveState();
+            // Enemies
+            enemies.forEach(e => {
+                if (e.isHit) {
+                    e.hitTimer -= dt;
+                    if (e.hitTimer <= 0) e.isHit = false;
+                    e.mesh.scale.setScalar(0.8 + Math.random() * 0.1);
                 } else {
-                    alert(`Не удалось закрепить: ${data.description}`);
+                    e.mesh.scale.setScalar(1);
+                    e.mesh.position.y = Math.sin(clock.getElapsedTime() * 3 + e.mesh.position.x) * 0.1;
                 }
-            } catch(e) {
-                alert(`Ошибка сервера при закреплении.`);
-            }
-        }
+            });
 
-        // Локальное открепление (Unpin)
-        async function unpinChatMessageLocal() {
-            const targetId = currentChatId;
-            try {
-                await fetch(`https://api.telegram.org/bot${botToken}/unpinChatMessage?chat_id=${targetId}`);
-                chats[targetId].pinnedMessageId = null;
-                renderPinnedBar();
-                saveState();
-            } catch(e) {}
-        }
-
-        // Бонус: Установка реакций через Bot API
-        async function sendReaction(emoji) {
-            const targetId = currentChatId;
-            const msgId = selectedMessageId;
-            closeContextMenu();
-
-            try {
-                const reactionPayload = [{ type: 'emoji', emoji: emoji }];
-                const response = await fetch(`https://api.telegram.org/bot${botToken}/setMessageReaction?chat_id=${targetId}&message_id=${msgId}&reaction=${JSON.stringify(reactionPayload)}`);
-                const data = await response.json();
-
-                if (data.ok) {
-                    const msg = chats[targetId].messages.find(m => m.messageId === msgId);
-                    if (msg) {
-                        msg.reactions = [emoji]; // Пока храним локально по одной реакции
-                    }
-                    if (currentChatId === targetId) renderMessages();
-                    saveState();
+            // Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.position.addScaledVector(p.userData.vel, dt);
+                p.userData.life -= dt;
+                p.rotation.x += dt * 3;
+                p.rotation.y += dt * 2;
+                if (p.userData.life <= 0) {
+                    scene.remove(p);
+                    particles.splice(i, 1);
                 }
-            } catch (e) {}
-        }
-
-        function copyMessageText() {
-            const msg = chats[currentChatId].messages.find(m => m.messageId === selectedMessageId);
-            if (msg && msg.text) {
-                navigator.clipboard.writeText(msg.text);
-            }
-            closeContextMenu();
-        }
-
-        function adjustTextareaHeight() {
-            const textarea = document.getElementById('message-text');
-            textarea.style.height = 'auto';
-            textarea.style.height = Math.max(48, Math.min(textarea.scrollHeight, 120)) + 'px';
-        }
-        document.getElementById('message-text').addEventListener('input', adjustTextareaHeight);
-
-        async function fetchAvatarFromServer(id, elementIdOverride = null) {
-            if (safeStorage.get("av_data_" + id)) {
-                const fallback = chats[id] ? chats[id].name : (id === botInfo.id ? botInfo.first_name : null);
-                updateAvatarUI(id, fallback, elementIdOverride);
-                updateAvatarUI(id, fallback, `av-list-${id}`);
-                return;
             }
 
-            try {
-                const chatRes = await fetch(`https://api.telegram.org/bot${botToken}/getChat?chat_id=${id}`);
-                const chatData = await chatRes.json();
+            // Minimap
+            if (window.updateMinimap) window.updateMinimap();
 
-                if (chatData.ok && chatData.result.photo) {
-                    const fileId = chatData.result.photo.small_file_id;
-                    const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
-                    const fileData = await fileRes.json();
-
-                    if (fileData.ok) {
-                        const path = fileData.result.file_path;
-                        const fullUrl = `https://api.telegram.org/file/bot${botToken}/${path}`;
-                        
-                        safeStorage.set("av_data_" + id, fullUrl);
-                        
-                        updateAvatarUI(id, null, elementIdOverride);
-                        updateAvatarUI(id, null, `av-list-${id}`);
-                    }
-                }
-            } catch(e) {}
+            renderer.render(scene, camera);
         }
 
-        function updateAvatarUI(id, fallbackName = null, forceElementId = null) {
-            const targetElement = forceElementId ? document.getElementById(forceElementId) : null;
-            if (!targetElement) return;
-
-            const url = safeStorage.get("av_data_" + id);
-            if (url) {
-                targetElement.style.backgroundImage = `url(${url})`;
-                targetElement.innerText = "";
-                targetElement.style.fontSize = "0";
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
             } else {
-                const nameToDisplay = fallbackName || (chats[id] ? chats[id].name : '?');
-                targetElement.style.backgroundImage = "none";
-                targetElement.style.backgroundColor = getPastelColor(id);
-                targetElement.innerText = nameToDisplay[0] ? nameToDisplay[0].toUpperCase() : '?';
-                targetElement.style.fontSize = "16px";
+                document.exitFullscreen();
             }
         }
-        
-        async function getMediaFileUrl(fileId) {
-            const cachedUrl = safeStorage.get("media_url_" + fileId);
-            if (cachedUrl) return cachedUrl;
 
-            try {
-                const res = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
-                const data = await res.json();
-                if (data.ok) {
-                    const url = `https://api.telegram.org/file/bot${botToken}/${data.result.file_path}`;
-                    safeStorage.set("media_url_" + fileId, url);
-                    return url;
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ==================== ANDROID BUTTON FIX ====================
+        function setupAllButtons() {
+            const addBtn = (id, fn) => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                btn.addEventListener('click', e => { e.stopPropagation(); fn(); });
+                btn.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); fn(); }, {passive:false});
+            };
+            addBtn('btn-sound', toggleSound);
+            addBtn('btn-fullscreen', toggleFullScreen);
+            addBtn('btn-respawn', respawnEnemies);
+            addBtn('btn-model', toggleModelPanel);
+            addBtn('btn-close-panel', toggleModelPanel);
+            addBtn('btn-dash', toggleSprint);
+
+            const btnAttack = document.getElementById('btn-attack');
+            if (btnAttack) {
+                btnAttack.addEventListener('click', e => { e.stopPropagation(); doAttack(); });
+                btnAttack.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); doAttack(); }, {passive:false});
+            }
+            const btnJump = document.getElementById('btn-jump');
+            if (btnJump) {
+                btnJump.addEventListener('click', e => { e.stopPropagation(); doJump(); });
+                btnJump.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); doJump(); }, {passive:false});
+            }
+
+            const danceTypes = ['dance', 'waltz', 'emote'];
+            danceTypes.forEach((type, i) => {
+                const btn = document.getElementById('btn-dance' + (i+1));
+                if (btn) {
+                    btn.addEventListener('click', e => { e.stopPropagation(); playDance(type); });
+                    btn.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); playDance(type); }, {passive:false});
                 }
-            } catch (e) {}
-            return null;
+            });
         }
 
-        function openProfileModal(chatId) {
-            if (!chatId || !chats[chatId]) {
-                alert("Выберите чат для просмотра профиля.");
-                return;
-            }
-            const chat = chats[chatId];
-            
-            document.getElementById('profile-modal-name').innerText = chat.name;
-            document.getElementById('profile-modal-username').innerText = chat.username ? `@${chat.username}` : '—';
-            document.getElementById('profile-modal-id').innerText = chat.id;
-            document.getElementById('profile-modal-type').innerText = chat.type;
-
-            updateAvatarUI(chat.id, chat.name, 'profile-modal-avatar');
-
-            document.getElementById('profile-modal').classList.add('active');
-        }
-
-        function closeProfileModal() {
-            document.getElementById('profile-modal').classList.remove('active');
-        }
-
-        function openMediaViewer(url, type) {
-            const viewerModal = document.getElementById('media-viewer-modal');
-            const imgEl = document.getElementById('media-viewer-img');
-            const videoEl = document.getElementById('media-viewer-video');
-            
-            imgEl.style.display = 'none';
-            videoEl.style.display = 'none';
-            videoEl.pause();
-
-            if (type === 'photo') {
-                imgEl.src = url;
-                imgEl.style.display = 'block';
-            } else if (type === 'video') {
-                videoEl.src = url;
-                videoEl.style.display = 'block';
-                videoEl.play();
-            }
-            viewerModal.classList.add('active');
-        }
-
-        function closeMediaViewer() {
-            const viewerModal = document.getElementById('media-viewer-modal');
-            const videoEl = document.getElementById('media-viewer-video');
-            if (videoEl.style.display === 'block') {
-                videoEl.pause();
-                videoEl.currentTime = 0;
-            }
-            viewerModal.classList.remove('active');
-        }
-
-        function getPastelColor(id) {
-            const colors = ['#e57373', '#f06292', '#ba68c8', '#9575cd', '#7986cb', '#64b5f6', '#4fc3f7', '#4dd0e1', '#4db6ac', '#81c784'];
-            return colors[Math.abs(id) % colors.length];
-        }
-
-        function escapeHtml(text) {
-            if (!text) return "";
-            return text.replace(/[&<>'"/]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;', '/': '&#x2F;' // Добавлен / для большей безопасности
-            }[tag] || tag));
-        }
-
-        function handleInputKey(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendBotMessage();
-            }
-            adjustTextareaHeight();
-        }
-
-        function createNewFolder() {
-            const name = prompt("Название новой папки:");
-            if (name && name.trim()) {
-                alert("Папка \"" + name.trim() + "\" создана! (функционал фильтрации по папкам будет в следующем обновлении)");
-            }
-        }
-
-        function backToSidebar() {
-            document.body.classList.remove('chat-opened');
-            document.getElementById('chat-window-pane').classList.remove('active');
-            currentChatId = null;
-        }
-
-        // Загрузка всей истории сообщений бота (со старта)
-        async function fetchBotHistory() {
-            try {
-                let offset = 0;
-                let allUpdates = [];
-                let hasMore = true;
-
-                // Загружаем пачками по 100
-                while (hasMore && allUpdates.length < 5000) { // Ограничение на 5000 обновлений для производительности
-                    const resp = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?offset=${offset}&limit=100`);
-                    const data = await resp.json();
-
-                    if (!data.ok || data.result.length === 0) {
-                        hasMore = false;
-                        break;
-                    }
-
-                    for (const update of data.result) {
-                        if (update.message) {
-                            processIncomingMessage(update.message);
-                        } else if (update.edited_message) {
-                            processEditedMessage(update.edited_message);
-                        } else if (update.channel_post) {
-                            processIncomingMessage(update.channel_post);
-                        }
-                        lastUpdateId = Math.max(lastUpdateId, update.update_id + 1);
-                    }
-
-                    allUpdates = allUpdates.concat(data.result);
-                    offset = data.result[data.result.length - 1].update_id + 1;
-                }
-
-                renderChats();
-                if (currentChatId) renderMessages();
-                saveState();
-                console.log(`История загружена: ${allUpdates.length} обновлений, ${Object.keys(chats).length} чатов`);
-            } catch (e) {
-                console.error('Ошибка загрузки истории:', e);
-            }
-        }
+        window.onload = function() {
+            setupAllButtons();
+            init3D();
+        };
     </script>
 </body>
 </html>
