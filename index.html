@@ -1253,8 +1253,12 @@
 
         function setupPresence(uid) {
             const userStatusRef = rtdb.ref(`users/${uid}/lastSeen`);
-            
-            // Set online / formatted time
+            const presenceRef = rtdb.ref(`presence/${uid}`);
+
+            // Set online
+            presenceRef.set(true);
+
+            // Set last seen time
             function updateTime() {
                 userStatusRef.set(getFormattedTime());
             }
@@ -1262,10 +1266,10 @@
             if (presenceInterval) clearInterval(presenceInterval);
             presenceInterval = setInterval(updateTime, 60000);
 
-            // On disconnect
-            rtdb.ref(`users/${uid}/lastSeen`).onDisconnect().set(getFormattedTime());
+            // On disconnect: offline + last seen
+            presenceRef.onDisconnect().set(false);
+            userStatusRef.onDisconnect().set(getFormattedTime());
         }
-
         function getFormattedTime() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -1417,11 +1421,19 @@
                 avatarEl.innerText = peerName.charAt(0).toUpperCase();
             }
 
-            // Listen peer last seen & status
-            rtdb.ref(`users/${peerUid}/lastSeen`).on('value', snap => {
+            // Real-time online status + last seen fallback
+            rtdb.ref(`presence/${peerUid}`).on('value', snap => {
                 const statusEl = document.getElementById('room-status');
-                if (snap.exists()) {
-                    statusEl.innerText = `был(а) в ${snap.val()}`;
+                if (snap.val() === true) {
+                    statusEl.innerText = "в сети";
+                    statusEl.style.color = "#4faeff";
+                } else {
+                    rtdb.ref(`users/${peerUid}/lastSeen`).once('value', ls => {
+                        if (ls.exists()) {
+                            statusEl.innerText = `был(а) в ${ls.val()}`;
+                            statusEl.style.color = "#7f91a8";
+                        }
+                    });
                 }
             });
 
@@ -1471,19 +1483,12 @@
                 const metadata = { type: type, sender: currentUser.uid, ts: Date.now() };
                 const encrypted = await encryptMessage(sharedKey, contentBase64, metadata);
 
-                // Self-destruct timer
-                let selfDestruct = null;
-                if (selfDestructMinutes > 0) {
-                    selfDestruct = Date.now() + selfDestructMinutes * 60 * 1000;
-                }
-
                 const msgData = {
                     sender: currentUser.uid,  // нужно для RTDB routing, но дублируется в meta
                     encryptedData: encrypted,
                     time: getFormattedTime(),
                     timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    v: 2,
-                    selfDestruct: selfDestruct
+                    v: 2
                 };
 
                 await rtdb.ref(`chats/${activeChatId}/messages`).push(msgData);
@@ -1507,165 +1512,210 @@
         function loadMessages(chatId, peerUid) {
             const container = document.getElementById('messages-container');
             container.innerHTML = '';
+            const processedMsgs = new Set();
+            let sharedKey = null;
 
-            const msgsRef = rtdb.ref(`chats/${chatId}/messages`);
-            messagesListenerRef = msgsRef.on('value', async snapshot => {
-                container.innerHTML = '';
-                if (!snapshot.exists()) return;
-
-                let sharedKey = null;
+            (async () => {
                 try {
                     const myKey = await getOrCreateKeyPair(currentUser.uid);
                     const peerPubSnap = await rtdb.ref(`users/${peerUid}/pubKey`).once('value');
                     if (peerPubSnap.exists()) {
                         sharedKey = await deriveSharedKey(myKey.privateKey, peerPubSnap.val());
                     }
-                } catch(e) {
-                    console.error("Key derivation failed", e);
+                } catch(e) { console.error("Key derivation failed", e); }
+            })();
+
+            const msgsRef = rtdb.ref(`chats/${chatId}/messages`);
+
+            msgsRef.on('child_added', async snap => {
+                const msgKey = snap.key;
+                const msg = snap.val();
+                if (processedMsgs.has(msgKey)) return;
+                processedMsgs.add(msgKey);
+                if (msg.deletedFor && msg.deletedFor[currentUser.uid]) return;
+                if (msg.autoDeleteAt && msg.autoDeleteAt < Date.now()) {
+                    await rtdb.ref(`chats/${chatId}/messages/${msgKey}`).remove();
+                    return;
                 }
-
-                const msgs = snapshot.val();
-                for (const msgKey in msgs) {
-                    const msg = msgs[msgKey];
-
-                    if (msg.deletedFor && msg.deletedFor[currentUser.uid]) continue;
-
-                    // Self-destruct check
-                    if (msg.selfDestruct && msg.selfDestruct < Date.now()) {
-                        await rtdb.ref(`chats/${chatId}/messages/${msgKey}`).remove();
-                        continue;
-                    }
-
-                    const isOutgoing = msg.sender === currentUser.uid;
-                    const bubble = document.createElement('div');
-                    bubble.className = `message-bubble ${isOutgoing ? 'outgoing' : 'incoming'}`;
-                    bubble.oncontextmenu = (e) => {
-                        e.preventDefault();
-                        showDeleteMessageModal(chatId, msgKey, isOutgoing);
-                    };
-
-                    if (msg.deletedForEveryone) {
-                        const delSpan = document.createElement('span');
-                        delSpan.style.fontStyle = 'italic';
-                        delSpan.style.color = '#879ab0';
-                        delSpan.textContent = 'Сообщение удалено';
-                        bubble.appendChild(delSpan);
-
-                        const footer = document.createElement('div');
-                        footer.className = 'message-footer';
-                        const timeSpan = document.createElement('span');
-                        timeSpan.className = 'message-time';
-                        timeSpan.textContent = msg.time;
-                        footer.appendChild(timeSpan);
-                        bubble.appendChild(footer);
-                    } else {
-                        let decryptedText = '';
-                        let msgType = msg.type || 'text';
-                        let decryptedMeta = null;
-
-                        if (msg.v === 2 && msg.encryptedData && sharedKey) {
-                            const result = await decryptMessage(sharedKey, msg.encryptedData);
-                            decryptedText = result.text;
-                            decryptedMeta = result.meta;
-                            if (decryptedMeta) msgType = decryptedMeta.type || 'text';
-                        } else if (msg.encryptedData && sharedKey) {
-                            decryptedText = await decryptMessageLegacy(sharedKey, msg.encryptedData);
-                        }
-
-                        // Build DOM safely — NO innerHTML for user data!
-                        let contentEl;
-                        if (msgType === 'text') {
-                            contentEl = document.createElement('span');
-                            contentEl.textContent = decryptedText;
-                        } else if (msgType === 'image') {
-                            contentEl = document.createElement('img');
-                            contentEl.src = decryptedText;
-                            contentEl.className = 'message-media';
-                            contentEl.style.cursor = 'pointer';
-                            contentEl.onclick = () => openMediaViewer(decryptedText, 'image');
-                        } else if (msgType === 'video') {
-                            contentEl = document.createElement('video');
-                            contentEl.src = decryptedText;
-                            contentEl.className = 'message-media';
-                            contentEl.controls = true;
-                        } else if (msgType === 'voice') {
-                            contentEl = document.createElement('div');
-                            contentEl.className = 'voice-player';
-                            contentEl.innerHTML = `
-                                <button class="play-btn">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                                </button>
-                                <div class="voice-wave">
-                                    <div class="wave-bar"></div><div class="wave-bar" style="height:20px"></div><div class="wave-bar" style="height:16px"></div><div class="wave-bar" style="height:24px"></div><div class="wave-bar" style="height:10px"></div>
-                                </div>
-                            `;
-                            const playBtn = contentEl.querySelector('.play-btn');
-                            playBtn.onclick = () => playVoiceMessage(playBtn, decryptedText);
-                        } else if (msgType === 'round') {
-                            contentEl = document.createElement('video');
-                            contentEl.src = decryptedText;
-                            contentEl.className = 'round-video';
-                            contentEl.autoplay = true;
-                            contentEl.loop = true;
-                            contentEl.muted = true;
-                            contentEl.playsInline = true;
-                            contentEl.onclick = function() { this.paused ? this.play() : this.pause(); };
-                        } else {
-                            contentEl = document.createElement('span');
-                            contentEl.textContent = decryptedText;
-                        }
-
-                        bubble.appendChild(contentEl);
-
-                        const footer = document.createElement('div');
-                        footer.className = 'message-footer';
-
-                        const timeSpan = document.createElement('span');
-                        timeSpan.className = 'message-time';
-                        timeSpan.textContent = msg.time;
-                        footer.appendChild(timeSpan);
-
-                        if (isOutgoing) {
-                            const checkSpan = document.createElement('span');
-                            checkSpan.style.color = '#4faeff';
-                            checkSpan.style.fontSize = '12px';
-                            checkSpan.textContent = '✓✓';
-                            footer.appendChild(checkSpan);
-                        }
-
-                        if (msg.selfDestruct) {
-                            const timerSpan = document.createElement('span');
-                            timerSpan.style.fontSize = '11px';
-                            timerSpan.style.color = '#fa3838';
-                            const mins = Math.ceil((msg.selfDestruct - Date.now()) / 60000);
-                            timerSpan.textContent = `⏱ ${mins}м`;
-                            footer.appendChild(timerSpan);
-                        }
-
-                        bubble.appendChild(footer);
-                    }
-
-                    container.appendChild(bubble);
+                if (msg.sender !== currentUser.uid && (!msg.readBy || !msg.readBy[currentUser.uid])) {
+                    await rtdb.ref(`chats/${chatId}/messages/${msgKey}/readBy/${currentUser.uid}`).set(true);
+                    await rtdb.ref(`chats/${chatId}/messages/${msgKey}/readAt/${currentUser.uid}`).set(Date.now());
                 }
+                if (msg.readBy && msg.readBy[currentUser.uid] && msg.readBy[peerUid] && !msg.autoDeleteAt) {
+                    await rtdb.ref(`chats/${chatId}/messages/${msgKey}/autoDeleteAt`).set(Date.now() + 10 * 60 * 1000);
+                }
+                if (msg.autoDeleteAt && msg.autoDeleteAt < Date.now()) {
+                    await rtdb.ref(`chats/${chatId}/messages/${msgKey}`).remove();
+                    return;
+                }
+                renderMessage(msgKey, msg, chatId, peerUid, sharedKey, container);
                 container.scrollTop = container.scrollHeight;
+            });
+
+            msgsRef.on('child_changed', async snap => {
+                const msgKey = snap.key;
+                const msg = snap.val();
+                if (msg.autoDeleteAt && msg.autoDeleteAt < Date.now()) {
+                    await rtdb.ref(`chats/${chatId}/messages/${msgKey}`).remove();
+                    return;
+                }
+                const existing = document.getElementById(`msg-${msgKey}`);
+                if (existing) {
+                    existing.remove();
+                    renderMessage(msgKey, msg, chatId, peerUid, sharedKey, container);
+                }
+            });
+
+            msgsRef.on('child_removed', snap => {
+                const msgKey = snap.key;
+                const existing = document.getElementById(`msg-${msgKey}`);
+                if (existing) existing.remove();
+                processedMsgs.delete(msgKey);
             });
         }
 
-        // ---- SELF-DESTRUCT TIMER ----
-        let selfDestructMinutes = 0;
+        async function renderMessage(msgKey, msg, chatId, peerUid, sharedKey, container) {
+            const isOutgoing = msg.sender === currentUser.uid;
+            const existing = document.getElementById(`msg-${msgKey}`);
+            if (existing) existing.remove();
 
-        function setSelfDestruct(minutes) {
-            selfDestructMinutes = minutes;
-            const indicator = document.getElementById('self-destruct-indicator');
-            if (indicator) {
-                if (minutes > 0) {
-                    indicator.textContent = `⏱ ${minutes}м`;
-                    indicator.style.display = 'block';
-                } else {
-                    indicator.style.display = 'none';
-                }
+            const bubble = document.createElement('div');
+            bubble.id = `msg-${msgKey}`;
+            bubble.className = `message-bubble ${isOutgoing ? 'outgoing' : 'incoming'}`;
+            bubble.oncontextmenu = (e) => {
+                e.preventDefault();
+                showDeleteMessageModal(chatId, msgKey, isOutgoing);
+            };
+
+            if (msg.deletedForEveryone) {
+                const delSpan = document.createElement('span');
+                delSpan.style.fontStyle = 'italic';
+                delSpan.style.color = '#879ab0';
+                delSpan.textContent = 'Сообщение удалено';
+                bubble.appendChild(delSpan);
+                const footer = document.createElement('div');
+                footer.className = 'message-footer';
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'message-time';
+                timeSpan.textContent = msg.time;
+                footer.appendChild(timeSpan);
+                bubble.appendChild(footer);
+                container.appendChild(bubble);
+                return;
             }
+
+            let decryptedText = '';
+            let msgType = 'text';
+            let decryptedMeta = null;
+
+            if (msg.v === 2 && msg.encryptedData && sharedKey) {
+                const result = await decryptMessage(sharedKey, msg.encryptedData);
+                decryptedText = result.text;
+                decryptedMeta = result.meta;
+                if (decryptedMeta) msgType = decryptedMeta.type || 'text';
+            } else if (msg.encryptedData && sharedKey) {
+                decryptedText = await decryptMessageLegacy(sharedKey, msg.encryptedData);
+            }
+
+            let contentEl;
+            if (msgType === 'text') {
+                contentEl = document.createElement('span');
+                contentEl.textContent = decryptedText;
+            } else if (msgType === 'image') {
+                const link = document.createElement('a');
+                link.href = decryptedText;
+                link.download = `photo_${msgKey.slice(-8)}.jpg`;
+                link.style.display = 'block';
+                link.style.textDecoration = 'none';
+                contentEl = document.createElement('img');
+                contentEl.src = decryptedText;
+                contentEl.className = 'message-media';
+                contentEl.style.display = 'block';
+                contentEl.onclick = (e) => { e.preventDefault(); openMediaViewer(decryptedText, 'image'); };
+                link.appendChild(contentEl);
+                contentEl = link;
+            } else if (msgType === 'video') {
+                const link = document.createElement('a');
+                link.href = decryptedText;
+                link.download = `video_${msgKey.slice(-8)}.mp4`;
+                link.style.display = 'block';
+                link.style.textDecoration = 'none';
+                contentEl = document.createElement('video');
+                contentEl.src = decryptedText;
+                contentEl.className = 'message-media';
+                contentEl.controls = true;
+                contentEl.preload = 'metadata';
+                contentEl.playsInline = true;
+                link.appendChild(contentEl);
+                contentEl = link;
+            } else if (msgType === 'voice') {
+                contentEl = document.createElement('div');
+                contentEl.className = 'voice-player';
+                contentEl.innerHTML = `<button class="play-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button><div class="voice-wave"><div class="wave-bar"></div><div class="wave-bar" style="height:20px"></div><div class="wave-bar" style="height:16px"></div><div class="wave-bar" style="height:24px"></div><div class="wave-bar" style="height:10px"></div></div>`;
+                const playBtn = contentEl.querySelector('.play-btn');
+                playBtn.onclick = () => playVoiceMessage(playBtn, decryptedText);
+            } else if (msgType === 'round') {
+                const link = document.createElement('a');
+                link.href = decryptedText;
+                link.download = `round_${msgKey.slice(-8)}.mp4`;
+                link.style.display = 'block';
+                link.style.textDecoration = 'none';
+                contentEl = document.createElement('video');
+                contentEl.src = decryptedText;
+                contentEl.className = 'round-video';
+                contentEl.autoplay = true;
+                contentEl.loop = true;
+                contentEl.muted = true;
+                contentEl.playsInline = true;
+                contentEl.controls = true;
+                contentEl.preload = 'auto';
+                link.appendChild(contentEl);
+                contentEl = link;
+            } else {
+                contentEl = document.createElement('span');
+                contentEl.textContent = decryptedText;
+            }
+
+            bubble.appendChild(contentEl);
+
+            const footer = document.createElement('div');
+            footer.className = 'message-footer';
+
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'message-time';
+            timeSpan.textContent = msg.time;
+            footer.appendChild(timeSpan);
+
+            if (isOutgoing) {
+                const readStatus = document.createElement('span');
+                readStatus.style.fontSize = '12px';
+                readStatus.style.marginLeft = '4px';
+                const peerRead = msg.readBy && msg.readBy[peerUid];
+                if (peerRead) {
+                    readStatus.style.color = '#4faeff';
+                    readStatus.textContent = '✓✓';
+                } else {
+                    readStatus.style.color = '#7f91a8';
+                    readStatus.textContent = '✓✓';
+                }
+                footer.appendChild(readStatus);
+            }
+
+            if (msg.autoDeleteAt) {
+                const timerSpan = document.createElement('span');
+                timerSpan.style.fontSize = '11px';
+                timerSpan.style.color = '#fa3838';
+                timerSpan.style.marginLeft = '4px';
+                const mins = Math.ceil((msg.autoDeleteAt - Date.now()) / 60000);
+                timerSpan.textContent = `⏱ ${mins}м`;
+                footer.appendChild(timerSpan);
+            }
+
+            bubble.appendChild(footer);
+            container.appendChild(bubble);
         }
+
+        
 
         // ---- SECURE DIALOG PREVIEW (XSS-safe) ----
         async function listenChatLastMessage(chatId, myUid, peerUid) {
@@ -1729,43 +1779,6 @@
                 }
             });
         }
-
-        // ---- ANTI-SCREENSHOT / ANTI-SHOULDER-SURFING ----
-        function injectSecurityCSS() {
-            const style = document.createElement('style');
-            style.textContent = `
-                #messenger-screen {
-                    -webkit-user-select: none;
-                    user-select: none;
-                }
-                .chat-input, .input-field {
-                    -webkit-user-select: text;
-                    user-select: text;
-                }
-                body:not(:focus-within) #messenger-screen {
-                    filter: blur(12px);
-                    transition: filter 0.3s;
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        injectSecurityCSS();
-
-        // ---- TAB TITLE SECURITY ----
-        const originalTitle = document.title;
-        window.addEventListener('blur', () => { document.title = '🔒 Заблокировано'; });
-        window.addEventListener('focus', () => { document.title = originalTitle; });
-
-        // ---- AUTO-LOCK ON TAB HIDE ----
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                setTimeout(() => {
-                    if (document.hidden && document.getElementById('messenger-screen').style.display !== 'none') {
-                        lockToCalculator();
-                    }
-                }, 5000);
-            }
-        });
 
         // ---- ATTACH MENU (with self-destruct option) ----
         function toggleAttachMenu(e) {
