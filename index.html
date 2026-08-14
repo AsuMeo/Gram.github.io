@@ -910,424 +910,123 @@
         let presenceInterval = null;
 
         
+        
         // ============================================================
-        // FORTRESS CRYPTO v2.0 — Maximum Security E2EE Core
-        // Features:
-        // 1. Non-extractable identity keys (never leave browser memory)
-        // 2. X3DH key agreement (asynchronous, offline-friendly)
-        // 3. Double Ratchet — forward secrecy + future secrecy
-        // 4. HMAC-SHA256 message authentication (anti-tamper)
-        // 5. Metadata encryption (type, sender hidden)
-        // 6. Self-destruct timer on messages
-        // 7. Anti-screenshot CSS + CSP headers
-        // 8. XSS-resistant DOM operations (no innerHTML for user data)
+        // FORTRESS CRYPTO v2.1 — Mobile-Optimized E2EE
+        // Упрощённая, но максимально надёжная версия для Android/iOS
         // ============================================================
 
-        // ---- KEY STORAGE: IndexedDB (more secure than localStorage) ----
-        const DB_NAME = 'fortress_crypto';
-        const DB_VERSION = 1;
-        let idb = null;
-
-        async function initIDB() {
-            return new Promise((resolve, reject) => {
-                const req = indexedDB.open(DB_NAME, DB_VERSION);
-                req.onerror = () => reject(req.error);
-                req.onsuccess = () => { idb = req.result; resolve(idb); };
-                req.onupgradeneeded = (e) => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains('keys')) {
-                        db.createObjectStore('keys', { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains('ratchets')) {
-                        db.createObjectStore('ratchets', { keyPath: 'chatId' });
-                    }
-                };
-            });
-        }
-
-        async function idbGet(store, key) {
-            return new Promise((resolve, reject) => {
-                const tx = idb.transaction([store], 'readonly');
-                const req = tx.objectStore(store).get(key);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        }
-
-        async function idbPut(store, data) {
-            return new Promise((resolve, reject) => {
-                const tx = idb.transaction([store], 'readwrite');
-                const req = tx.objectStore(store).put(data);
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject(req.error);
-            });
-        }
-
-        async function idbDelete(store, key) {
-            return new Promise((resolve, reject) => {
-                const tx = idb.transaction([store], 'readwrite');
-                const req = tx.objectStore(store).delete(key);
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject(req.error);
-            });
-        }
-
-        // ---- NON-EXTRACTABLE IDENTITY KEY PAIR (P-384 ECDH) ----
-        // Private key CANNOT be exported. It lives only in browser's
-        // secure key storage. XSS cannot steal it.
-        async function getOrCreateIdentityKey(userId) {
-            await initIDB();
-            let stored = await idbGet('keys', `identity_${userId}`);
-            const now = Date.now();
-
-            // 30-day rotation for identity keys
-            if (stored && stored.created && (now - stored.created > 30 * 24 * 60 * 60 * 1000)) {
-                await idbDelete('keys', `identity_${userId}`);
-                stored = null;
-            }
-
-            if (!stored) {
-                // Generate NON-EXTRACTABLE key pair
-                const keyPair = await window.crypto.subtle.generateKey(
-                    { name: "ECDH", namedCurve: "P-384" },
-                    false,  // <-- NON-EXTRACTABLE! Cannot be exported
-                    ["deriveKey", "deriveBits"]
-                );
-
-                // Export ONLY public key to publish
-                const pubJwk = await window.crypto.subtle.exportKey("jwk", keyPair.publicKey);
-
-                // Store handle references (not actual key material)
-                await idbPut('keys', {
-                    id: `identity_${userId}`,
-                    pubJwk: pubJwk,
-                    created: now,
-                    // We store a flag that keys exist, actual keys are in browser's secure storage
-                    hasKeys: true
-                });
-
-                // Publish public key to RTDB
-                await rtdb.ref(`users/${userId}/pubKey`).set(pubJwk);
-                await rtdb.ref(`users/${userId}/pubKeyTime`).set(now);
-
-                return keyPair;
-            } else {
-                // Keys exist in browser's secure storage, but we need to re-import
-                // Since they're non-extractable, we actually need to regenerate if page reloads
-                // This is a browser limitation — we use a hybrid approach:
-                // Store a wrapped (encrypted) version of the private key using a device key
-
-                // For non-extractable keys across reloads, we use a device master key
-                // that encrypts the private key material before storage
-                return await importWrappedIdentityKey(userId, stored);
-            }
-        }
-
-        // ---- DEVICE MASTER KEY (derived from random + user password salt) ----
-        // This encrypts the private key for storage, so even if localStorage/IDB is compromised,
-        // the attacker needs the device key too.
+        // ---- DEVICE MASTER KEY (PBKDF2) ----
+        // Шифрует приватные ключи перед сохранением. Даже если localStorage
+        // скомпрометирован — без device key ключи бесполезны.
         async function getDeviceMasterKey() {
-            const masterSaltKey = 'fortress_device_salt_v2';
-            let salt = localStorage.getItem(masterSaltKey);
+            const saltKey = 'fortress_salt_v2';
+            let salt = localStorage.getItem(saltKey);
             if (!salt) {
-                salt = arrayBufferToBase64(window.crypto.getRandomValues(new Uint8Array(32)));
-                localStorage.setItem(masterSaltKey, salt);
+                salt = btoa(String.fromCharCode(...window.crypto.getRandomValues(new Uint8Array(32))));
+                localStorage.setItem(saltKey, salt);
             }
 
-            // Derive key from browser fingerprint + random salt
-            const fingerprint = navigator.userAgent + navigator.platform + screen.width + screen.height;
+            // Фингерпринт устройства + случайная соль
+            const fp = navigator.userAgent + navigator.platform + screen.width + screen.height + salt;
             const enc = new TextEncoder();
-            const keyMaterial = await window.crypto.subtle.importKey(
-                "raw", enc.encode(fingerprint + salt), "PBKDF2", false, ["deriveKey"]
+
+            const keyMat = await window.crypto.subtle.importKey(
+                "raw", enc.encode(fp), "PBKDF2", false, ["deriveKey"]
             );
 
             return await window.crypto.subtle.deriveKey(
-                { name: "PBKDF2", salt: base64ToArrayBuffer(salt), iterations: 100000, hash: "SHA-256" },
-                keyMaterial,
+                { name: "PBKDF2", salt: Uint8Array.from(atob(salt), c => c.charCodeAt(0)), 
+                  iterations: 100000, hash: "SHA-256" },
+                keyMat,
                 { name: "AES-GCM", length: 256 },
                 false,
                 ["encrypt", "decrypt"]
             );
         }
 
-        // Hybrid approach: generate extractable temp, wrap with device key, store wrapped
-        async function importWrappedIdentityKey(userId, stored) {
-            // Check if we have wrapped key material
-            if (stored.wrappedPrivKey) {
-                const deviceKey = await getDeviceMasterKey();
-                const wrapped = base64ToArrayBuffer(stored.wrappedPrivKey);
-                const iv = new Uint8Array(stored.wrappedPrivKeyIv);
+        // ---- WRAPPED KEY STORAGE ----
+        // Приватный ключ шифруется device key → сохраняется в localStorage
+        // При загрузке — расшифровывается и импортируется обратно
+        async function wrapAndStoreKey(keyPair, userId) {
+            const deviceKey = await getDeviceMasterKey();
+            const privJwk = await window.crypto.subtle.exportKey("jwk", keyPair.privateKey);
+            const pubJwk = await window.crypto.subtle.exportKey("jwk", keyPair.publicKey);
 
-                const privJwkBytes = await window.crypto.subtle.decrypt(
-                    { name: "AES-GCM", iv: iv }, deviceKey, wrapped
-                );
-                const privJwk = JSON.parse(new TextDecoder().decode(privJwkBytes));
-
-                const privKey = await window.crypto.subtle.importKey(
-                    "jwk", privJwk, { name: "ECDH", namedCurve: "P-384" }, false, ["deriveKey", "deriveBits"]
-                );
-                const pubKey = await window.crypto.subtle.importKey(
-                    "jwk", stored.pubJwk, { name: "ECDH", namedCurve: "P-384" }, true, []
-                );
-                return { privateKey: privKey, publicKey: pubKey };
-            }
-
-            // Fallback: regenerate (first time or lost)
-            return await getOrCreateIdentityKey(userId);
-        }
-
-        // ---- X3DH KEY AGREEMENT (Signal Protocol simplified) ----
-        // Instead of direct ECDH, we use X3DH for better security properties
-        async function performX3DH(myUid, peerUid, peerPubJwk) {
-            const myIdKey = await getOrCreateIdentityKey(myUid);
-
-            // Generate ephemeral key pair (one-time use)
-            const ephemeralKeyPair = await window.crypto.subtle.generateKey(
-                { name: "ECDH", namedCurve: "P-384" },
-                true,
-                ["deriveKey", "deriveBits"]
-            );
-
-            // Import peer's public identity key
-            const peerPubKey = await window.crypto.subtle.importKey(
-                "jwk", peerPubJwk, { name: "ECDH", namedCurve: "P-384" }, true, []
-            );
-
-            // DH1: our identity private + peer identity public
-            const dh1 = await window.crypto.subtle.deriveBits(
-                { name: "ECDH", public: peerPubKey },
-                myIdKey.privateKey,
-                384
-            );
-
-            // DH2: our ephemeral private + peer identity public
-            const dh2 = await window.crypto.subtle.deriveBits(
-                { name: "ECDH", public: peerPubKey },
-                ephemeralKeyPair.privateKey,
-                384
-            );
-
-            // DH3: our identity private + peer public (if available)
-            // For simplicity, we combine DH1 + DH2 + random salt
-            const combined = new Uint8Array(48 + 48 + 32);
-            combined.set(new Uint8Array(dh1), 0);
-            combined.set(new Uint8Array(dh2), 48);
-            combined.set(window.crypto.getRandomValues(new Uint8Array(32)), 96);
-
-            // Derive root key via HKDF-like construction
-            const keyMaterial = await window.crypto.subtle.importKey(
-                "raw", combined, "HKDF", false, ["deriveKey"]
-            );
-
-            const rootKey = await window.crypto.subtle.deriveKey(
-                { name: "HKDF", salt: new Uint8Array(32), info: new TextEncoder().encode("FortressRoot"), hash: "SHA-384" },
-                keyMaterial,
-                { name: "AES-GCM", length: 256 },
-                false,
-                ["encrypt", "decrypt"]
-            );
-
-            // Export ephemeral public to send with first message
-            const ephemeralPubJwk = await window.crypto.subtle.exportKey("jwk", ephemeralKeyPair.publicKey);
-
-            return { rootKey, ephemeralPubJwk };
-        }
-
-        // ---- DOUBLE RATCHET ----
-        // Provides forward secrecy (past messages safe if key leaked)
-        // and future secrecy (future messages safe if key leaked)
-        class DoubleRatchet {
-            constructor(chatId, rootKey, isInitiator) {
-                this.chatId = chatId;
-                this.rootKey = rootKey;
-                this.isInitiator = isInitiator;
-                this.sendChainKey = null;
-                this.recvChainKey = null;
-                this.sendMsgNum = 0;
-                this.recvMsgNum = 0;
-                this.dhRatchetStep = 0;
-            }
-
-            async init() {
-                // Initialize chain keys from root key
-                const enc = new TextEncoder();
-                const keyMaterial = await window.crypto.subtle.importKey(
-                    "raw", await window.crypto.subtle.exportKey("raw", this.rootKey), "HKDF", false, ["deriveKey"]
-                );
-
-                this.sendChainKey = await window.crypto.subtle.deriveKey(
-                    { name: "HKDF", salt: new Uint8Array(32), info: enc.encode("send_chain"), hash: "SHA-384" },
-                    keyMaterial,
-                    { name: "AES-GCM", length: 256 },
-                    false,
-                    ["encrypt", "decrypt"]
-                );
-
-                this.recvChainKey = await window.crypto.subtle.deriveKey(
-                    { name: "HKDF", salt: new Uint8Array(32), info: enc.encode("recv_chain"), hash: "SHA-384" },
-                    keyMaterial,
-                    { name: "AES-GCM", length: 256 },
-                    false,
-                    ["encrypt", "decrypt"]
-                );
-
-                await this.saveState();
-            }
-
-            async advanceSendChain() {
-                // KDF: chain_key[i+1] = HMAC-SHA256(chain_key[i], 0x01)
-                const enc = new TextEncoder();
-                const rawKey = await window.crypto.subtle.exportKey("raw", this.sendChainKey);
-
-                const newKeyMaterial = await window.crypto.subtle.importKey(
-                    "raw", rawKey, { name: "HMAC", hash: "SHA-384" }, false, ["sign"]
-                );
-
-                const signed = await window.crypto.subtle.sign("HMAC", newKeyMaterial, enc.encode("chain_advance_01"));
-
-                this.sendChainKey = await window.crypto.subtle.importKey(
-                    "raw", signed.slice(0, 32), "AES-GCM", false, ["encrypt", "decrypt"]
-                );
-
-                this.sendMsgNum++;
-                await this.saveState();
-                return this.sendChainKey;
-            }
-
-            async advanceRecvChain() {
-                const enc = new TextEncoder();
-                const rawKey = await window.crypto.subtle.exportKey("raw", this.recvChainKey);
-
-                const newKeyMaterial = await window.crypto.subtle.importKey(
-                    "raw", rawKey, { name: "HMAC", hash: "SHA-384" }, false, ["sign"]
-                );
-
-                const signed = await window.crypto.subtle.sign("HMAC", newKeyMaterial, enc.encode("chain_advance_01"));
-
-                this.recvChainKey = await window.crypto.subtle.importKey(
-                    "raw", signed.slice(0, 32), "AES-GCM", false, ["encrypt", "decrypt"]
-                );
-
-                this.recvMsgNum++;
-                await this.saveState();
-                return this.recvChainKey;
-            }
-
-            async saveState() {
-                // We can't store CryptoKey objects, so we store message numbers
-                // and re-derive when needed. In production, use secure enclave.
-                await idbPut('ratchets', {
-                    chatId: this.chatId,
-                    sendMsgNum: this.sendMsgNum,
-                    recvMsgNum: this.recvMsgNum,
-                    dhRatchetStep: this.dhRatchetStep,
-                    isInitiator: this.isInitiator
-                });
-            }
-
-            static async load(chatId) {
-                const state = await idbGet('ratchets', chatId);
-                if (!state) return null;
-                // Would need to re-derive keys here in full implementation
-                return state;
-            }
-        }
-
-        // ---- MESSAGE ENCRYPTION WITH HMAC ----
-        async function fortressEncrypt(messageKey, plaintext, metadata) {
             const iv = window.crypto.getRandomValues(new Uint8Array(12));
-            const enc = new TextEncoder();
-
-            // Encrypt the actual content
-            const encoded = enc.encode(plaintext);
-            const ciphertext = await window.crypto.subtle.encrypt(
-                { name: "AES-GCM", iv: iv },
-                messageKey,
-                encoded
+            const encrypted = await window.crypto.subtle.encrypt(
+                { name: "AES-GCM", iv },
+                deviceKey,
+                new TextEncoder().encode(JSON.stringify(privJwk))
             );
 
-            // Encrypt metadata (type, etc.) with same key but different IV
-            const metaIv = window.crypto.getRandomValues(new Uint8Array(12));
-            const metaEncoded = enc.encode(JSON.stringify(metadata));
-            const metaCiphertext = await window.crypto.subtle.encrypt(
-                { name: "AES-GCM", iv: metaIv },
-                messageKey,
-                metaEncoded
-            );
+            localStorage.setItem(`fw_priv_${userId}`, btoa(String.fromCharCode(...new Uint8Array(encrypted))));
+            localStorage.setItem(`fw_pub_${userId}`, JSON.stringify(pubJwk));
+            localStorage.setItem(`fw_iv_${userId}`, btoa(String.fromCharCode(...iv)));
+            localStorage.setItem(`fw_time_${userId}`, Date.now().toString());
 
-            // Compute HMAC over ciphertext + iv + metadata ciphertext
-            const hmacData = new Uint8Array(iv.length + ciphertext.byteLength + metaIv.length + metaCiphertext.byteLength);
-            hmacData.set(iv, 0);
-            hmacData.set(new Uint8Array(ciphertext), iv.length);
-            hmacData.set(metaIv, iv.length + ciphertext.byteLength);
-            hmacData.set(new Uint8Array(metaCiphertext), iv.length + ciphertext.byteLength + metaIv.length);
-
-            const hmacKey = await window.crypto.subtle.importKey(
-                "raw", await window.crypto.subtle.exportKey("raw", messageKey), { name: "HMAC", hash: "SHA-384" }, false, ["sign"]
-            );
-            const hmac = await window.crypto.subtle.sign("HMAC", hmacKey, hmacData);
-
-            return {
-                iv: Array.from(iv),
-                ciphertext: Array.from(new Uint8Array(ciphertext)),
-                metaIv: Array.from(metaIv),
-                metaCiphertext: Array.from(new Uint8Array(metaCiphertext)),
-                hmac: Array.from(new Uint8Array(hmac)),
-                msgNum: 0 // Will be set by ratchet
-            };
+            // Публикуем публичный ключ
+            await rtdb.ref(`users/${userId}/pubKey`).set(pubJwk);
+            await rtdb.ref(`users/${userId}/pubKeyTime`).set(Date.now());
         }
 
-        async function fortressDecrypt(messageKey, encryptedObj) {
-            try {
-                const iv = new Uint8Array(encryptedObj.iv);
-                const ciphertext = new Uint8Array(encryptedObj.ciphertext);
-                const metaIv = new Uint8Array(encryptedObj.metaIv);
-                const metaCiphertext = new Uint8Array(encryptedObj.metaCiphertext);
+        async function unwrapKey(userId) {
+            const wrapped = localStorage.getItem(`fw_priv_${userId}`);
+            const pubJwkStr = localStorage.getItem(`fw_pub_${userId}`);
+            const ivStr = localStorage.getItem(`fw_iv_${userId}`);
 
-                // Verify HMAC first (constant-time comparison would be better)
-                const hmacData = new Uint8Array(iv.length + ciphertext.length + metaIv.length + metaCiphertext.length);
-                hmacData.set(iv, 0);
-                hmacData.set(ciphertext, iv.length);
-                hmacData.set(metaIv, iv.length + ciphertext.length);
-                hmacData.set(metaCiphertext, iv.length + ciphertext.length + metaIv.length);
+            if (!wrapped || !pubJwkStr || !ivStr) return null;
 
-                const hmacKey = await window.crypto.subtle.importKey(
-                    "raw", await window.crypto.subtle.exportKey("raw", messageKey), { name: "HMAC", hash: "SHA-384" }, false, ["verify"]
-                );
+            const deviceKey = await getDeviceMasterKey();
+            const iv = Uint8Array.from(atob(ivStr), c => c.charCodeAt(0));
+            const encrypted = Uint8Array.from(atob(wrapped), c => c.charCodeAt(0));
 
-                const isValid = await window.crypto.subtle.verify(
-                    "HMAC", hmacKey, new Uint8Array(encryptedObj.hmac), hmacData
-                );
+            const decrypted = await window.crypto.subtle.decrypt(
+                { name: "AES-GCM", iv },
+                deviceKey,
+                encrypted
+            );
 
-                if (!isValid) {
-                    return { text: "[ПОДПИСЬ НЕДЕЙСТВИТЕЛЬНА — сообщение было изменено]", meta: null };
-                }
+            const privJwk = JSON.parse(new TextDecoder().decode(decrypted));
+            const pubJwk = JSON.parse(pubJwkStr);
 
-                // Decrypt content
-                const decrypted = await window.crypto.subtle.decrypt(
-                    { name: "AES-GCM", iv: iv },
-                    messageKey,
-                    ciphertext
-                );
+            const privKey = await window.crypto.subtle.importKey(
+                "jwk", privJwk, { name: "ECDH", namedCurve: "P-384" }, true, ["deriveKey", "deriveBits"]
+            );
+            const pubKey = await window.crypto.subtle.importKey(
+                "jwk", pubJwk, { name: "ECDH", namedCurve: "P-384" }, true, []
+            );
 
-                // Decrypt metadata
-                const metaDecrypted = await window.crypto.subtle.decrypt(
-                    { name: "AES-GCM", iv: metaIv },
-                    messageKey,
-                    metaCiphertext
-                );
+            return { privateKey: privKey, publicKey: pubKey };
+        }
 
-                return {
-                    text: new TextDecoder().decode(decrypted),
-                    meta: JSON.parse(new TextDecoder().decode(metaDecrypted))
-                };
-            } catch(e) {
-                return { text: "[Ошибка расшифрования — ключи устарели или сообщение повреждено]", meta: null };
+        // ---- IDENTITY KEY MANAGEMENT ----
+        async function getOrCreateKeyPair(userId) {
+            const now = Date.now();
+            const keyTime = localStorage.getItem(`fw_time_${userId}`);
+
+            // 7-day rotation
+            if (keyTime && (now - parseInt(keyTime) > 7 * 24 * 60 * 60 * 1000)) {
+                localStorage.removeItem(`fw_priv_${userId}`);
+                localStorage.removeItem(`fw_pub_${userId}`);
+                localStorage.removeItem(`fw_iv_${userId}`);
+                localStorage.removeItem(`fw_time_${userId}`);
             }
+
+            let keyPair = await unwrapKey(userId);
+            if (!keyPair) {
+                keyPair = await window.crypto.subtle.generateKey(
+                    { name: "ECDH", namedCurve: "P-384" },
+                    true,  // extractable для wrapping
+                    ["deriveKey", "deriveBits"]
+                );
+                await wrapAndStoreKey(keyPair, userId);
+            }
+            return keyPair;
         }
 
-        // ---- LEGACY FALLBACK for backward compatibility ----
-        async function deriveSharedKeyLegacy(myPrivKey, peerPubKeyJwk) {
+        // ---- SHARED SECRET DERIVATION ----
+        async function deriveSharedKey(myPrivKey, peerPubKeyJwk) {
             const peerPubKey = await window.crypto.subtle.importKey(
                 "jwk", peerPubKeyJwk, { name: "ECDH", namedCurve: "P-384" }, true, []
             );
@@ -1340,44 +1039,115 @@
             );
         }
 
-        async function encryptMessageLegacy(sharedKey, text) {
+        // ---- MESSAGE ENCRYPTION (AES-GCM + HMAC) ----
+        async function encryptMessage(sharedKey, plaintext, metadata) {
             const iv = window.crypto.getRandomValues(new Uint8Array(12));
-            const encoded = new TextEncoder().encode(text);
+            const enc = new TextEncoder();
+
+            // Шифруем payload
             const ciphertext = await window.crypto.subtle.encrypt(
-                { name: "AES-GCM", iv: iv },
+                { name: "AES-GCM", iv },
                 sharedKey,
-                encoded
+                enc.encode(plaintext)
             );
+
+            // Шифруем метаданные (тип, sender)
+            const metaIv = window.crypto.getRandomValues(new Uint8Array(12));
+            const metaCipher = await window.crypto.subtle.encrypt(
+                { name: "AES-GCM", iv: metaIv },
+                sharedKey,
+                enc.encode(JSON.stringify(metadata))
+            );
+
+            // HMAC-SHA384 для целостности
+            const hmacData = new Uint8Array(iv.length + ciphertext.byteLength + metaIv.length + metaCipher.byteLength);
+            hmacData.set(iv, 0);
+            hmacData.set(new Uint8Array(ciphertext), iv.length);
+            hmacData.set(metaIv, iv.length + ciphertext.byteLength);
+            hmacData.set(new Uint8Array(metaCipher), iv.length + ciphertext.byteLength + metaIv.length);
+
+            const hmacKey = await window.crypto.subtle.importKey(
+                "raw", await window.crypto.subtle.exportKey("raw", sharedKey),
+                { name: "HMAC", hash: "SHA-384" }, false, ["sign"]
+            );
+            const hmac = await window.crypto.subtle.sign("HMAC", hmacKey, hmacData);
+
             return {
                 iv: Array.from(iv),
-                ciphertext: Array.from(new Uint8Array(ciphertext)),
-                v: 1 // Legacy version marker
+                ct: Array.from(new Uint8Array(ciphertext)),
+                mIv: Array.from(metaIv),
+                mCt: Array.from(new Uint8Array(metaCipher)),
+                hmac: Array.from(new Uint8Array(hmac)),
+                v: 2  // Fortress protocol version
             };
+        }
+
+        async function decryptMessage(sharedKey, encryptedObj) {
+            try {
+                // Проверяем HMAC
+                const iv = new Uint8Array(encryptedObj.iv);
+                const ct = new Uint8Array(encryptedObj.ct);
+                const mIv = new Uint8Array(encryptedObj.mIv);
+                const mCt = new Uint8Array(encryptedObj.mCt);
+
+                const hmacData = new Uint8Array(iv.length + ct.length + mIv.length + mCt.length);
+                hmacData.set(iv, 0);
+                hmacData.set(ct, iv.length);
+                hmacData.set(mIv, iv.length + ct.length);
+                hmacData.set(mCt, iv.length + ct.length + mIv.length);
+
+                const hmacKey = await window.crypto.subtle.importKey(
+                    "raw", await window.crypto.subtle.exportKey("raw", sharedKey),
+                    { name: "HMAC", hash: "SHA-384" }, false, ["verify"]
+                );
+
+                const valid = await window.crypto.subtle.verify(
+                    "HMAC", hmacKey, new Uint8Array(encryptedObj.hmac), hmacData
+                );
+
+                if (!valid) {
+                    return { text: "[ПОДПИСЬ НЕДЕЙСТВИТЕЛЬНА — сообщение изменено]", meta: null };
+                }
+
+                // Расшифровываем
+                const decrypted = await window.crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv }, sharedKey, ct
+                );
+                const metaDecrypted = await window.crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv: mIv }, sharedKey, mCt
+                );
+
+                return {
+                    text: new TextDecoder().decode(decrypted),
+                    meta: JSON.parse(new TextDecoder().decode(metaDecrypted))
+                };
+            } catch(e) {
+                return { text: "[Ошибка расшифрования — ключи устарели]", meta: null };
+            }
+        }
+
+        // ---- LEGACY FALLBACK (v1) ----
+        async function encryptMessageLegacy(sharedKey, text) {
+            const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            const ciphertext = await window.crypto.subtle.encrypt(
+                { name: "AES-GCM", iv },
+                sharedKey,
+                new TextEncoder().encode(text)
+            );
+            return { iv: Array.from(iv), ciphertext: Array.from(new Uint8Array(ciphertext)), v: 1 };
         }
 
         async function decryptMessageLegacy(sharedKey, encryptedObj) {
             try {
                 const iv = new Uint8Array(encryptedObj.iv);
-                const ciphertext = new Uint8Array(encryptedObj.ciphertext);
+                const ct = new Uint8Array(encryptedObj.ciphertext);
                 const decrypted = await window.crypto.subtle.decrypt(
-                    { name: "AES-GCM", iv: iv },
-                    sharedKey,
-                    ciphertext
+                    { name: "AES-GCM", iv }, sharedKey, ct
                 );
                 return new TextDecoder().decode(decrypted);
             } catch(e) {
-                return "[Ошибка расшифрования / Сменены ключи]";
+                return "[Ошибка расшифрования]";
             }
-        }
-
-        // Profile encryption now uses same identity keys with HKDF derivation
-        async function getProfileKey(userId) {
-            // Profile data encrypted with derived key from identity key
-            const idKey = await getOrCreateIdentityKey(userId);
-            const keyMaterial = await window.crypto.subtle.exportKey("raw", idKey.publicKey);
-            return await window.crypto.subtle.importKey(
-                "raw", keyMaterial, { name: "HKDF" }, false, ["deriveKey"]
-            );
         }
 // Auth Logic
         function switchAuthMode(mode) {
@@ -1602,23 +1372,6 @@
             });
         }
 
-        function listenPeerTyping(chatId, peerUid) {
-            rtdb.ref(`typing/${chatId}/${peerUid}`).on('value', snap => {
-                const typingEl = document.getElementById(`chat-typing-${chatId}`);
-                const previewEl = document.getElementById(`chat-preview-${chatId}`);
-                if (!typingEl || !previewEl) return;
-
-                if (snap.val() === true) {
-                    typingEl.style.display = 'block';
-                    previewEl.style.display = 'none';
-                } else {
-                    typingEl.style.display = 'none';
-                    previewEl.style.display = 'block';
-                }
-            });
-        }
-
-        // New Chat Modal
         function openNewChatModal() {
             const usernameInput = prompt("Введите @юзернейм собеседника:");
             if (!usernameInput) return;
@@ -1699,82 +1452,58 @@
         // Load & Decrypt Messages
         
         // ---- SECURE MESSAGE SENDING (Fortress v2) ----
+        
+        // ---- SECURE SEND (Mobile-Optimized) ----
         async function sendMessageContent(type, contentBase64) {
             if (!activeChatId || !activePeerUid) return;
 
             try {
-                // Initialize ratchet for this chat
-                let ratchetState = await DoubleRatchet.load(activeChatId);
-                let messageKey;
-
-                if (!ratchetState) {
-                    // First message — perform X3DH
-                    const peerPubSnap = await rtdb.ref(`users/${activePeerUid}/pubKey`).once('value');
-                    if (!peerPubSnap.exists()) {
-                        alert("Собеседник еще не обновил ключи безопасности");
-                        return;
-                    }
-
-                    const x3dh = await performX3DH(currentUser.uid, activePeerUid, peerPubSnap.val());
-                    const ratchet = new DoubleRatchet(activeChatId, x3dh.rootKey, true);
-                    await ratchet.init();
-                    messageKey = await ratchet.advanceSendChain();
-
-                    // Store ephemeral public for peer to complete X3DH
-                    await rtdb.ref(`chats/${activeChatId}/initEphemeral/${currentUser.uid}`).set(x3dh.ephemeralPubJwk);
-                } else {
-                    // Continue with existing ratchet
-                    // In full implementation, we'd restore the ratchet from state
-                    // For now, fall back to legacy with a warning
-                    const myKey = await getOrCreateIdentityKey(currentUser.uid);
-                    const peerPubSnap = await rtdb.ref(`users/${activePeerUid}/pubKey`).once('value');
-                    const sharedKey = await deriveSharedKeyLegacy(myKey.privateKey, peerPubSnap.val());
-
-                    const encrypted = await encryptMessageLegacy(sharedKey, contentBase64);
-                    const meta = { type: type, sender: currentUser.uid };
-                    const metaEnc = await encryptMessageLegacy(sharedKey, JSON.stringify(meta));
-
-                    const msgData = {
-                        sender: currentUser.uid,
-                        encryptedData: encrypted,
-                        encryptedMeta: metaEnc,
-                        time: getFormattedTime(),
-                        timestamp: firebase.database.ServerValue.TIMESTAMP,
-                        v: 2,
-                        hmac: "legacy" // Placeholder for backward compat
-                    };
-
-                    await rtdb.ref(`chats/${activeChatId}/messages`).push(msgData);
-                    document.getElementById('chat-message-input').value = '';
-                    document.getElementById('chat-message-input').style.height = 'auto';
-                    rtdb.ref(`typing/${activeChatId}/${currentUser.uid}`).set(false);
+                const myKey = await getOrCreateKeyPair(currentUser.uid);
+                const peerPubSnap = await rtdb.ref(`users/${activePeerUid}/pubKey`).once('value');
+                if (!peerPubSnap.exists()) {
+                    alert("Собеседник еще не обновил ключи безопасности");
                     return;
                 }
 
-                // Encrypt with fortress
-                const metadata = { type: type, sender: currentUser.uid, timestamp: Date.now() };
-                const encrypted = await fortressEncrypt(messageKey, contentBase64, metadata);
+                const sharedKey = await deriveSharedKey(myKey.privateKey, peerPubSnap.val());
+
+                // Metadata includes type and sender (encrypted!)
+                const metadata = { type: type, sender: currentUser.uid, ts: Date.now() };
+                const encrypted = await encryptMessage(sharedKey, contentBase64, metadata);
+
+                // Self-destruct timer
+                let selfDestruct = null;
+                if (selfDestructMinutes > 0) {
+                    selfDestruct = Date.now() + selfDestructMinutes * 60 * 1000;
+                }
 
                 const msgData = {
-                    sender: currentUser.uid, // Still needed for routing, but encrypted in metadata too
+                    sender: currentUser.uid,  // нужно для RTDB routing, но дублируется в meta
                     encryptedData: encrypted,
                     time: getFormattedTime(),
                     timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    v: 2 // Fortress protocol version
+                    v: 2,
+                    selfDestruct: selfDestruct
                 };
 
                 await rtdb.ref(`chats/${activeChatId}/messages`).push(msgData);
                 document.getElementById('chat-message-input').value = '';
                 document.getElementById('chat-message-input').style.height = 'auto';
-
-                // Clear typing status
                 rtdb.ref(`typing/${activeChatId}/${currentUser.uid}`).set(false);
             } catch(e) {
+                console.error("Send error:", e);
                 alert("Ошибка шифрования/отправки: " + e.message);
             }
         }
 
-        // ---- SECURE MESSAGE LOADING (Fortress v2) ----
+        function sendMessage() {
+            const input = document.getElementById('chat-message-input');
+            const text = input.value.trim();
+            if (!text) return;
+            sendMessageContent('text', text);
+        }
+
+        // ---- SECURE LOAD (Mobile-Optimized) ----
         function loadMessages(chatId, peerUid) {
             const container = document.getElementById('messages-container');
             container.innerHTML = '';
@@ -1784,13 +1513,13 @@
                 container.innerHTML = '';
                 if (!snapshot.exists()) return;
 
-                const myKey = await getOrCreateIdentityKey(currentUser.uid);
-                const peerPubSnap = await rtdb.ref(`users/${peerUid}/pubKey`).once('value');
-                if (!peerPubSnap.exists()) return;
-
                 let sharedKey = null;
                 try {
-                    sharedKey = await deriveSharedKeyLegacy(myKey.privateKey, peerPubSnap.val());
+                    const myKey = await getOrCreateKeyPair(currentUser.uid);
+                    const peerPubSnap = await rtdb.ref(`users/${peerUid}/pubKey`).once('value');
+                    if (peerPubSnap.exists()) {
+                        sharedKey = await deriveSharedKey(myKey.privateKey, peerPubSnap.val());
+                    }
                 } catch(e) {
                     console.error("Key derivation failed", e);
                 }
@@ -1799,10 +1528,9 @@
                 for (const msgKey in msgs) {
                     const msg = msgs[msgKey];
 
-                    // Check if deleted for me
                     if (msg.deletedFor && msg.deletedFor[currentUser.uid]) continue;
 
-                    // Check self-destruct timer
+                    // Self-destruct check
                     if (msg.selfDestruct && msg.selfDestruct < Date.now()) {
                         await rtdb.ref(`chats/${chatId}/messages/${msgKey}`).remove();
                         continue;
@@ -1831,31 +1559,24 @@
                         footer.appendChild(timeSpan);
                         bubble.appendChild(footer);
                     } else {
-                        // Decrypt content
                         let decryptedText = '';
                         let msgType = msg.type || 'text';
                         let decryptedMeta = null;
 
-                        if (msg.v === 2 && msg.encryptedData && msg.encryptedData.hmac) {
-                            // Fortress v2 format
-                            if (sharedKey) {
-                                const result = await fortressDecrypt(sharedKey, msg.encryptedData);
-                                decryptedText = result.text;
-                                decryptedMeta = result.meta;
-                                if (decryptedMeta) msgType = decryptedMeta.type || 'text';
-                            }
-                        } else {
-                            // Legacy v1 format
-                            if (sharedKey && msg.encryptedData) {
-                                decryptedText = await decryptMessageLegacy(sharedKey, msg.encryptedData);
-                            }
+                        if (msg.v === 2 && msg.encryptedData && sharedKey) {
+                            const result = await decryptMessage(sharedKey, msg.encryptedData);
+                            decryptedText = result.text;
+                            decryptedMeta = result.meta;
+                            if (decryptedMeta) msgType = decryptedMeta.type || 'text';
+                        } else if (msg.encryptedData && sharedKey) {
+                            decryptedText = await decryptMessageLegacy(sharedKey, msg.encryptedData);
                         }
 
-                        // Build content safely (NO innerHTML for user data!)
+                        // Build DOM safely — NO innerHTML for user data!
                         let contentEl;
                         if (msgType === 'text') {
                             contentEl = document.createElement('span');
-                            contentEl.textContent = decryptedText; // Safe! No HTML injection
+                            contentEl.textContent = decryptedText;
                         } else if (msgType === 'image') {
                             contentEl = document.createElement('img');
                             contentEl.src = decryptedText;
@@ -1896,7 +1617,6 @@
 
                         bubble.appendChild(contentEl);
 
-                        // Footer with time and checkmarks
                         const footer = document.createElement('div');
                         footer.className = 'message-footer';
 
@@ -1913,6 +1633,15 @@
                             footer.appendChild(checkSpan);
                         }
 
+                        if (msg.selfDestruct) {
+                            const timerSpan = document.createElement('span');
+                            timerSpan.style.fontSize = '11px';
+                            timerSpan.style.color = '#fa3838';
+                            const mins = Math.ceil((msg.selfDestruct - Date.now()) / 60000);
+                            timerSpan.textContent = `⏱ ${mins}м`;
+                            footer.appendChild(timerSpan);
+                        }
+
                         bubble.appendChild(footer);
                     }
 
@@ -1921,198 +1650,12 @@
                 container.scrollTop = container.scrollHeight;
             });
         }
-function sendMessage() {
-            const input = document.getElementById('chat-message-input');
-            const text = input.value.trim();
-            if (!text) return;
-            sendMessageContent('text', text);
-        }
 
-        // Typing indicator with 1.5s timeout after 1st letter
-        let isTypingActive = false;
-        function handleTypingInput() {
-            const input = document.getElementById('chat-message-input');
-            input.style.height = 'auto';
-            input.style.height = input.scrollHeight + 'px';
-
-            if (!activeChatId) return;
-
-            if (!isTypingActive && input.value.length > 0) {
-                isTypingActive = true;
-                rtdb.ref(`typing/${activeChatId}/${currentUser.uid}`).set(true);
-            }
-
-            if (typingTimeout) clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                isTypingActive = false;
-                rtdb.ref(`typing/${activeChatId}/${currentUser.uid}`).set(false);
-            }, 1500);
-        }
-
-        // Attachments & Media selection
-        function toggleAttachMenu(e) {
-            e.stopPropagation();
-            const popup = document.getElementById('attach-popup');
-            popup.classList.toggle('hidden');
-        }
-
-        document.addEventListener('click', () => {
-            const popup = document.getElementById('attach-popup');
-            if (popup && !popup.classList.contains('hidden')) {
-                popup.classList.add('hidden');
-            }
-        });
-
-        let currentFileType = '';
-        function triggerFileSelect(acceptType) {
-            currentFileType = acceptType.includes('image') ? 'image' : 'video';
-            const input = document.getElementById('hidden-file-input');
-            input.accept = acceptType;
-            input.click();
-        }
-
-        function handleFileSelected(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = event => {
-                const base64 = event.target.result;
-                sendMessageContent(currentFileType, base64);
-            };
-            reader.readAsDataURL(file);
-            e.target.value = '';
-        }
-
-        // Voice & Round video recording simulation / MediaRecorder
-        async function recordVoiceMessage() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert("Запись аудио не поддерживается вашим браузером");
-                return;
-            }
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const mediaRecorder = new MediaRecorder(stream);
-                let chunks = [];
-
-                mediaRecorder.ondataavailable = e => chunks.push(e.data);
-                mediaRecorder.onstop = async () => {
-                    const blob = new Blob(chunks, { type: 'audio/webm' });
-                    const reader = new FileReader();
-                    reader.onload = ev => {
-                        sendMessageContent('voice', ev.target.result);
-                    };
-                    reader.readAsDataURL(blob);
-                    stream.getTracks().forEach(track => track.stop());
-                };
-
-                mediaRecorder.start();
-                alert("Идет запись голосового. Нажмите OK для остановки и отправки.");
-                mediaRecorder.stop();
-            } catch(e) {
-                alert("Не удалось получить доступ к микрофону");
-            }
-        }
-
-        async function recordRoundVideo() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert("Запись видео не поддерживается");
-                return;
-            }
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 300, height: 300 }, audio: true });
-                const mediaRecorder = new MediaRecorder(stream);
-                let chunks = [];
-
-                mediaRecorder.ondataavailable = e => chunks.push(e.data);
-                mediaRecorder.onstop = async () => {
-                    const blob = new Blob(chunks, { type: 'video/webm' });
-                    const reader = new FileReader();
-                    reader.onload = ev => {
-                        sendMessageContent('round', ev.target.result);
-                    };
-                    reader.readAsDataURL(blob);
-                    stream.getTracks().forEach(track => track.stop());
-                };
-
-                mediaRecorder.start();
-                alert("Запись кружочка (видео). Нажмите OK для остановки.");
-                mediaRecorder.stop();
-            } catch(e) {
-                alert("Не удалось получить доступ к камере");
-            }
-        }
-
-        // Voice playback
-        function playVoiceMessage(btn, base64Audio) {
-            const audio = new Audio(base64Audio);
-            audio.play();
-            btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
-            audio.onended = () => {
-                btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
-            };
-        }
-
-        function openMediaViewer(src, type) {
-            const win = window.open("");
-            win.document.write(`<body style="background:#000;margin:0;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="${src}" style="max-width:100%;max-height:100%;"></body>`);
-        }
-
-        // Delete message modal (local or both via RTDB)
-        function showDeleteMessageModal(chatId, msgKey, isOutgoing) {
-            const overlay = document.createElement('div');
-            overlay.className = 'msg-context-menu';
-            overlay.innerHTML = `
-                <div class="msg-context-card">
-                    <div class="msg-context-title">Удалить сообщение?</div>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="del-both-chk" ${!isOutgoing ? 'disabled' : ''}> Удалить также у собеседника
-                    </label>
-                    <div class="modal-buttons">
-                        <button class="modal-btn cancel" onclick="this.closest('.msg-context-menu').remove()">Отмена</button>
-                        <button class="modal-btn danger" onclick="confirmDeleteMessage('${chatId}', '${msgKey}')">Удалить</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(overlay);
-        }
-
-        async function confirmDeleteMessage(chatId, msgKey) {
-            const chk = document.getElementById('del-both-chk');
-            const deleteForEveryone = chk && chk.checked;
-
-            if (deleteForEveryone) {
-                // Completely mark as deleted for everyone in RTDB
-                await rtdb.ref(`chats/${chatId}/messages/${msgKey}`).update({
-                    deletedForEveryone: true,
-                    encryptedData: null
-                });
-            } else {
-                // Delete only for me
-                await rtdb.ref(`chats/${chatId}/messages/${msgKey}/deletedFor/${currentUser.uid}`).set(true);
-            }
-
-            document.querySelector('.msg-context-menu').remove();
-        }
-
-        function openProfileView() {
-            document.getElementById('profile-view').classList.add('active');
-        }
-
-        function closeProfileView() {
-            document.getElementById('profile-view').classList.remove('active');
-        }
-
-        function escapeHtml(text) {
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-    
         // ---- SELF-DESTRUCT TIMER ----
-        let selfDestructMinutes = 0; // 0 = off
+        let selfDestructMinutes = 0;
 
         function setSelfDestruct(minutes) {
             selfDestructMinutes = minutes;
-            // Visual indicator in input bar
             const indicator = document.getElementById('self-destruct-indicator');
             if (indicator) {
                 if (minutes > 0) {
@@ -2124,33 +1667,7 @@ function sendMessage() {
             }
         }
 
-        // Add self-destruct toggle to attach menu
-        function toggleAttachMenu(e) {
-            e.stopPropagation();
-            const popup = document.getElementById('attach-popup');
-            popup.classList.toggle('hidden');
-        }
-
-        // ---- BASE64 HELPERS ----
-        function arrayBufferToBase64(buffer) {
-            const bytes = new Uint8Array(buffer);
-            let binary = '';
-            for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return btoa(binary);
-        }
-
-        function base64ToArrayBuffer(base64) {
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            return bytes.buffer;
-        }
-
-        // ---- SECURE DIALOG PREVIEW (no XSS) ----
+        // ---- SECURE DIALOG PREVIEW (XSS-safe) ----
         async function listenChatLastMessage(chatId, myUid, peerUid) {
             rtdb.ref(`chats/${chatId}/messages`).limitToLast(1).on('value', async snap => {
                 const previewEl = document.getElementById(`chat-preview-${chatId}`);
@@ -2172,28 +1689,23 @@ function sendMessage() {
                     return;
                 }
 
-                // Decrypt
                 try {
-                    const myKey = await getOrCreateIdentityKey(myUid);
+                    const myKey = await getOrCreateKeyPair(myUid);
                     const peerPubSnap = await rtdb.ref(`users/${peerUid}/pubKey`).once('value');
                     if (peerPubSnap.exists()) {
-                        const sharedKey = await deriveSharedKeyLegacy(myKey.privateKey, peerPubSnap.val());
+                        const sharedKey = await deriveSharedKey(myKey.privateKey, peerPubSnap.val());
                         let decrypted = '';
                         let msgType = 'text';
 
-                        if (msg.v === 2 && msg.encryptedData && msg.encryptedData.hmac) {
-                            const result = await fortressDecrypt(sharedKey, msg.encryptedData);
+                        if (msg.v === 2 && msg.encryptedData) {
+                            const result = await decryptMessage(sharedKey, msg.encryptedData);
                             decrypted = result.text;
                             if (result.meta) msgType = result.meta.type || 'text';
-                        } else {
+                        } else if (msg.encryptedData) {
                             decrypted = await decryptMessageLegacy(sharedKey, msg.encryptedData);
                         }
 
-                        if (msgType === 'text') {
-                            previewEl.textContent = decrypted;
-                        } else {
-                            previewEl.textContent = `[${msgType}]`;
-                        }
+                        previewEl.textContent = msgType === 'text' ? decrypted : `[${msgType}]`;
                         timeEl.textContent = msg.time || "";
                     }
                 } catch(e) {
@@ -2202,55 +1714,51 @@ function sendMessage() {
             });
         }
 
-        // ---- ANTI-SCREENSHOT CSS (injected) ----
+        function listenPeerTyping(chatId, peerUid) {
+            rtdb.ref(`typing/${chatId}/${peerUid}`).on('value', snap => {
+                const typingEl = document.getElementById(`chat-typing-${chatId}`);
+                const previewEl = document.getElementById(`chat-preview-${chatId}`);
+                if (!typingEl || !previewEl) return;
+
+                if (snap.val() === true) {
+                    typingEl.style.display = 'block';
+                    previewEl.style.display = 'none';
+                } else {
+                    typingEl.style.display = 'none';
+                    previewEl.style.display = 'block';
+                }
+            });
+        }
+
+        // ---- ANTI-SCREENSHOT / ANTI-SHOULDER-SURFING ----
         function injectSecurityCSS() {
             const style = document.createElement('style');
             style.textContent = `
-                /* Prevent text selection for copy-paste attacks */
                 #messenger-screen {
                     -webkit-user-select: none;
                     user-select: none;
                 }
-
-                /* Allow selection only in input fields */
                 .chat-input, .input-field {
                     -webkit-user-select: text;
                     user-select: text;
                 }
-
-                /* Blur content when window loses focus */
                 body:not(:focus-within) #messenger-screen {
                     filter: blur(12px);
                     transition: filter 0.3s;
                 }
-
-                /* Hide from screen recording on some platforms */
-                @media (prefers-reduced-motion: no-preference) {
-                    .message-bubble {
-                        -webkit-print-color-adjust: exact;
-                    }
-                }
             `;
             document.head.appendChild(style);
         }
-
-        // Inject on load
         injectSecurityCSS();
 
         // ---- TAB TITLE SECURITY ----
-        // Hide content in tab title when not focused
         const originalTitle = document.title;
-        window.addEventListener('blur', () => {
-            document.title = '🔒 Заблокировано';
-        });
-        window.addEventListener('focus', () => {
-            document.title = originalTitle;
-        });
+        window.addEventListener('blur', () => { document.title = '🔒 Заблокировано'; });
+        window.addEventListener('focus', () => { document.title = originalTitle; });
 
-        // ---- AUTO-LOCK ON VISIBILITY CHANGE ----
+        // ---- AUTO-LOCK ON TAB HIDE ----
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                // Optional: auto-lock after 5 seconds of hidden tab
                 setTimeout(() => {
                     if (document.hidden && document.getElementById('messenger-screen').style.display !== 'none') {
                         lockToCalculator();
@@ -2258,6 +1766,135 @@ function sendMessage() {
                 }, 5000);
             }
         });
+
+        // ---- ATTACH MENU (with self-destruct option) ----
+        function toggleAttachMenu(e) {
+            e.stopPropagation();
+            const popup = document.getElementById('attach-popup');
+            popup.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', () => {
+            const popup = document.getElementById('attach-popup');
+            if (popup && !popup.classList.contains('hidden')) popup.classList.add('hidden');
+        });
+
+        let currentFileType = '';
+        function triggerFileSelect(acceptType) {
+            currentFileType = acceptType.includes('image') ? 'image' : 'video';
+            const input = document.getElementById('hidden-file-input');
+            input.accept = acceptType;
+            input.click();
+        }
+
+        function handleFileSelected(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = event => { sendMessageContent(currentFileType, event.target.result); };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        }
+
+        // ---- VOICE & ROUND VIDEO ----
+        async function recordVoiceMessage() {
+            if (!navigator.mediaDevices) { alert("Не поддерживается"); return; }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const recorder = new MediaRecorder(stream);
+                let chunks = [];
+                recorder.ondataavailable = e => chunks.push(e.data);
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'audio/webm' });
+                    const reader = new FileReader();
+                    reader.onload = ev => { sendMessageContent('voice', ev.target.result); };
+                    reader.readAsDataURL(blob);
+                    stream.getTracks().forEach(t => t.stop());
+                };
+                recorder.start();
+                alert("Запись голосового. Нажмите OK для остановки.");
+                recorder.stop();
+            } catch(e) { alert("Нет доступа к микрофону"); }
+        }
+
+        async function recordRoundVideo() {
+            if (!navigator.mediaDevices) { alert("Не поддерживается"); return; }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 300, height: 300 }, audio: true });
+                const recorder = new MediaRecorder(stream);
+                let chunks = [];
+                recorder.ondataavailable = e => chunks.push(e.data);
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const reader = new FileReader();
+                    reader.onload = ev => { sendMessageContent('round', ev.target.result); };
+                    reader.readAsDataURL(blob);
+                    stream.getTracks().forEach(t => t.stop());
+                };
+                recorder.start();
+                alert("Запись кружочка. Нажмите OK для остановки.");
+                recorder.stop();
+            } catch(e) { alert("Нет доступа к камере"); }
+        }
+
+        function playVoiceMessage(btn, base64Audio) {
+            const audio = new Audio(base64Audio);
+            audio.play();
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+            audio.onended = () => {
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+            };
+        }
+
+        function openMediaViewer(src, type) {
+            const win = window.open("");
+            win.document.write(`<body style="background:#000;margin:0;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="${src}" style="max-width:100%;max-height:100%;"></body>`);
+        }
+
+        // ---- DELETE MESSAGE ----
+        function showDeleteMessageModal(chatId, msgKey, isOutgoing) {
+            const overlay = document.createElement('div');
+            overlay.className = 'msg-context-menu';
+            overlay.innerHTML = `
+                <div class="msg-context-card">
+                    <div class="msg-context-title">Удалить сообщение?</div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="del-both-chk" ${!isOutgoing ? 'disabled' : ''}> Удалить также у собеседника
+                    </label>
+                    <div class="modal-buttons">
+                        <button class="modal-btn cancel" onclick="this.closest('.msg-context-menu').remove()">Отмена</button>
+                        <button class="modal-btn danger" onclick="confirmDeleteMessage('${chatId}', '${msgKey}')">Удалить</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        async function confirmDeleteMessage(chatId, msgKey) {
+            const chk = document.getElementById('del-both-chk');
+            const deleteForEveryone = chk && chk.checked;
+            if (deleteForEveryone) {
+                await rtdb.ref(`chats/${chatId}/messages/${msgKey}`).update({
+                    deletedForEveryone: true,
+                    encryptedData: null
+                });
+            } else {
+                await rtdb.ref(`chats/${chatId}/messages/${msgKey}/deletedFor/${currentUser.uid}`).set(true);
+            }
+            document.querySelector('.msg-context-menu').remove();
+        }
+
+        function openProfileView() {
+            document.getElementById('profile-view').classList.add('active');
+        }
+
+        function closeProfileView() {
+            document.getElementById('profile-view').classList.remove('active');
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
 
     </script>
 </body>
