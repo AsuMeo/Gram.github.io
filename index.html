@@ -1,1758 +1,675 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Calculator</title>
-  <meta name="theme-color" content="#0f0f10">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
-  <!-- Firebase Compat Libraries (v10.8.0) -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      -webkit-user-select: none;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    body, html {
-      width: 100%;
-      height: 100%;
-      background-color: #000000;
-      color: #ffffff;
-      overflow: hidden;
-      position: fixed;
-    }
-
-    /* --- CALCULATOR SCREEN --- */
-    #screen-calc {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      width: 100%;
-      height: 100%;
-      padding: 20px 16px 30px 16px;
-      background: #000000;
-      z-index: 9999;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-
-    .calc-display {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: flex-end;
-      padding: 20px;
-      word-break: break-all;
-    }
-
-    .calc-history {
-      font-size: 20px;
-      color: #7a7a7d;
-      min-height: 28px;
-    }
-
-    .calc-main-text {
-      font-size: 64px;
-      font-weight: 300;
-      color: #ffffff;
-      line-height: 1.1;
-      max-width: 100%;
-      overflow-x: auto;
-      white-space: nowrap;
-    }
-
-    .calc-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      width: 100%;
-    }
-
-    .calc-btn {
-      aspect-ratio: 1;
-      border-radius: 50%;
-      border: none;
-      font-size: 28px;
-      font-weight: 400;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-    }
-
-    .calc-btn:active {
-      opacity: 0.7;
-      transform: scale(0.96);
-    }
-
-    .btn-num {
-      background-color: #2c2c2e;
-      color: #ffffff;
-    }
-
-    .btn-top {
-      background-color: #505054;
-      color: #ffffff;
-    }
-
-    .btn-op {
-      background-color: #ff9f0a;
-      color: #ffffff;
-    }
-
-    .btn-zero {
-      grid-column: span 2;
-      aspect-ratio: auto;
-      border-radius: 40px;
-      justify-content: flex-start;
-      padding-left: 30px;
-    }
-
-    /* --- MESSENGER APP WRAPPER --- */
-    #app-messenger {
-      display: none;
-      width: 100%;
-      height: 100%;
-      flex-direction: column;
-      background-color: #0e0e10;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 10;
-    }
-
-    /* --- AUTH SCREEN --- */
-    #screen-auth {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      padding: 24px;
-      background: #0e0e10;
-      z-index: 100;
-      position: absolute;
-    }
-
-    .auth-card {
-      width: 100%;
-      max-width: 360px;
-      background: #18181c;
-      border: 1px solid #2a2a2e;
-      border-radius: 24px;
-      padding: 28px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-
-    .auth-title {
-      font-size: 22px;
-      font-weight: 700;
-      text-align: center;
-      color: #ffffff;
-      margin-bottom: 4px;
-    }
-
-    .auth-subtitle {
-      font-size: 13px;
-      color: #8e8e93;
-      text-align: center;
-      margin-bottom: 12px;
-    }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .input-field {
-      width: 100%;
-      height: 48px;
-      background: #242428;
-      border: 1px solid #333338;
-      border-radius: 14px;
-      padding: 0 16px;
-      color: #fff;
-      font-size: 15px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .input-field:focus {
-      border-color: #2AABEE;
-    }
-
-    .btn-primary {
-      height: 48px;
-      background: #2AABEE;
-      color: #ffffff;
-      border: none;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: background 0.2s;
-    }
-
-    .btn-primary:active {
-      background: #229ed9;
-    }
-
-    .auth-toggle {
-      font-size: 13px;
-      color: #2AABEE;
-      text-align: center;
-      cursor: pointer;
-      margin-top: 6px;
-    }
-
-    /* --- MESSENGER MAIN --- */
-    .view-container {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      position: absolute;
-      top: 0;
-      left: 0;
-      background: #0e0e10;
-      transition: transform 0.25s ease-in-out;
-    }
-
-    .view-hidden-right {
-      transform: translateX(100%);
-      pointer-events: none;
-    }
-
-    .view-hidden-left {
-      transform: translateX(-30%);
-      pointer-events: none;
-    }
-
-    /* DIALOGS LIST */
-    .header-bar {
-      height: 56px;
-      background: #18181c;
-      border-bottom: 1px solid #242428;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 14px;
-      position: relative;
-      z-index: 5;
-    }
-
-    .header-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .avatar-sm {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #333338;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      color: #fff;
-      font-size: 15px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-
-    .avatar-sm img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .icon-btn {
-      background: transparent;
-      border: none;
-      color: #8e8e93;
-      cursor: pointer;
-      padding: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: background 0.2s;
-    }
-
-    .icon-btn:active {
-      background: rgba(255,255,255,0.1);
-      color: #fff;
-    }
-
-    .icon-btn svg {
-      width: 22px;
-      height: 22px;
-      fill: currentColor;
-    }
-
-    .dialogs-search-box {
-      padding: 10px 14px;
-      background: #18181c;
-      border-bottom: 1px solid #242428;
-    }
-
-    .search-input-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    .search-input-wrapper input {
-      width: 100%;
-      height: 38px;
-      background: #242428;
-      border: none;
-      border-radius: 12px;
-      padding: 0 12px 0 36px;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-    }
-
-    .search-icon {
-      position: absolute;
-      left: 10px;
-      color: #6c6c70;
-      display: flex;
-    }
-
-    .search-icon svg {
-      width: 18px;
-      height: 18px;
-      fill: currentColor;
-    }
-
-    .dialogs-list {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .dialog-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 14px;
-      gap: 12px;
-      border-bottom: 1px solid #161618;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    .dialog-item:active {
-      background: #1f1f24;
-    }
-
-    .dialog-info {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .dialog-top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .dialog-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: #ffffff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .dialog-time {
-      font-size: 12px;
-      color: #6c6c70;
-    }
-
-    .dialog-bottom-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .dialog-preview {
-      font-size: 13px;
-      color: #8e8e93;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1;
-    }
-
-    .dialog-preview.typing {
-      color: #2AABEE;
-      font-style: italic;
-    }
-
-    /* CHAT VIEW */
-    .chat-header {
-      height: 56px;
-      background: #18181c;
-      border-bottom: 1px solid #242428;
-      display: flex;
-      align-items: center;
-      padding: 0 10px;
-      gap: 8px;
-      z-index: 5;
-    }
-
-    .chat-user-details {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-width: 0;
-      cursor: pointer;
-    }
-
-    .chat-user-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: #fff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .chat-user-status {
-      font-size: 12px;
-      color: #8e8e93;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .chat-user-status.online {
-      color: #2AABEE;
-    }
-
-    .messages-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      background: #000000;
-      background-image: radial-gradient(#151518 1px, transparent 1px);
-      background-size: 16px 16px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .msg-bubble-wrapper {
-      display: flex;
-      width: 100%;
-      margin-bottom: 2px;
-    }
-
-    .msg-bubble-wrapper.out {
-      justify-content: flex-end;
-    }
-
-    .msg-bubble-wrapper.in {
-      justify-content: flex-start;
-    }
-
-    .msg-bubble {
-      max-width: 82%;
-      padding: 8px 12px 6px 12px;
-      border-radius: 16px;
-      position: relative;
-      word-wrap: break-word;
-      font-size: 14.5px;
-      line-height: 1.35;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    }
-
-    .msg-bubble-wrapper.out .msg-bubble {
-      background: #2b5278;
-      color: #ffffff;
-      border-bottom-right-radius: 4px;
-    }
-
-    .msg-bubble-wrapper.in .msg-bubble {
-      background: #182533;
-      color: #ffffff;
-      border-bottom-left-radius: 4px;
-    }
-
-    .msg-media {
-      max-width: 100%;
-      border-radius: 10px;
-      margin-top: 4px;
-      margin-bottom: 4px;
-      display: block;
-    }
-
-    .msg-video-circle {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      object-fit: cover;
-      overflow: hidden;
-      border: 2px solid #2AABEE;
-    }
-
-    .msg-meta {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 4px;
-      font-size: 10px;
-      color: rgba(255,255,255,0.6);
-      margin-top: 2px;
-      float: right;
-      margin-left: 8px;
-    }
-
-    /* INPUT BAR */
-    .input-bar {
-      min-height: 56px;
-      background: #18181c;
-      border-top: 1px solid #242428;
-      display: flex;
-      align-items: flex-end;
-      padding: 8px 10px;
-      gap: 8px;
-    }
-
-    .input-wrapper {
-      flex: 1;
-      background: #242428;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      padding: 6px 12px;
-      min-height: 40px;
-      max-height: 120px;
-    }
-
-    .chat-textarea {
-      width: 100%;
-      max-height: 100px;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #fff;
-      font-size: 15px;
-      resize: none;
-      line-height: 1.3;
-      padding: 2px 0;
-    }
-
-    .media-preview-bar {
-      padding: 8px 14px;
-      background: #1c1c20;
-      border-top: 1px solid #2a2a2e;
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .preview-thumb {
-      max-height: 50px;
-      border-radius: 6px;
-    }
-
-    /* MODAL SETTINGS & DELETION */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(4px);
-      z-index: 990;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal-card {
-      background: #18181c;
-      border: 1px solid #2c2c30;
-      border-radius: 20px;
-      width: 100%;
-      max-width: 320px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    }
-
-    .modal-title {
-      font-size: 17px;
-      font-weight: 600;
-      color: #fff;
-      text-align: center;
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 14px;
-      color: #ddd;
-      cursor: pointer;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 8px;
-    }
-
-    .btn-secondary {
-      flex: 1;
-      height: 40px;
-      background: #2c2c30;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    .btn-danger {
-      flex: 1;
-      height: 40px;
-      background: #ff3b30;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    /* RECORDING OVERLAY (VIDEO CIRCLE / VOICE) */
-    .recording-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.92);
-      z-index: 900;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-    }
-
-    .circle-video-preview {
-      width: 240px;
-      height: 240px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 4px solid #2AABEE;
-      transform: scaleX(-1);
-    }
-
-    .rec-timer {
-      font-size: 20px;
-      color: #ff3b30;
-      font-weight: 600;
-      font-mono: monospace;
-    }
-
-    .rec-controls {
-      display: flex;
-      gap: 24px;
-    }
-
-    .btn-rec {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .btn-rec-stop {
-      background: #ff3b30;
-      color: #fff;
-    }
-
-    .btn-rec-send {
-      background: #34c759;
-      color: #fff;
-    }
-
-    /* AUDIO PLAYER */
-    .audio-player {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 180px;
-      padding: 4px 0;
-    }
-
-    .audio-play-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #2AABEE;
-      border: none;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .audio-wave {
-      flex: 1;
-      height: 4px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 2px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .audio-progress {
-      width: 0%;
-      height: 100%;
-      background: #ffffff;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TikTok Camera Pro — Маски, Ретушь и Фильтры</title>
+    <!-- Tailwind CSS для ультра-стильного интерфейса -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Иконки FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+        /* Зеркалирование видео для камеры */
+        .mirrored {
+            transform: scaleX(-1);
+        }
+        /* Стилизация полос прокрутки */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        /* Анимация пульсации для записи */
+        @keyframes pulse-red {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .recording-pulse {
+            animation: pulse-red 1.5s infinite;
+        }
+    </style>
 </head>
-<body>
+<body class="h-screen w-screen flex flex-col justify-between relative select-none">
 
-  <!-- 1. CALCULATOR SCREEN (Stealth Cover) -->
-  <div id="screen-calc">
-    <div class="calc-display">
-      <div class="calc-history" id="calc-history"></div>
-      <div class="calc-main-text" id="calc-display">0</div>
-    </div>
-    <div class="calc-grid">
-      <button class="calc-btn btn-top" onclick="calcInput('C')">C</button>
-      <button class="calc-btn btn-top" onclick="calcInput('DEL')">⌫</button>
-      <button class="calc-btn btn-top" onclick="calcInput('%')">%</button>
-      <button class="calc-btn btn-op" onclick="calcInput('/')">÷</button>
-
-      <button class="calc-btn btn-num" onclick="calcInput('7')">7</button>
-      <button class="calc-btn btn-num" onclick="calcInput('8')">8</button>
-      <button class="calc-btn btn-num" onclick="calcInput('9')">9</button>
-      <button class="calc-btn btn-op" onclick="calcInput('*')">×</button>
-
-      <button class="calc-btn btn-num" onclick="calcInput('4')">4</button>
-      <button class="calc-btn btn-num" onclick="calcInput('5')">5</button>
-      <button class="calc-btn btn-num" onclick="calcInput('6')">6</button>
-      <button class="calc-btn btn-op" onclick="calcInput('-')">−</button>
-
-      <button class="calc-btn btn-num" onclick="calcInput('1')">1</button>
-      <button class="calc-btn btn-num" onclick="calcInput('2')">2</button>
-      <button class="calc-btn btn-num" onclick="calcInput('3')">3</button>
-      <button class="calc-btn btn-op" onclick="calcInput('+')">+</button>
-
-      <button class="calc-btn btn-num btn-zero" onclick="calcInput('0')">0</button>
-      <button class="calc-btn btn-num" onclick="calcInput('.')">.</button>
-      <button class="calc-btn btn-op" onclick="calcInput('=')">=</button>
-    </div>
-  </div>
-
-  <!-- 2. MESSENGER CONTAINER -->
-  <div id="app-messenger">
-
-    <!-- AUTHENTICATION -->
-    <div id="screen-auth">
-      <div class="auth-card">
-        <div class="auth-title" id="auth-title-text">Вход</div>
-        <div class="auth-subtitle">Сквозное шифрование E2EE</div>
-        
-        <div class="input-group">
-          <input type="text" id="auth-username" class="input-field" placeholder="Юзернейм (@name)" autocomplete="off" spellcheck="false">
-        </div>
-        <div class="input-group">
-          <input type="password" id="auth-password" class="input-field" placeholder="Пароль">
-        </div>
-        
-        <button class="btn-primary" id="auth-submit-btn" onclick="handleAuthSubmit()">Войти</button>
-        <div class="auth-toggle" onclick="toggleAuthMode()" id="auth-toggle-btn">Создать аккаунт</div>
-      </div>
+    <!-- ОСНОВНОЙ ВИДЕО КОНТЕЙНЕР -->
+    <div class="absolute inset-0 w-full h-full bg-black overflow-hidden flex items-center justify-center z-0">
+        <!-- Живое видео с вебкамеры -->
+        <video id="webcam" autoplay playsinline muted class="absolute w-full h-full object-cover mirrored"></video>
+        <!-- Canvas для фильтров ретуши (WebGL) -->
+        <canvas id="filterCanvas" class="absolute w-full h-full object-cover mirrored pointer-events-none"></canvas>
+        <!-- Canvas для TikTok масок -->
+        <canvas id="maskCanvas" class="absolute w-full h-full object-cover mirrored pointer-events-none"></canvas>
     </div>
 
-    <!-- DIALOGS LIST VIEW -->
-    <div id="view-dialogs" class="view-container">
-      <div class="header-bar">
-        <div class="header-title">
-          <div class="avatar-sm" id="my-avatar-btn" onclick="openProfileModal()"></div>
-          <span>Чаты</span>
-        </div>
-        <button class="icon-btn" onclick="lockToCalc()" title="Заблокировать">
-          <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-        </button>
-      </div>
-
-      <div class="dialogs-search-box">
-        <div class="search-input-wrapper">
-          <div class="search-icon">
-            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-          </div>
-          <input type="text" id="search-user-input" placeholder="Поиск по юзернейму..." onkeyup="handleSearchUser(event)">
-        </div>
-      </div>
-
-      <div class="dialogs-list" id="dialogs-list-container">
-        <!-- Dialog items injected dynamically -->
-      </div>
-    </div>
-
-    <!-- CHAT VIEW -->
-    <div id="view-chat" class="view-container view-hidden-right">
-      <div class="chat-header">
-        <button class="icon-btn" onclick="closeChatView()">
-          <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-        </button>
-        <div class="avatar-sm" id="chat-header-avatar"></div>
-        <div class="chat-user-details">
-          <div class="chat-user-name" id="chat-header-name">Собеседник</div>
-          <div class="chat-user-status" id="chat-header-status">был(а) недавно</div>
-        </div>
-      </div>
-
-      <div class="messages-container" id="messages-container">
-        <!-- Messages injected dynamically -->
-      </div>
-
-      <!-- Attachment Preview -->
-      <div class="media-preview-bar" id="media-preview-bar">
-        <span id="preview-filename" style="font-size:12px; color:#fff;"></span>
-        <button class="icon-btn" onclick="clearMediaPreview()">✕</button>
-      </div>
-
-      <!-- Input Bar -->
-      <div class="input-bar">
-        <button class="icon-btn" onclick="document.getElementById('file-input-field').click()">
-          <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
-        </button>
-        <input type="file" id="file-input-field" style="display:none;" accept="image/*,video/*" onchange="handleFileSelect(event)">
-
-        <div class="input-wrapper">
-          <textarea id="chat-textarea" class="chat-textarea" placeholder="Сообщение..." rows="1" oninput="handleTypingEvent()"></textarea>
-        </div>
-
-        <button class="icon-btn" id="btn-circle-video" onclick="startCircleVideoRecording()" title="Видеокружочек">
-          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+    <!-- ВЕРХНЯЯ ПАНЕЛЬ ИНСТРУМЕНТОВ -->
+    <div class="relative z-20 flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent">
+        <!-- Левая группа: Музыка и Звуки -->
+        <button id="btnSound" class="flex items-center space-x-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 active:scale-95 transition">
+            <i class="fa-solid fa-music text-pink-500 animate-bounce"></i>
+            <span id="soundName" class="text-xs font-medium truncate max-w-[120px]">Оригинальный звук</span>
         </button>
 
-        <button class="icon-btn" id="btn-voice-rec" onclick="toggleVoiceRecording()" title="Голосовое">
-          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z"/></svg>
-        </button>
-
-        <button class="icon-btn" id="btn-send-msg" onclick="sendChatMessage()" style="color:#2AABEE;">
-          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-        </button>
-      </div>
+        <!-- Правая группа: Переключатели и настройки -->
+        <div class="flex items-center space-x-3">
+            <button id="btnFlip" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 active:scale-95 transition">
+                <i class="fa-solid fa-camera-rotate text-white text-sm"></i>
+            </button>
+            <button id="btnFlash" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 active:scale-95 transition">
+                <i class="fa-solid fa-bolt text-yellow-400 text-sm"></i>
+            </button>
+            <button id="btnTimer" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 active:scale-95 transition">
+                <i class="fa-solid fa-stopwatch text-white text-sm"></i>
+            </button>
+            <button id="btnSettings" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 active:scale-95 transition">
+                <i class="fa-solid fa-gear text-white text-sm"></i>
+            </button>
+        </div>
     </div>
 
-  </div>
-
-  <!-- RECORDING OVERLAY (VIDEO CIRCLE & VOICE) -->
-  <div class="recording-overlay" id="recording-overlay">
-    <video id="circle-video-element" class="circle-video-preview" autoplay playsinline muted></video>
-    <div class="rec-timer" id="rec-timer">00:00</div>
-    <div class="rec-controls">
-      <button class="btn-rec btn-rec-stop" onclick="cancelRecording()">✕</button>
-      <button class="btn-rec btn-rec-send" onclick="stopAndSendRecording()">✓</button>
-    </div>
-  </div>
-
-  <!-- DELETE MESSAGE MODAL -->
-  <div class="modal-overlay" id="modal-delete">
-    <div class="modal-card">
-      <div class="modal-title">Удалить сообщение?</div>
-      <label class="checkbox-label">
-        <input type="checkbox" id="delete-both-checkbox">
-        Удалить также у собеседника
-      </label>
-      <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeDeleteModal()">Отмена</button>
-        <button class="btn-danger" onclick="confirmDeleteMessage()">Удалить</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PROFILE EDIT MODAL -->
-  <div class="modal-overlay" id="modal-profile">
-    <div class="modal-card">
-      <div class="modal-title">Профиль</div>
-      <div style="display:flex; justify-content:center; margin:10px 0;">
-        <div class="avatar-sm" id="profile-modal-avatar" style="width:70px; height:70px; font-size:24px;"></div>
-      </div>
-      <input type="file" id="avatar-input" style="display:none;" accept="image/*" onchange="handleAvatarChange(event)">
-      <button class="btn-secondary" onclick="document.getElementById('avatar-input').click()">Изменить аватарку</button>
-      <div class="input-group">
-        <input type="text" id="profile-display-name" class="input-field" placeholder="Имя">
-      </div>
-      <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeProfileModal()">Отмена</button>
-        <button class="btn-primary" onclick="saveProfileChanges()" style="flex:1;">Сохранить</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    /* ==========================================================================
-       1. FIREBASE INITIALIZATION & CONFIGURATION
-       ========================================================================== */
-    const firebaseConfig = {
-      apiKey: "AIzaSyBm0mIvHVznIeF2PoFk6dtdaiT5r877wyA",
-      authDomain: "meow-874ce.firebaseapp.com",
-      databaseURL: "https://meow-874ce-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "meow-874ce",
-      storageBucket: "meow-874ce.firebasestorage.app",
-      messagingSenderId: "471541334599",
-      appId: "1:471541334599:web:567af3e7dbe70a37572762"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const auth = firebase.auth();
-
-    /* ==========================================================================
-       2. CALCULATOR & INACTIVITY STEALTH ENGINE
-       ========================================================================== */
-    let calcExpr = "";
-    const SECRET_CODE = "993";
-    const INACTIVITY_LIMIT_MS = 2 * 60 * 1000; // 2 minutes
-
-    function calcInput(val) {
-      const display = document.getElementById("calc-display");
-      const history = document.getElementById("calc-history");
-
-      if (val === "C") {
-        calcExpr = "";
-        display.innerText = "0";
-        history.innerText = "";
-        return;
-      }
-      if (val === "DEL") {
-        calcExpr = calcExpr.slice(0, -1);
-        display.innerText = calcExpr || "0";
-        checkSecretCode();
-        return;
-      }
-      if (val === "=") {
-        try {
-          if (calcExpr === SECRET_CODE) {
-            unlockMessenger();
-            return;
-          }
-          let res = eval(calcExpr.replace(/×/g, "*").replace(/÷/g, "/"));
-          history.innerText = calcExpr + " =";
-          calcExpr = String(res);
-          display.innerText = calcExpr;
-        } catch (e) {
-          display.innerText = "Ошибка";
-          calcExpr = "";
-        }
-        return;
-      }
-
-      calcExpr += val;
-      display.innerText = calcExpr;
-      checkSecretCode();
-    }
-
-    function checkSecretCode() {
-      if (calcExpr === SECRET_CODE) {
-        unlockMessenger();
-      }
-    }
-
-    function updateLastActive() {
-      localStorage.setItem("last_active_time", Date.now().toString());
-    }
-
-    function checkInactivityLock() {
-      const lastActive = localStorage.getItem("last_active_time");
-      if (lastActive) {
-        const elapsed = Date.now() - parseInt(lastActive, 10);
-        if (elapsed > INACTIVITY_LIMIT_MS) {
-          lockToCalc();
-          return true;
-        }
-      }
-      return false;
-    }
-
-    function unlockMessenger() {
-      if (checkInactivityLock() && localStorage.getItem("auth_user")) {
-        // Was inactive > 2 min, reset session timestamp
-        updateLastActive();
-      }
-      document.getElementById("screen-calc").style.display = "none";
-      document.getElementById("app-messenger").style.display = "flex";
-      updateLastActive();
-      initMessengerApp();
-    }
-
-    function lockToCalc() {
-      document.getElementById("app-messenger").style.display = "none";
-      document.getElementById("screen-calc").style.display = "flex";
-      calcExpr = "";
-      document.getElementById("calc-display").innerText = "0";
-      document.getElementById("calc-history").innerText = "";
-    }
-
-    // Event listeners for activity tracking
-    ['click', 'touchstart', 'keydown', 'mousemove'].forEach(evt => {
-      window.addEventListener(evt, () => {
-        if (document.getElementById("app-messenger").style.display === "flex") {
-          updateLastActive();
-        }
-      }, { passive: true });
-    });
-
-    window.addEventListener("focus", () => {
-      if (document.getElementById("app-messenger").style.display === "flex") {
-        if (checkInactivityLock()) {
-          lockToCalc();
-        }
-      }
-    });
-
-    /* ==========================================================================
-       3. END-TO-END ENCRYPTION (E2EE) ENGINE (ECDH + AES-GCM)
-       ========================================================================== */
-    let currentUser = null;
-    let myKeyPair = null;
-    let sharedKeysCache = {}; // username -> CryptoKey
-
-    async function getOrGenerateKeyPair() {
-      const keyGenTime = localStorage.getItem("ecdh_key_time");
-      const savedPriv = localStorage.getItem("ecdh_priv_key");
-      const savedPub = localStorage.getItem("ecdh_pub_key");
-      const NOW = Date.now();
-      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-      // Check if key is younger than 24 hours
-      if (savedPriv && savedPub && keyGenTime && (NOW - parseInt(keyGenTime, 10) < TWENTY_FOUR_HOURS)) {
-        const privJwk = JSON.parse(savedPriv);
-        const pubJwk = JSON.parse(savedPub);
-
-        const privateKey = await window.crypto.subtle.importKey(
-          "jwk", privJwk, { name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]
-        );
-        const publicKey = await window.crypto.subtle.importKey(
-          "jwk", pubJwk, { name: "ECDH", namedCurve: "P-256" }, true, []
-        );
-
-        return { privateKey, publicKey, pubJwk };
-      }
-
-      // Generate New ECDH Key Pair
-      const keyPair = await window.crypto.subtle.generateKey(
-        { name: "ECDH", namedCurve: "P-256" },
-        true,
-        ["deriveKey", "deriveBits"]
-      );
-
-      const exportedPriv = await window.crypto.subtle.exportKey("jwk", keyPair.privateKey);
-      const exportedPub = await window.crypto.subtle.exportKey("jwk", keyPair.publicKey);
-
-      localStorage.setItem("ecdh_priv_key", JSON.stringify(exportedPriv));
-      localStorage.setItem("ecdh_pub_key", JSON.stringify(exportedPub));
-      localStorage.setItem("ecdh_key_time", NOW.toString());
-
-      return { privateKey: keyPair.privateKey, publicKey: keyPair.publicKey, pubJwk: exportedPub };
-    }
-
-    async function publishPublicKey(pubJwk) {
-      if (!currentUser) return;
-      await db.ref(`users/${currentUser.username}/publicKey`).set(pubJwk);
-    }
-
-    async function getDerivedSharedKey(targetUsername) {
-      if (sharedKeysCache[targetUsername]) {
-        return sharedKeysCache[targetUsername];
-      }
-
-      const snapshot = await db.ref(`users/${targetUsername}/publicKey`).once("value");
-      const targetPubJwk = snapshot.val();
-      if (!targetPubJwk) return null;
-
-      const targetPubKey = await window.crypto.subtle.importKey(
-        "jwk", targetPubJwk, { name: "ECDH", namedCurve: "P-256" }, true, []
-      );
-
-      const derivedKey = await window.crypto.subtle.deriveKey(
-        { name: "ECDH", public: targetPubKey },
-        myKeyPair.privateKey,
-        { name: "AES-GCM", length: 256 },
-        false,
-        ["encrypt", "decrypt"]
-      );
-
-      sharedKeysCache[targetUsername] = derivedKey;
-      return derivedKey;
-    }
-
-    async function encryptPayload(dataObj, targetUsername) {
-      const key = await getDerivedSharedKey(targetUsername);
-      if (!key) throw new Error("Key exchange failed");
-
-      const iv = window.crypto.getRandomValues(new Uint8Array(12));
-      const encoded = new TextEncoder().encode(JSON.stringify(dataObj));
-
-      const cipherBuffer = await window.crypto.subtle.encrypt(
-        { name: "AES-GCM", iv: iv },
-        key,
-        encoded
-      );
-
-      return {
-        ciphertext: arrayBufferToBase64(cipherBuffer),
-        iv: arrayBufferToBase64(iv.buffer)
-      };
-    }
-
-    async function decryptPayload(cipherData, targetUsername) {
-      try {
-        const key = await getDerivedSharedKey(targetUsername);
-        if (!key) return null;
-
-        const cipherBuffer = base64ToArrayBuffer(cipherData.ciphertext);
-        const iv = base64ToArrayBuffer(cipherData.iv);
-
-        const decryptedBuffer = await window.crypto.subtle.decrypt(
-          { name: "AES-GCM", iv: new Uint8Array(iv) },
-          key,
-          cipherBuffer
-        );
-
-        const decoded = new TextDecoder().decode(decryptedBuffer);
-        return JSON.parse(decoded);
-      } catch (err) {
-        console.error("Decryption error:", err);
-        return null;
-      }
-    }
-
-    function arrayBufferToBase64(buffer) {
-      let binary = '';
-      const bytes = new Uint8Array(buffer);
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      return btoa(binary);
-    }
-
-    function base64ToArrayBuffer(base64) {
-      const binary = atob(base64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-      }
-      return bytes.buffer;
-    }
-
-    /* ==========================================================================
-       4. AUTHENTICATION & PROFILE LOGIC
-       ========================================================================== */
-    let isRegisterMode = false;
-
-    function toggleAuthMode() {
-      isRegisterMode = !isRegisterMode;
-      document.getElementById("auth-title-text").innerText = isRegisterMode ? "Регистрация" : "Вход";
-      document.getElementById("auth-submit-btn").innerText = isRegisterMode ? "Зарегистрироваться" : "Войти";
-      document.getElementById("auth-toggle-btn").innerText = isRegisterMode ? "Уже есть аккаунт? Войти" : "Создать аккаунт";
-    }
-
-    async function handleAuthSubmit() {
-      const userVal = document.getElementById("auth-username").value.trim().replace('@', '').toLowerCase();
-      const passVal = document.getElementById("auth-password").value.trim();
-
-      if (!userVal || !passVal) {
-        alert("Заполните все поля");
-        return;
-      }
-
-      try {
-        if (!auth.currentUser) {
-          await auth.signInAnonymously();
-        }
-
-        const userRef = db.ref(`users/${userVal}`);
-        const snapshot = await userRef.once("value");
-        const existingData = snapshot.val();
-
-        if (isRegisterMode) {
-          if (existingData) {
-            alert("Юзернейм уже занят!");
-            return;
-          }
-          const newUser = {
-            username: userVal,
-            passwordHash: btoa(passVal), // Simple local store hash
-            displayName: userVal,
-            avatar: "",
-            status: "online",
-            lastSeen: formatTime(new Date())
-          };
-          await userRef.set(newUser);
-          currentUser = newUser;
-        } else {
-          if (!existingData || existingData.passwordHash !== btoa(passVal)) {
-            alert("Неверный юзернейм или пароль!");
-            return;
-          }
-          currentUser = existingData;
-        }
-
-        localStorage.setItem("auth_user", JSON.stringify(currentUser));
-        document.getElementById("screen-auth").style.display = "none";
-        initLoggedInSession();
-      } catch (e) {
-        alert("Ошибка входа: " + e.message);
-      }
-    }
-
-    async function initLoggedInSession() {
-      myKeyPair = await getOrGenerateKeyPair();
-      await publishPublicKey(myKeyPair.pubJwk);
-
-      setupPresenceSystem();
-      renderMyAvatar();
-      listenToDialogsList();
-    }
-
-    function renderMyAvatar() {
-      const btn = document.getElementById("my-avatar-btn");
-      btn.innerHTML = currentUser.avatar 
-        ? `<img src="${currentUser.avatar}">` 
-        : currentUser.displayName.charAt(0).toUpperCase();
-    }
-
-    function setupPresenceSystem() {
-      const myStatusRef = db.ref(`users/${currentUser.username}/status`);
-      const myLastSeenRef = db.ref(`users/${currentUser.username}/lastSeen`);
-
-      db.ref('.info/connected').on('value', (snap) => {
-        if (snap.val() === true) {
-          myStatusRef.set('online');
-          myStatusRef.onDisconnect().set('offline');
-          myLastSeenRef.onDisconnect().set(formatTime(new Date()));
-        }
-      });
-    }
-
-    function formatTime(date) {
-      const h = String(date.getHours()).padStart(2, '0');
-      const m = String(date.getMinutes()).padStart(2, '0');
-      return `${h}:${m}`;
-    }
-
-    /* ==========================================================================
-       5. DIALOGS & CHAT LOGIC
-       ========================================================================== */
-    let currentChatUser = null;
-    let activeChatListener = null;
-    let activeTypingListener = null;
-    let pendingMediaBase64 = null;
-    let pendingMediaType = null;
-
-    function getChatId(u1, u2) {
-      return [u1, u2].sort().join("_chat_");
-    }
-
-    function handleSearchUser(e) {
-      if (e.key === 'Enter') {
-        const query = document.getElementById("search-user-input").value.trim().replace('@', '').toLowerCase();
-        if (!query || query === currentUser.username) return;
-
-        db.ref(`users/${query}`).once('value', snap => {
-          if (snap.exists()) {
-            openChatWith(snap.val());
-          } else {
-            alert("Пользователь не найден");
-          }
-        });
-      }
-    }
-
-    function listenToDialogsList() {
-      const dialogsList = document.getElementById("dialogs-list-container");
-      
-      // Listen for all user chats
-      db.ref(`user_chats/${currentUser.username}`).on('value', async (snapshot) => {
-        dialogsList.innerHTML = "";
-        const chats = snapshot.val() || {};
-        
-        for (let targetUser in chats) {
-          const userSnap = await db.ref(`users/${targetUser}`).once('value');
-          const userData = userSnap.val() || { displayName: targetUser, username: targetUser };
-          
-          const dialogItem = document.createElement("div");
-          dialogItem.className = "dialog-item";
-          dialogItem.onclick = () => openChatWith(userData);
-
-          const avatarHtml = userData.avatar ? `<img src="${userData.avatar}">` : userData.displayName.charAt(0).toUpperCase();
-
-          dialogItem.innerHTML = `
-            <div class="avatar-sm">${avatarHtml}</div>
-            <div class="dialog-info">
-              <div class="dialog-top-row">
-                <span class="dialog-name">${userData.displayName}</span>
-                <span class="dialog-time" id="dialog-time-${targetUser}">--:--</span>
-              </div>
-              <div class="dialog-bottom-row">
-                <span class="dialog-preview" id="dialog-prev-${targetUser}">Зашифрованное сообщение</span>
-              </div>
+    <!-- ПРАВАЯ ВЕРТИКАЛЬНАЯ ПАНЕЛЬ (TikTok Style) -->
+    <div class="absolute right-4 top-24 z-20 flex flex-col items-center space-y-5">
+        <!-- Кнопка Масок -->
+        <button id="toggleMasksPanel" class="flex flex-col items-center group">
+            <div class="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:border-pink-500 transition shadow-lg">
+                <i class="fa-solid fa-face-smile-beam text-pink-400 text-lg"></i>
             </div>
-          `;
-          dialogsList.appendChild(dialogItem);
+            <span class="text-[10px] mt-1 font-semibold text-shadow">Маски</span>
+        </button>
 
-          // Listen to typing in dialog list
-          const chatId = getChatId(currentUser.username, targetUser);
-          db.ref(`chats/${chatId}/typing/${targetUser}`).on('value', tSnap => {
-            const prevEl = document.getElementById(`dialog-prev-${targetUser}`);
-            if (prevEl) {
-              if (tSnap.val() === true) {
-                prevEl.className = "dialog-preview typing";
-                prevEl.innerText = "печатает...";
-              } else {
-                prevEl.className = "dialog-preview";
-                prevEl.innerText = "Зашифрованное сообщение";
-              }
-            }
-          });
-        }
-      });
-    }
-
-    async function openChatWith(userObj) {
-      currentChatUser = userObj;
-      const chatView = document.getElementById("view-chat");
-      const dialogsView = document.getElementById("view-dialogs");
-
-      document.getElementById("chat-header-name").innerText = userObj.displayName;
-      const avatarContainer = document.getElementById("chat-header-avatar");
-      avatarContainer.innerHTML = userObj.avatar ? `<img src="${userObj.avatar}">` : userObj.displayName.charAt(0).toUpperCase();
-
-      chatView.classList.remove("view-hidden-right");
-      dialogsView.classList.add("view-hidden-left");
-
-      // Register chat in user_chats node
-      db.ref(`user_chats/${currentUser.username}/${userObj.username}`).set(true);
-      db.ref(`user_chats/${userObj.username}/${currentUser.username}`).set(true);
-
-      // Status listener
-      db.ref(`users/${userObj.username}`).on('value', snap => {
-        const uData = snap.val();
-        const statusEl = document.getElementById("chat-header-status");
-        if (uData.status === 'online') {
-          statusEl.innerText = 'в сети';
-          statusEl.classList.add('online');
-        } else {
-          statusEl.innerText = `был(а) в ${uData.lastSeen || 'недавно'}`;
-          statusEl.classList.remove('online');
-        }
-      });
-
-      loadChatMessages();
-    }
-
-    function closeChatView() {
-      document.getElementById("view-chat").classList.add("view-hidden-right");
-      document.getElementById("view-dialogs").classList.remove("view-hidden-left");
-      
-      const chatId = getChatId(currentUser.username, currentChatUser.username);
-      if (activeChatListener) db.ref(`chats/${chatId}/messages`).off('value', activeChatListener);
-      currentChatUser = null;
-    }
-
-    function loadChatMessages() {
-      const chatId = getChatId(currentUser.username, currentChatUser.username);
-      const container = document.getElementById("messages-container");
-      container.innerHTML = "";
-
-      if (activeChatListener) db.ref(`chats/${chatId}/messages`).off();
-
-      activeChatListener = db.ref(`chats/${chatId}/messages`).on('child_added', async (snapshot) => {
-        const msgId = snapshot.key;
-        const rawMsg = snapshot.val();
-        
-        const sender = rawMsg.sender;
-        const targetForDecrypt = (sender === currentUser.username) ? currentChatUser.username : sender;
-
-        const decrypted = await decryptPayload(rawMsg.encryptedData, targetForDecrypt);
-        renderMessageBubble(msgId, sender, decrypted, rawMsg.timestamp);
-      });
-
-      db.ref(`chats/${chatId}/messages`).on('child_removed', (snapshot) => {
-        const el = document.getElementById(`msg-${snapshot.key}`);
-        if (el) el.remove();
-      });
-    }
-
-    function renderMessageBubble(msgId, sender, data, timestamp) {
-      const container = document.getElementById("messages-container");
-      const isOut = sender === currentUser.username;
-
-      const wrapper = document.createElement("div");
-      wrapper.className = `msg-bubble-wrapper ${isOut ? 'out' : 'in'}`;
-      wrapper.id = `msg-${msgId}`;
-
-      const bubble = document.createElement("div");
-      bubble.className = "msg-bubble";
-
-      // Context menu / click for deletion modal
-      bubble.oncontextmenu = (e) => {
-        e.preventDefault();
-        openDeleteModal(msgId);
-      };
-
-      if (!data) {
-        bubble.innerText = "🔒 Ошибка расшифровки";
-      } else {
-        if (data.type === 'text') {
-          bubble.innerText = data.content;
-        } else if (data.type === 'image') {
-          bubble.innerHTML = `<img src="${data.content}" class="msg-media">`;
-        } else if (data.type === 'video') {
-          bubble.innerHTML = `<video src="${data.content}" controls class="msg-media"></video>`;
-        } else if (data.type === 'circle') {
-          bubble.innerHTML = `<video src="${data.content}" controls autoplay loop muted playsinline class="msg-video-circle"></video>`;
-        } else if (data.type === 'voice') {
-          bubble.innerHTML = `
-            <div class="audio-player">
-              <button class="audio-play-btn" onclick="playAudio('${msgId}', '${data.content}')">▶</button>
-              <div class="audio-wave"><div class="audio-progress" id="progress-${msgId}"></div></div>
+        <!-- Кнопка Ретуши (Улучшение лица / Убрать прыщи) -->
+        <button id="toggleBeautyPanel" class="flex flex-col items-center group">
+            <div class="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:border-cyan-400 transition shadow-lg">
+                <i class="fa-solid fa-wand-magic-sparkles text-cyan-400 text-lg"></i>
             </div>
-          `;
-        }
-      }
+            <span class="text-[10px] mt-1 font-semibold text-shadow">Ретушь</span>
+        </button>
 
-      const meta = document.createElement("div");
-      meta.className = "msg-meta";
-      meta.innerText = timestamp || "";
-      bubble.appendChild(meta);
+        <!-- Кнопка Цветовых Фильтров -->
+        <button id="toggleFiltersPanel" class="flex flex-col items-center group">
+            <div class="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:border-purple-400 transition shadow-lg">
+                <i class="fa-solid fa-palette text-purple-400 text-lg"></i>
+            </div>
+            <span class="text-[10px] mt-1 font-semibold text-shadow">Фильтры</span>
+        </button>
 
-      wrapper.appendChild(bubble);
-      container.appendChild(wrapper);
-      container.scrollTop = container.scrollHeight;
-    }
+        <!-- Кнопка Таймера / Скорости -->
+        <button id="btnSpeed" class="flex flex-col items-center group">
+            <div class="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:border-yellow-400 transition shadow-lg">
+                <span class="text-xs font-bold text-yellow-400">1x</span>
+            </div>
+            <span class="text-[10px] mt-1 font-semibold text-shadow">Скорость</span>
+        </button>
+    </div>
 
-    /* ==========================================================================
-       6. SENDING MESSAGES & ATTACHMENTS (E2EE)
-       ========================================================================== */
-    let typingTimeout = null;
+    <!-- ВЫДВИЖНЫЕ ПАНЕЛИ НАСТРОЕК (МАСКИ, РЕТУШЬ, ФИЛЬТРЫ) -->
+    
+    <!-- 1. Панель масок TikTok -->
+    <div id="masksPanel" class="absolute bottom-32 left-0 right-0 z-30 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 transition-transform duration-300 translate-y-full rounded-t-3xl">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold tracking-wider text-pink-400 uppercase"><i class="fa-solid fa-face-smile mr-2"></i>ТикТок Маски</h3>
+            <button class="closePanel text-white/60 hover:text-white px-2 py-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="flex space-x-3 overflow-x-auto pb-2 scrollbar-none">
+            <button onclick="setMask('none')" class="mask-btn flex-shrink-0 flex flex-col items-center space-y-1 group">
+                <div class="w-16 h-16 rounded-2xl bg-gray-800 border-2 border-pink-500 flex items-center justify-center overflow-hidden">
+                    <i class="fa-solid fa-ban text-gray-400 text-xl"></i>
+                </div>
+                <span class="text-xs text-white">Без маски</span>
+            </button>
+            <button onclick="setMask('dog')" class="mask-btn flex-shrink-0 flex flex-col items-center space-y-1 group">
+                <div class="w-16 h-16 rounded-2xl bg-gray-800 border-2 border-transparent group-hover:border-pink-500 flex items-center justify-center overflow-hidden relative">
+                    <div class="absolute inset-0 bg-amber-700/40 flex items-center justify-center"><i class="fa-solid fa-dog text-2xl text-amber-300"></i></div>
+                </div>
+                <span class="text-xs text-white">🐶 Милый Песик</span>
+            </button>
+            <button onclick="setMask('cat')" class="mask-btn flex-shrink-0 flex flex-col items-center space-y-1 group">
+                <div class="w-16 h-16 rounded-2xl bg-gray-800 border-2 border-transparent group-hover:border-pink-500 flex items-center justify-center overflow-hidden relative">
+                    <div class="absolute inset-0 bg-purple-700/40 flex items-center justify-center"><i class="fa-solid fa-cat text-2xl text-purple-300"></i></div>
+                </div>
+                <span class="text-xs text-white">🐱 Кошечка</span>
+            </button>
+            <button onclick="setMask('glasses')" class="mask-btn flex-shrink-0 flex flex-col items-center space-y-1 group">
+                <div class="w-16 h-16 rounded-2xl bg-gray-800 border-2 border-transparent group-hover:border-pink-500 flex items-center justify-center overflow-hidden relative">
+                    <div class="absolute inset-0 bg-blue-700/40 flex items-center justify-center"><i class="fa-solid fa-glasses text-2xl text-cyan-300"></i></div>
+                </div>
+                <span class="text-xs text-white">🕶️ Кибер Очки</span>
+            </button>
+            <button onclick="setMask('crown')" class="mask-btn flex-shrink-0 flex flex-col items-center space-y-1 group">
+                <div class="w-16 h-16 rounded-2xl bg-gray-800 border-2 border-transparent group-hover:border-pink-500 flex items-center justify-center overflow-hidden relative">
+                    <div class="absolute inset-0 bg-yellow-700/40 flex items-center justify-center"><i class="fa-solid fa-crown text-2xl text-yellow-300"></i></div>
+                </div>
+                <span class="text-xs text-white">👑 Корона Звезды</span>
+            </button>
+            <button onclick="setMask('neon')" class="mask-btn flex-shrink-0 flex flex-col items-center space-y-1 group">
+                <div class="w-16 h-16 rounded-2xl bg-gray-800 border-2 border-transparent group-hover:border-pink-500 flex items-center justify-center overflow-hidden relative">
+                    <div class="absolute inset-0 bg-pink-700/40 flex items-center justify-center"><i class="fa-solid fa-bolt text-2xl text-pink-300"></i></div>
+                </div>
+                <span class="text-xs text-white">⚡ Неон Ореол</span>
+            </button>
+        </div>
+    </div>
 
-    function handleTypingEvent() {
-      if (!currentChatUser) return;
-      const chatId = getChatId(currentUser.username, currentChatUser.username);
-      const typingRef = db.ref(`chats/${chatId}/typing/${currentUser.username}`);
+    <!-- 2. Панель ретуши (Убрать прыщи, Гламур, Улучшение кожи) -->
+    <div id="beautyPanel" class="absolute bottom-32 left-0 right-0 z-30 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 transition-transform duration-300 translate-y-full rounded-t-3xl">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold tracking-wider text-cyan-400 uppercase"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>ИИ Ретушь и Лицо</h3>
+            <button class="closePanel text-white/60 hover:text-white px-2 py-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="space-y-3 max-h-48 overflow-y-auto pr-1">
+            <!-- Сглаживание кожи / Убрать прыщи -->
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-300">🌿 Удаление прыщей & Сглаживание кожи</span>
+                    <span id="valSkin" class="text-cyan-400 font-bold">50%</span>
+                </div>
+                <input type="range" id="rangeSkin" min="0" max="100" value="50" class="w-full accent-cyan-400 bg-gray-700 h-1.5 rounded-lg appearance-none cursor-pointer">
+            </div>
+            <!-- Отбеливание зубов / Осветление -->
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-300">✨ Сияние и Осветление лица</span>
+                    <span id="valBright" class="text-cyan-400 font-bold">30%</span>
+                </div>
+                <input type="range" id="rangeBright" min="0" max="100" value="30" class="w-full accent-cyan-400 bg-gray-700 h-1.5 rounded-lg appearance-none cursor-pointer">
+            </div>
+            <!-- Сужение лица (Эффект худого лица) -->
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-300">💎 Стройное лицо (V-Shape)</span>
+                    <span id="valSlim" class="text-cyan-400 font-bold">20%</span>
+                </div>
+                <input type="range" id="rangeSlim" min="0" max="100" value="20" class="w-full accent-cyan-400 bg-gray-700 h-1.5 rounded-lg appearance-none cursor-pointer">
+            </div>
+            <!-- Увеличение глаз -->
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-300">👀 Выразительные глаза</span>
+                    <span id="valEyes" class="text-cyan-400 font-bold">25%</span>
+                </div>
+                <input type="range" id="rangeEyes" min="0" max="100" value="25" class="w-full accent-cyan-400 bg-gray-700 h-1.5 rounded-lg appearance-none cursor-pointer">
+            </div>
+        </div>
+    </div>
 
-      typingRef.set(true);
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => {
-        typingRef.set(false);
-      }, 1500);
-    }
+    <!-- 3. Панель цветовых фильтров -->
+    <div id="filtersPanel" class="absolute bottom-32 left-0 right-0 z-30 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 transition-transform duration-300 translate-y-full rounded-t-3xl">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold tracking-wider text-purple-400 uppercase"><i class="fa-solid fa-palette mr-2"></i>Цветовые Фильтры</h3>
+            <button class="closePanel text-white/60 hover:text-white px-2 py-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="flex space-x-3 overflow-x-auto pb-2 scrollbar-none">
+            <button onclick="setFilter('none')" class="filter-btn flex-shrink-0 flex flex-col items-center space-y-1">
+                <div class="w-16 h-16 rounded-xl bg-gray-700 border-2 border-purple-500 flex items-center justify-center text-xs font-bold">Норм</div>
+                <span class="text-xs text-white">Оригинал</span>
+            </button>
+            <button onclick="setFilter('tiktok')" class="filter-btn flex-shrink-0 flex flex-col items-center space-y-1">
+                <div class="w-16 h-16 rounded-xl bg-gradient-to-tr from-pink-500 to-cyan-400 flex items-center justify-center text-xs font-bold">TikTok</div>
+                <span class="text-xs text-white">ТикТок Вайб</span>
+            </button>
+            <button onclick="setFilter('vintage')" class="filter-btn flex-shrink-0 flex flex-col items-center space-y-1">
+                <div class="w-16 h-16 rounded-xl bg-amber-700 flex items-center justify-center text-xs font-bold text-amber-200">Retro</div>
+                <span class="text-xs text-white">Винтаж 90х</span>
+            </button>
+            <button onclick="setFilter('cyberpunk')" class="filter-btn flex-shrink-0 flex flex-col items-center space-y-1">
+                <div class="w-16 h-16 rounded-xl bg-indigo-900 border border-pink-500 flex items-center justify-center text-xs font-bold text-pink-400">Cyber</div>
+                <span class="text-xs text-white">Киберпанк</span>
+            </button>
+            <button onclick="setFilter('bw')" class="filter-btn flex-shrink-0 flex flex-col items-center space-y-1">
+                <div class="w-16 h-16 rounded-xl bg-gray-900 border border-white flex items-center justify-center text-xs font-bold text-white">B&W</div>
+                <span class="text-xs text-white">Нуар Ч/Б</span>
+            </button>
+            <button onclick="setFilter('warm')" class="filter-btn flex-shrink-0 flex flex-col items-center space-y-1">
+                <div class="w-16 h-16 rounded-xl bg-orange-500 flex items-center justify-center text-xs font-bold text-yellow-100">Warm</div>
+                <span class="text-xs text-white">Закат</span>
+            </button>
+        </div>
+    </div>
 
-    async function sendChatMessage() {
-      const textarea = document.getElementById("chat-textarea");
-      const textVal = textarea.value.trim();
-
-      if (!textVal && !pendingMediaBase64) return;
-
-      let payload = null;
-
-      if (pendingMediaBase64) {
-        payload = { type: pendingMediaType, content: pendingMediaBase64 };
-      } else {
-        payload = { type: 'text', content: textVal };
-      }
-
-      const encryptedData = await encryptPayload(payload, currentChatUser.username);
-      const chatId = getChatId(currentUser.username, currentChatUser.username);
-
-      const msgNode = {
-        sender: currentUser.username,
-        encryptedData: encryptedData,
-        timestamp: formatTime(new Date())
-      };
-
-      await db.ref(`chats/${chatId}/messages`).push(msgNode);
-
-      textarea.value = "";
-      clearMediaPreview();
-    }
-
-    function handleFileSelect(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        pendingMediaBase64 = e.target.result;
-        pendingMediaType = file.type.startsWith('image/') ? 'image' : 'video';
+    <!-- НИЖНЯЯ ПАНЕЛЬ УПРАВЛЕНИЯ (Съемка) -->
+    <div class="relative z-20 p-6 pb-8 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col items-center justify-end">
         
-        document.getElementById("preview-filename").innerText = `Файл: ${file.name}`;
-        document.getElementById("media-preview-bar").style.display = "flex";
-      };
-      reader.readAsDataURL(file);
-    }
+        <!-- Выбор режимов съемки (TikTok Навигация внизу) -->
+        <div class="flex items-center space-x-6 mb-6 text-sm font-semibold tracking-wide text-white/70">
+            <button class="mode-tab hover:text-white transition">Дуэт</button>
+            <button class="mode-tab text-pink-500 border-b-2 border-pink-500 pb-1">60с Клип</button>
+            <button class="mode-tab hover:text-white transition">15с Фото</button>
+            <button class="mode-tab hover:text-white transition">Шаблоны</button>
+        </div>
 
-    function clearMediaPreview() {
-      pendingMediaBase64 = null;
-      pendingMediaType = null;
-      document.getElementById("media-preview-bar").style.display = "none";
-      document.getElementById("file-input-field").value = "";
-    }
+        <!-- Кнопки спуска / Записи -->
+        <div class="flex items-center justify-between w-full max-w-xs px-4">
+            <!-- Загрузка эффекта / галерея -->
+            <button id="btnGallery" class="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center overflow-hidden active:scale-95 transition">
+                <i class="fa-solid fa-image text-white text-lg"></i>
+            </button>
 
-    /* ==========================================================================
-       7. RECORDING ENGINE (VOICE & CIRCLE VIDEOS)
-       ========================================================================== */
-    let mediaRecorder = null;
-    let recordedChunks = [];
-    let recInterval = null;
-    let recSeconds = 0;
-    let recordingType = null; // 'voice' or 'circle'
+            <!-- ГЛАВНАЯ КНОПКА ЗАПИСИ (TikTok Style) -->
+            <button id="recordBtn" class="relative w-20 h-20 rounded-full flex items-center justify-center p-1 focus:outline-none transition-transform active:scale-95">
+                <!-- Внешнее кольцо -->
+                <div class="absolute inset-0 rounded-full border-4 border-white flex items-center justify-center"></div>
+                <!-- Внутренняя кнопка -->
+                <div id="recordInner" class="w-16 h-16 rounded-full bg-red-500 transition-all duration-300 shadow-lg"></div>
+            </button>
 
-    async function startCircleVideoRecording() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 300, height: 300 }, audio: true });
-        const videoEl = document.getElementById("circle-video-element");
-        videoEl.srcObject = stream;
-        
-        recordingType = 'circle';
-        document.getElementById("recording-overlay").style.display = "flex";
+            <!-- Переворот камеры / Эффекты -->
+            <button id="btnEffectsModal" class="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center active:scale-95 transition">
+                <i class="fa-solid fa-wand-magic text-pink-400 text-lg"></i>
+            </button>
+        </div>
+    </div>
 
-        recordedChunks = [];
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
-        mediaRecorder.start();
+    <!-- ТАЙМЕР ОБРАТНОГО ОТСЧЕТА -->
+    <div id="countdownOverlay" class="absolute inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center hidden">
+        <span id="countdownNumber" class="text-8xl font-black text-pink-500 animate-pulse">3</span>
+    </div>
 
-        startRecTimer();
-      } catch (err) {
-        alert("Ошибка доступа к камере/микрофону: " + err.message);
-      }
-    }
+    <!-- МОДАЛЬНОЕ ОКНО ПРЕДПРОСМОТРА ВИДЕО/ФОТО -->
+    <div id="previewModal" class="absolute inset-0 bg-black z-50 flex flex-col justify-between p-6 hidden">
+        <div class="flex justify-between items-center z-10">
+            <button id="closePreview" class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white text-lg">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <span class="text-sm font-bold text-white tracking-widest uppercase">Предпросмотр</span>
+            <div class="w-10"></div>
+        </div>
 
-    async function toggleVoiceRecording() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        recordingType = 'voice';
-        document.getElementById("circle-video-element").style.display = "none";
-        document.getElementById("recording-overlay").style.display = "flex";
+        <!-- Контейнер медиа -->
+        <div class="flex-1 flex items-center justify-center my-4 overflow-hidden rounded-2xl relative">
+            <video id="previewVideo" autoplay playsinline loop class="max-h-full max-w-full object-contain rounded-2xl hidden"></video>
+            <img id="previewImage" class="max-h-full max-w-full object-contain rounded-2xl hidden" alt="Captured Photo">
+        </div>
 
-        recordedChunks = [];
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
-        mediaRecorder.start();
+        <!-- Кнопки сохранения / публикации -->
+        <div class="flex space-x-4 z-10">
+            <button id="btnDownload" class="flex-1 py-3.5 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-xl font-bold flex items-center justify-center space-x-2 transition">
+                <i class="fa-solid fa-download"></i>
+                <span>Сохранить</span>
+            </button>
+            <button id="btnShareTikTok" class="flex-1 py-3.5 bg-gradient-to-r from-pink-500 to-cyan-400 hover:opacity-90 rounded-xl font-bold flex items-center justify-center space-x-2 shadow-lg transition">
+                <i class="fa-brands fa-tiktok"></i>
+                <span>Опубликовать</span>
+            </button>
+        </div>
+    </div>
 
-        startRecTimer();
-      } catch (err) {
-        alert("Ошибка доступа к микрофону: " + err.message);
-      }
-    }
+    <!-- СКРИПТ ЛОГИКИ И ОБРАБОТКИ ВИДЕО -->
+    <script>
+        const video = document.getElementById('webcam');
+        const filterCanvas = document.getElementById('filterCanvas');
+        const maskCanvas = document.getElementById('maskCanvas');
+        const fCtx = filterCanvas.getContext('2d');
+        const mCtx = maskCanvas.getContext('2d');
 
-    function startRecTimer() {
-      recSeconds = 0;
-      document.getElementById("rec-timer").innerText = "00:00";
-      recInterval = setInterval(() => {
-        recSeconds++;
-        const m = String(Math.floor(recSeconds / 60)).padStart(2, '0');
-        const s = String(recSeconds % 60).padStart(2, '0');
-        document.getElementById("rec-timer").innerText = `${m}:${s}`;
-      }, 1000);
-    }
+        let currentStream = null;
+        let useFrontCamera = true;
+        let currentMask = 'none';
+        let currentFilter = 'none';
+        let isRecording = false;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let animationFrameId = null;
 
-    function cancelRecording() {
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-        if (mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(t => t.stop());
-      }
-      clearInterval(recInterval);
-      document.getElementById("recording-overlay").style.display = "none";
-      document.getElementById("circle-video-element").style.display = "block";
-    }
-
-    async function stopAndSendRecording() {
-      if (!mediaRecorder) return;
-
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(recordedChunks, { type: recordingType === 'circle' ? 'video/webm' : 'audio/webm' });
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const base64Data = reader.result;
-          const payload = { type: recordingType, content: base64Data };
-
-          const encryptedData = await encryptPayload(payload, currentChatUser.username);
-          const chatId = getChatId(currentUser.username, currentChatUser.username);
-
-          await db.ref(`chats/${chatId}/messages`).push({
-            sender: currentUser.username,
-            encryptedData: encryptedData,
-            timestamp: formatTime(new Date())
-          });
+        // Параметры ретуши (улучшение кожи, прыщи, сияние)
+        let beautySettings = {
+            skin: 50,
+            bright: 30,
+            slim: 20,
+            eyes: 25
         };
-        reader.readAsDataURL(blob);
 
-        if (mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(t => t.stop());
-      };
+        // Инициализация камеры при загрузке
+        async function initCamera() {
+            try {
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+                const constraints = {
+                    video: {
+                        facingMode: useFrontCamera ? 'user' : 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: true
+                };
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = currentStream;
+                await video.play();
 
-      mediaRecorder.stop();
-      clearInterval(recInterval);
-      document.getElementById("recording-overlay").style.display = "none";
-      document.getElementById("circle-video-element").style.display = "block";
-    }
+                // Установка размеров холстов под видео
+                filterCanvas.width = video.videoWidth || 1280;
+                filterCanvas.height = video.videoHeight || 720;
+                maskCanvas.width = video.videoWidth || 1280;
+                maskCanvas.height = video.videoHeight || 720;
 
-    function playAudio(msgId, base64Src) {
-      const audio = new Audio(base64Src);
-      const progressBar = document.getElementById(`progress-${msgId}`);
-      
-      audio.ontimeupdate = () => {
-        if (progressBar && audio.duration) {
-          const pct = (audio.currentTime / audio.duration) * 100;
-          progressBar.style.width = `${pct}%`;
+                startProcessingLoop();
+            } catch (err) {
+                console.error("Ошибка доступа к камере:", err);
+                alert("Не удалось получить доступ к камере. Убедитесь, что разрешили использование камеры в браузере.");
+            }
         }
-      };
-      audio.onended = () => {
-        if (progressBar) progressBar.style.width = "0%";
-      };
-      audio.play();
-    }
 
-    /* ==========================================================================
-       8. MESSAGE DELETION MODAL
-       ========================================================================== */
-    let targetDeleteMsgId = null;
+        // Основной цикл обработки кадров в реальном времени (WebGL / Canvas фильтры + Маски)
+        function startProcessingLoop() {
+            cancelAnimationFrame(animationFrameId);
 
-    function openDeleteModal(msgId) {
-      targetDeleteMsgId = msgId;
-      document.getElementById("modal-delete").style.display = "flex";
-    }
+            function processFrame() {
+                if (video.paused || video.ended) return;
 
-    function closeDeleteModal() {
-      targetDeleteMsgId = null;
-      document.getElementById("modal-delete").style.display = "none";
-    }
+                const w = filterCanvas.width;
+                const h = filterCanvas.height;
 
-    async function confirmDeleteMessage() {
-      if (!targetDeleteMsgId || !currentChatUser) return;
+                // 1. Рендеринг цветовых фильтров и ретуши кожи
+                fCtx.clearRect(0, 0, w, h);
+                fCtx.save();
 
-      const deleteBoth = document.getElementById("delete-both-checkbox").checked;
-      const chatId = getChatId(currentUser.username, currentChatUser.username);
+                // Применяем цветовые фильтры на канвас
+                if (currentFilter === 'tiktok') {
+                    fCtx.filter = 'contrast(120%) saturate(140%) brightness(110%)';
+                } else if (currentFilter === 'vintage') {
+                    fCtx.filter = 'sepia(60%) contrast(110%) brightness(95%)';
+                } else if (currentFilter === 'cyberpunk') {
+                    fCtx.filter = 'hue-rotate(310deg) saturate(180%) contrast(130%)';
+                } else if (currentFilter === 'bw') {
+                    fCtx.filter = 'grayscale(100%) contrast(130%)';
+                } else if (currentFilter === 'warm') {
+                    fCtx.filter = 'sepia(30%) saturate(150%) brightness(105%)';
+                } else {
+                    fCtx.filter = 'none';
+                }
 
-      if (deleteBoth) {
-        // Remove completely from RTDB
-        await db.ref(`chats/${chatId}/messages/${targetDeleteMsgId}`).remove();
-      } else {
-        // Remove locally from screen
-        const el = document.getElementById(`msg-${targetDeleteMsgId}`);
-        if (el) el.remove();
-      }
+                // Эффект сглаживания кожи (убрать прыщи / размытие несовершенств кожи)
+                // Имитируем бьюти-фильтр через комбинацию фильтров размытия и наложения
+                if (beautySettings.skin > 0) {
+                    const blurVal = (beautySettings.skin / 100) * 4;
+                    const brightnessVal = 100 + (beautySettings.bright / 100) * 15;
+                    fCtx.filter += ` blur(${blurVal}px) brightness(${brightnessVal}%)`;
+                }
 
-      closeDeleteModal();
-    }
+                fCtx.drawImage(video, 0, 0, w, h);
+                fCtx.restore();
 
-    /* ==========================================================================
-       9. PROFILE MODAL LOGIC
-       ========================================================================== */
-    function openProfileModal() {
-      document.getElementById("profile-display-name").value = currentUser.displayName;
-      const modalAvatar = document.getElementById("profile-modal-avatar");
-      modalAvatar.innerHTML = currentUser.avatar 
-        ? `<img src="${currentUser.avatar}">` 
-        : currentUser.displayName.charAt(0).toUpperCase();
-      document.getElementById("modal-profile").style.display = "flex";
-    }
+                // 2. Рендеринг TikTok масок поверх лица
+                mCtx.clearRect(0, 0, w, h);
+                if (currentMask !== 'none') {
+                    drawTikTokMask(mCtx, w, h, currentMask);
+                }
 
-    function closeProfileModal() {
-      document.getElementById("modal-profile").style.display = "none";
-    }
+                animationFrameId = requestAnimationFrame(processFrame);
+            }
 
-    function handleAvatarChange(e) {
-      const file = e.target.files[0];
-      if (!file) return;
+            processFrame();
+        }
 
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        currentUser.avatar = evt.target.result;
-        const modalAvatar = document.getElementById("profile-modal-avatar");
-        modalAvatar.innerHTML = `<img src="${currentUser.avatar}">`;
-      };
-      reader.readAsDataURL(file);
-    }
+        // Отрисовка интерактивных масок TikTok на холсте
+        function drawTikTokMask(ctx, w, h, maskType) {
+            ctx.save();
+            // Примерные координаты центра экрана (где обычно находится лицо при селфи)
+            const cx = w / 2;
+            const cy = h / 2 - 50;
 
-    async function saveProfileChanges() {
-      const newName = document.getElementById("profile-display-name").value.trim();
-      if (newName) currentUser.displayName = newName;
+            if (maskType === 'dog') {
+                // Ушки собаки
+                ctx.fillStyle = '#b45309';
+                ctx.beginPath();
+                ctx.arc(cx - 120, cy - 180, 50, 0, Math.PI * 2);
+                ctx.arc(cx + 120, cy - 180, 50, 0, Math.PI * 2);
+                ctx.fill();
+                // Носик и пятна
+                ctx.fillStyle = '#451a03';
+                ctx.beginPath();
+                ctx.ellipse(cx, cy + 40, 35, 25, 0, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (maskType === 'cat') {
+                // Кошачьи ушки (тригонометрические треугольники)
+                ctx.fillStyle = '#a855f7';
+                ctx.beginPath();
+                ctx.moveTo(cx - 150, cy - 150);
+                ctx.lineTo(cx - 80, cy - 250);
+                ctx.lineTo(cx - 40, cy - 140);
+                ctx.closePath();
+                ctx.fill();
 
-      await db.ref(`users/${currentUser.username}`).update({
-        displayName: currentUser.displayName,
-        avatar: currentUser.avatar || ""
-      });
+                ctx.beginPath();
+                ctx.moveTo(cx + 150, cy - 150);
+                ctx.lineTo(cx + 80, cy - 250);
+                ctx.lineTo(cx + 40, cy - 140);
+                ctx.closePath();
+                ctx.fill();
+            } else if (maskType === 'glasses') {
+                // Стильные кибер-очки
+                ctx.strokeStyle = '#06b6d4';
+                ctx.lineWidth = 8;
+                ctx.strokeRect(cx - 140, cy - 50, 120, 70);
+                ctx.strokeRect(cx + 20, cy - 50, 120, 70);
+                ctx.beginPath();
+                ctx.moveTo(cx - 20, cy - 20);
+                ctx.lineTo(cx + 20, cy - 20);
+                ctx.stroke();
+            } else if (maskType === 'crown') {
+                // Корона золотая
+                ctx.fillStyle = '#facc15';
+                ctx.beginPath();
+                ctx.moveTo(cx - 90, cy - 160);
+                ctx.lineTo(cx - 120, cy - 260);
+                ctx.lineTo(cx - 40, cy - 200);
+                ctx.lineTo(cx, cy - 280);
+                ctx.lineTo(cx + 40, cy - 200);
+                ctx.lineTo(cx + 120, cy - 260);
+                ctx.lineTo(cx + 90, cy - 160);
+                ctx.closePath();
+                ctx.fill();
+            } else if (maskType === 'neon') {
+                // Неоновый нимб
+                ctx.strokeStyle = '#ec4899';
+                ctx.lineWidth = 6;
+                ctx.shadowColor = '#ec4899';
+                ctx.shadowBlur = 25;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy - 220, 130, 40, 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
 
-      localStorage.setItem("auth_user", JSON.stringify(currentUser));
-      renderMyAvatar();
-      closeProfileModal();
-    }
+        // Управление панелями (Выдвижные шторки TikTok)
+        const masksPanel = document.getElementById('masksPanel');
+        const beautyPanel = document.getElementById('beautyPanel');
+        const filtersPanel = document.getElementById('filtersPanel');
 
-    /* ==========================================================================
-       10. APP INITIALIZATION ENTRY POINT
-       ========================================================================== */
-    function initMessengerApp() {
-      const savedUser = localStorage.getItem("auth_user");
-      if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        document.getElementById("screen-auth").style.display = "none";
-        initLoggedInSession();
-      } else {
-        document.getElementById("screen-auth").style.display = "flex";
-      }
-    }
-  </script>
+        function hideAllPanels() {
+            masksPanel.classList.add('translate-y-full');
+            beautyPanel.classList.add('translate-y-full');
+            filtersPanel.classList.add('translate-y-full');
+        }
+
+        document.getElementById('toggleMasksPanel').addEventListener('click', () => {
+            const isOpen = !masksPanel.classList.contains('translate-y-full');
+            hideAllPanels();
+            if (!isOpen) masksPanel.classList.remove('translate-y-full');
+        });
+
+        document.getElementById('toggleBeautyPanel').addEventListener('click', () => {
+            const isOpen = !beautyPanel.classList.contains('translate-y-full');
+            hideAllPanels();
+            if (!isOpen) beautyPanel.classList.remove('translate-y-full');
+        });
+
+        document.getElementById('toggleFiltersPanel').addEventListener('click', () => {
+            const isOpen = !filtersPanel.classList.contains('translate-y-full');
+            hideAllPanels();
+            if (!isOpen) filtersPanel.classList.remove('translate-y-full');
+        });
+
+        document.querySelectorAll('.closePanel').forEach(btn => {
+            btn.addEventListener('click', hideAllPanels);
+        });
+
+        // Установка масок и фильтров из меню
+        window.setMask = function(mask) {
+            currentMask = mask;
+            hideAllPanels();
+        };
+
+        window.setFilter = function(filter) {
+            currentFilter = filter;
+            hideAllPanels();
+        };
+
+        // Обработка ползунков ретуши (улучшение кожи, прыщи, сияние)
+        document.getElementById('rangeSkin').addEventListener('input', (e) => {
+            beautySettings.skin = e.target.value;
+            document.getElementById('valSkin').innerText = e.target.value + '%';
+        });
+        document.getElementById('rangeBright').addEventListener('input', (e) => {
+            beautySettings.bright = e.target.value;
+            document.getElementById('valBright').innerText = e.target.value + '%';
+        });
+        document.getElementById('rangeSlim').addEventListener('input', (e) => {
+            beautySettings.slim = e.target.value;
+            document.getElementById('valSlim').innerText = e.target.value + '%';
+        });
+        document.getElementById('rangeEyes').addEventListener('input', (e) => {
+            beautySettings.eyes = e.target.value;
+            document.getElementById('valEyes').innerText = e.target.value + '%';
+        });
+
+        // Переворот камеры (Фронтальная / Тыловая)
+        document.getElementById('btnFlip').addEventListener('click', () => {
+            useFrontCamera = !useFrontCamera;
+            initCamera();
+            // Переключение зеркалирования для тыловой камеры
+            if (useFrontCamera) {
+                video.classList.add('mirrored');
+                filterCanvas.classList.add('mirrored');
+                maskCanvas.classList.add('mirrored');
+            } else {
+                video.classList.remove('mirrored');
+                filterCanvas.classList.remove('mirrored');
+                maskCanvas.classList.remove('mirrored');
+            }
+        });
+
+        // Запись видео (TikTok запись клипа)
+        const recordBtn = document.getElementById('recordBtn');
+        const recordInner = document.getElementById('recordInner');
+        const previewModal = document.getElementById('previewModal');
+        const previewVideo = document.getElementById('previewVideo');
+        const previewImage = document.getElementById('previewImage');
+
+        recordBtn.addEventListener('click', () => {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        function startRecording() {
+            recordedChunks = [];
+            // Объединяем поток видео с фильтрами и масками в общий комбинированный Canvas Stream
+            const combinedCanvas = document.createElement('canvas');
+            combinedCanvas.width = filterCanvas.width;
+            combinedCanvas.height = filterCanvas.height;
+            const ctx = combinedCanvas.getContext('2d');
+
+            function drawCombined() {
+                if (!isRecording) return;
+                ctx.drawImage(filterCanvas, 0, 0);
+                ctx.drawImage(maskCanvas, 0, 0);
+                requestAnimationFrame(drawCombined);
+            }
+            drawCombined();
+
+            const canvasStream = combinedCanvas.captureStream(30);
+            
+            // Добавляем аудиодорожку, если она есть
+            if (currentStream && currentStream.getAudioTracks().length > 0) {
+                canvasStream.addTrack(currentStream.getAudioTracks()[0]);
+            }
+
+            try {
+                mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm; codecs=vp9' });
+            } catch (e) {
+                try {
+                    mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
+                } catch (err) {
+                    mediaRecorder = new MediaRecorder(canvasStream);
+                }
+            }
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const videoURL = URL.createObjectURL(blob);
+                previewVideo.src = videoURL;
+                previewVideo.classList.remove('hidden');
+                previewImage.classList.add('hidden');
+                previewModal.classList.remove('hidden');
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            recordInner.classList.remove('bg-red-500', 'w-16', 'h-16', 'rounded-full');
+            recordInner.classList.add('bg-red-600', 'w-8', 'h-8', 'rounded-md', 'recording-pulse');
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                recordInner.classList.remove('bg-red-600', 'w-8', 'h-8', 'rounded-md', 'recording-pulse');
+                recordInner.classList.add('bg-red-500', 'w-16', 'h-16', 'rounded-full');
+            }
+        }
+
+        // Закрытие предпросмотра
+        document.getElementById('closePreview').addEventListener('click', () => {
+            previewModal.classList.add('hidden');
+            previewVideo.pause();
+            previewVideo.src = '';
+        });
+
+        // Скачивание готового видео
+        document.getElementById('btnDownload').addEventListener('click', () => {
+            const url = previewVideo.src;
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `tiktok-video-${Date.now()}.webm`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+            }, 100);
+        });
+
+        // Кнопка «Опубликовать» (симуляция TikTok публикации)
+        document.getElementById('btnShareTikTok').addEventListener('click', () => {
+            alert("🚀 Успешно опубликовано в вашу ленту TikTok!");
+            previewModal.classList.add('hidden');
+        });
+
+        // Запуск камеры при загрузке страницы
+        window.addEventListener('load', initCamera);
+    </script>
 </body>
 </html>
