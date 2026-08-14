@@ -1,1166 +1,1111 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>GLB Риггер — Создание скелета и анимаций</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0a0a0f;
-            color: #fff;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        #canvas-container {
-            flex: 1;
-            position: relative;
-            width: 100%;
-        }
-        canvas { display: block; width: 100%; height: 100%; }
-        .ui-panel {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(10, 10, 20, 0.95);
-            backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(100, 150, 255, 0.2);
-            padding: 10px 14px;
-            z-index: 10;
-            max-height: 60vh;
-            overflow-y: auto;
-            transition: transform 0.3s ease;
-        }
-        .ui-panel.collapsed { transform: translateY(calc(100% - 44px)); }
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .panel-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #a0b0ff;
-            letter-spacing: 0.5px;
-        }
-        .toggle-panel {
-            background: none;
-            border: none;
-            color: #a0b0ff;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            padding: 8px 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn:active { transform: scale(0.95); }
-        .btn-primary { background: #4a6fff; color: #fff; box-shadow: 0 2px 10px rgba(74,111,255,0.3); }
-        .btn-secondary { background: rgba(255,255,255,0.08); color: #ccc; border: 1px solid rgba(255,255,255,0.1); }
-        .btn-success { background: rgba(50,200,100,0.2); color: #50c878; border: 1px solid rgba(50,200,100,0.3); }
-        .btn-danger { background: rgba(255,70,70,0.15); color: #ff6b6b; border: 1px solid rgba(255,70,70,0.2); }
-        .btn-warning { background: rgba(255,180,0,0.15); color: #ffb800; border: 1px solid rgba(255,180,0,0.2); }
-        .btn-info { background: rgba(0,200,255,0.15); color: #00c8ff; border: 1px solid rgba(0,200,255,0.2); }
-        .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
-        .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
-        .tab {
-            padding: 5px 12px;
-            font-size: 11px;
-            border-radius: 6px;
-            cursor: pointer;
-            background: rgba(255,255,255,0.03);
-            color: #666;
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.2s;
-        }
-        .tab.active {
-            background: rgba(74, 111, 255, 0.15);
-            color: #a0b0ff;
-            border-color: rgba(74, 111, 255, 0.25);
-        }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .section-title {
-            font-size: 10px;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 8px 0 4px 0;
-        }
-        .bone-list {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            max-height: 140px;
-            overflow-y: auto;
-        }
-        .bone-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 10px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .bone-item:hover, .bone-item.selected {
-            background: rgba(74,111,255,0.1);
-            border-color: rgba(74,111,255,0.25);
-        }
-        .bone-item.selected { box-shadow: 0 0 8px rgba(74,111,255,0.1); }
-        .bone-color {
-            width: 10px; height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .bone-name { color: #ccc; flex: 1; }
-        .bone-depth { font-size: 10px; color: #555; }
-        .mesh-list {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            max-height: 120px;
-            overflow-y: auto;
-        }
-        .mesh-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 10px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .mesh-item:hover, .mesh-item.selected {
-            background: rgba(255,100,100,0.1);
-            border-color: rgba(255,100,100,0.2);
-        }
-        .mesh-name { color: #ccc; flex: 1; }
-        .mesh-verts { font-size: 10px; color: #555; }
-        .slider-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 6px 0;
-        }
-        .slider-group label {
-            font-size: 11px;
-            color: #888;
-            min-width: 60px;
-        }
-        input[type="range"] {
-            flex: 1;
-            -webkit-appearance: none;
-            height: 3px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
-            outline: none;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 14px; height: 14px;
-            background: #4a6fff;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-        .slider-value {
-            font-size: 11px;
-            color: #a0b0ff;
-            min-width: 32px;
-            text-align: right;
-        }
-        #file-input, #file-input-anim { display: none; }
-        .info-overlay {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            pointer-events: none;
-            z-index: 5;
-        }
-        .info-overlay.hidden { display: none; }
-        .info-icon { font-size: 56px; margin-bottom: 12px; opacity: 0.25; }
-        .info-text { font-size: 15px; color: rgba(255,255,255,0.35); line-height: 1.6; }
-        .loading-overlay {
-            position: absolute;
-            top:0; left:0; right:0; bottom:0;
-            background: rgba(10,10,20,0.85);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-        .loading-overlay.visible { opacity: 1; pointer-events: all; }
-        .spinner {
-            width: 40px; height: 40px;
-            border: 3px solid rgba(74,111,255,0.2);
-            border-top-color: #4a6fff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { margin-top: 12px; font-size: 13px; color: #a0b0ff; }
-        .top-bar {
-            position: absolute;
-            top:0; left:0; right:0;
-            padding: 10px 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-            pointer-events: none;
-        }
-        .top-bar > * { pointer-events: all; }
-        .model-name {
-            font-size: 12px;
-            color: rgba(255,255,255,0.5);
-            background: rgba(0,0,0,0.4);
-            padding: 5px 10px;
-            border-radius: 6px;
-        }
-        .mode-badge {
-            font-size: 10px;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-        .mode-badge.view { background: rgba(100,100,100,0.2); color: #888; }
-        .mode-badge.rig { background: rgba(74,111,255,0.2); color: #4a6fff; }
-        .mode-badge.pose { background: rgba(255,180,0,0.2); color: #ffb800; }
-        .mode-badge.weight { background: rgba(255,100,100,0.2); color: #ff6464; }
-        .mode-badge.anim { background: rgba(50,200,100,0.2); color: #50c878; }
-        .hint-text {
-            font-size: 11px;
-            color: #555;
-            padding: 4px 0;
-            line-height: 1.4;
-        }
-        .anim-timeline {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 6px;
-            margin-top: 6px;
-        }
-        .timeline-slider {
-            flex: 1;
-        }
-        .keyframe-btn {
-            width: 28px; height: 28px;
-            border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.05);
-            color: #ccc;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .keyframe-btn.recording {
-            background: rgba(255,50,50,0.3);
-            color: #ff5050;
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .toast {
-            position: absolute;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(20,20,35,0.95);
-            border: 1px solid rgba(74,111,255,0.3);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #a0b0ff;
-            z-index: 30;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-        .toast.show { opacity: 1; }
-    </style>
-</head>
-<body>
-    <div id="canvas-container">
-        <canvas id="gl"></canvas>
-        <div class="top-bar">
-            <div class="model-name" id="model-name">Загрузите GLB модель</div>
-            <div class="mode-badge view" id="mode-badge">👁 VIEW</div>
-        </div>
-        <div class="info-overlay" id="info-overlay">
-            <div class="info-icon">🦴</div>
-            <div class="info-text">
-                GLB Риггер — создавай скелет<br>
-                прямо в браузере!<br><br>
-                Нажми «Загрузить GLB»
-            </div>
-        </div>
-        <div class="loading-overlay" id="loading-overlay">
-            <div class="spinner"></div>
-            <div class="loading-text" id="loading-text">Загрузка...</div>
-        </div>
-        <div class="toast" id="toast"></div>
-    </div>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusRTC - Ultra Stable P2P Calling Platform</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts (Inter & JetBrains Mono for logs) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <div class="ui-panel" id="ui-panel">
-        <div class="panel-header">
-            <span class="panel-title">🦴 GLB РИГГЕР</span>
-            <button class="toggle-panel" id="panel-toggle">▼</button>
-        </div>
-
-        <!-- ГЛАВНЫЕ КНОПКИ -->
-        <div class="btn-row">
-            <button class="btn btn-primary" id="btn-load">📂 Загрузить GLB</button>
-            <button class="btn btn-success" id="btn-export">💾 Экспорт GLB</button>
-        </div>
-
-        <div class="btn-row">
-            <button class="btn btn-secondary" id="btn-mode-view">👁 View</button>
-            <button class="btn btn-secondary" id="btn-mode-rig">🦴 Риг</button>
-            <button class="btn btn-secondary" id="btn-mode-pose">✋ Поза</button>
-            <button class="btn btn-secondary" id="btn-mode-weight">⚖️ Веса</button>
-            <button class="btn btn-secondary" id="btn-mode-anim">🎬 Анимация</button>
-        </div>
-
-        <!-- ТАБЫ -->
-        <div class="tabs">
-            <div class="tab active" data-tab="bones">🦴 Кости</div>
-            <div class="tab" data-tab="meshes">🔷 Меши</div>
-            <div class="tab" data-tab="weights">⚖️ Веса</div>
-            <div class="tab" data-tab="pose">✋ Поза</div>
-            <div class="tab" data-tab="anim">🎬 Анимация</div>
-        </div>
-
-        <!-- КОСТИ -->
-        <div class="tab-content active" id="tab-bones">
-            <div class="hint-text" id="bones-hint">
-                Режим РИГ: тапни на модели — создашь кость. Тапни на кость — выберешь родителя для следующей.
-            </div>
-            <div class="btn-row">
-                <button class="btn btn-primary" id="btn-add-root">➕ Корневая кость</button>
-                <button class="btn btn-danger" id="btn-del-bone">🗑 Удалить</button>
-                <button class="btn btn-warning" id="btn-clear-bones">❌ Все кости</button>
-            </div>
-            <div class="section-title">Список костей:</div>
-            <div class="bone-list" id="bone-list">
-                <div style="color:#555; font-size:12px; text-align:center; padding:10px;">Нет костей</div>
-            </div>
-        </div>
-
-        <!-- МЕШИ -->
-        <div class="tab-content" id="tab-meshes">
-            <div class="hint-text">
-                Выбери меши для привязки к скелету. Красный = выбран.
-            </div>
-            <div class="btn-row">
-                <button class="btn btn-success" id="btn-bind-mesh">🔗 Привязать к скелету</button>
-                <button class="btn btn-danger" id="btn-unbind-mesh">✂️ Отвязать</button>
-            </div>
-            <div class="section-title">Меши в сцене:</div>
-            <div class="mesh-list" id="mesh-list">
-                <div style="color:#555; font-size:12px; text-align:center; padding:10px;">Нет мешей</div>
-            </div>
-        </div>
-
-        <!-- ВЕСА -->
-        <div class="tab-content" id="tab-weights">
-            <div class="hint-text">
-                Выбери кость и меш — настрой веса. Красный = 100% влияние кости.
-            </div>
-            <div class="btn-row">
-                <button class="btn btn-primary" id="btn-auto-weights">🤖 Авто-веса</button>
-                <button class="btn btn-secondary" id="btn-paint-brush">🖌 Кисть</button>
-            </div>
-            <div class="slider-group">
-                <label>Радиус кисти</label>
-                <input type="range" id="brush-radius" min="0.01" max="0.5" step="0.01" value="0.1">
-                <span class="slider-value" id="brush-radius-val">0.10</span>
-            </div>
-            <div class="slider-group">
-                <label>Сила кисти</label>
-                <input type="range" id="brush-strength" min="0" max="1" step="0.01" value="1">
-                <span class="slider-value" id="brush-strength-val">1.00</span>
-            </div>
-            <div class="section-title">Выбранная кость: <span id="weight-bone-name" style="color:#4a6fff;">—</span></div>
-        </div>
-
-        <!-- ПОЗА -->
-        <div class="tab-content" id="tab-pose">
-            <div class="hint-text">
-                Выбери кость и крути! Это меняет позу модели.
-            </div>
-            <div class="slider-group">
-                <label>Rotate X</label>
-                <input type="range" id="rot-x" min="-180" max="180" step="1" value="0">
-                <span class="slider-value" id="rot-x-val">0°</span>
-            </div>
-            <div class="slider-group">
-                <label>Rotate Y</label>
-                <input type="range" id="rot-y" min="-180" max="180" step="1" value="0">
-                <span class="slider-value" id="rot-y-val">0°</span>
-            </div>
-            <div class="slider-group">
-                <label>Rotate Z</label>
-                <input type="range" id="rot-z" min="-180" max="180" step="1" value="0">
-                <span class="slider-value" id="rot-z-val">0°</span>
-            </div>
-            <div class="section-title">Выбранная кость: <span id="pose-bone-name" style="color:#ffb800;">—</span></div>
-        </div>
-
-        <!-- АНИМАЦИЯ -->
-        <div class="tab-content" id="tab-anim">
-            <div class="hint-text">
-                Ставь ключевые кадры (🔴) в разных позах, потом жми Play!
-            </div>
-            <div class="btn-row">
-                <button class="btn btn-primary" id="btn-keyframe">🔴 Ключ</button>
-                <button class="btn btn-secondary" id="btn-anim-play">▶️ Play</button>
-                <button class="btn btn-secondary" id="btn-anim-stop">⏹ Stop</button>
-                <button class="btn btn-danger" id="btn-clear-anim">❌ Сбросить</button>
-            </div>
-            <div class="anim-timeline">
-                <span style="font-size:11px; color:#888;">0s</span>
-                <input type="range" class="timeline-slider" id="timeline" min="0" max="10" step="0.1" value="0">
-                <span style="font-size:11px; color:#888;" id="time-display">0.0s</span>
-            </div>
-            <div class="section-title">Ключевые кадры: <span id="keyframe-count" style="color:#50c878;">0</span></div>
-        </div>
-    </div>
-
-    <input type="file" id="file-input" accept=".glb,.gltf">
-
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          boxShadow: {
+            'glow-emerald': '0 0 15px -3px rgba(16, 185, 129, 0.4)',
+            'glow-indigo': '0 0 15px -3px rgba(99, 102, 241, 0.4)',
+            'glow-rose': '0 0 15px -3px rgba(244, 63, 94, 0.4)',
+          }
         }
+      }
     }
-    </script>
+  </script>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  <style>
+    /* Premium custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    
+    /* Elegant pulse indicator */
+    .pulse-glow {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(1.15); }
+    }
+    
+    /* Mirror local camera */
+    .mirrored {
+      transform: scaleX(-1);
+    }
+  </style>
 
-        // ==================== СЦЕНА ====================
-        const container = document.getElementById('canvas-container');
-        const canvas = document.getElementById('gl');
+  <!-- Firebase Legacy Compat SDK (Most stable & foolproof for single HTML scripts) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500/30 selection:text-indigo-200 antialiased overflow-x-hidden">
 
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0a0f);
-        scene.fog = new THREE.Fog(0x0a0a0f, 5, 30);
+  <!-- TOP HEADER BANNER -->
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50 px-4 py-3 lg:px-8">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      
+      <!-- Logo and App Title -->
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-gradient-to-tr from-indigo-600 to-violet-500 rounded-xl shadow-glow-indigo">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-50 to-slate-200">
+            NexusRTC <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">v2.0 Stable</span>
+          </h1>
+          <p class="text-[10px] text-slate-400 font-mono">Ultra-stable WebRTC P2P + Firebase Signaling</p>
+        </div>
+      </div>
 
-        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.01, 1000);
-        camera.position.set(0, 1.5, 4);
+      <!-- Realtime Connection Status Dashboard -->
+      <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+        <!-- Firebase DB State -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Signaling:</span>
+          <span id="firebase-status" class="flex items-center gap-1.5 text-xs font-medium text-amber-400">
+            <span class="w-2 h-2 rounded-full bg-amber-500 pulse-glow"></span> Connecting...
+          </span>
+        </div>
 
-        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
+        <!-- WebRTC Peer State -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">P2P Peer:</span>
+          <span id="peer-status" class="flex items-center gap-1.5 text-xs font-medium text-rose-500">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span> Idle
+          </span>
+        </div>
+      </div>
 
-        // ОСВЕЩЕНИЕ
-        scene.add(new THREE.AmbientLight(0x404060, 0.5));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        dirLight.position.set(3, 5, 3);
-        dirLight.castShadow = true;
-        scene.add(dirLight);
-        scene.add(new THREE.DirectionalLight(0x6080ff, 0.3).position.set(-3, 2, -2));
-        scene.add(new THREE.PointLight(0xff80c0, 0.4, 10).position.set(0, 3, -3));
+    </div>
+  </header>
 
-        // ПОЛ
-        const grid = new THREE.GridHelper(10, 20, 0x333344, 0x1a1a22);
-        scene.add(grid);
-        const plane = new THREE.Mesh(
-            new THREE.PlaneGeometry(20, 20),
-            new THREE.MeshStandardMaterial({ color: 0x0f0f18, roughness: 0.9 })
-        );
-        plane.rotation.x = -Math.PI / 2;
-        plane.position.y = -0.01;
-        plane.receiveShadow = true;
-        scene.add(plane);
+  <!-- MAIN APP GRID -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    
+    <!-- LEFT SIDEBAR: CONTROLS & STATISTICS (4 cols) -->
+    <section class="lg:col-span-4 space-y-6">
+      
+      <!-- ROOM PANEL -->
+      <div class="p-5 rounded-2xl bg-slate-900/40 border border-slate-800/80 shadow-xl backdrop-blur-md">
+        <h3 class="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2 uppercase tracking-wider">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          Управление Комнатой
+        </h3>
 
-        // КОНТРОЛЫ
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.minDistance = 0.3;
-        controls.maxDistance = 20;
-        controls.target.set(0, 1, 0);
-        controls.update();
+        <!-- Actions -->
+        <div id="room-setup-zone" class="space-y-4">
+          <!-- Create button -->
+          <button id="btn-create-room" class="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:scale-[0.98] text-white rounded-xl font-medium shadow-lg shadow-indigo-900/20 transition-all flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            Создать новую комнату
+          </button>
 
-        // ==================== ПЕРЕМЕННЫЕ ====================
-        let model = null;
-        let originalModel = null;
-        let meshes = [];
-        let bones = [];
-        let boneHelpers = [];
-        let boneLines = [];
-        let selectedBone = null;
-        let selectedMesh = null;
-        let mode = 'view';
-        let raycaster = new THREE.Raycaster();
-        let mouse = new THREE.Vector2();
-        let clock = new THREE.Clock();
-        let mixer = null;
-        let keyframes = [];
-        let isPlaying = false;
-        let animTime = 0;
-        let skinnedMeshes = [];
-        let boneColors = [0xff3333, 0x33ff33, 0x3333ff, 0xffff33, 0xff33ff, 0x33ffff, 0xff8833, 0x8833ff];
+          <div class="relative flex items-center">
+            <div class="flex-grow border-t border-slate-800"></div>
+            <span class="flex-shrink mx-4 text-xs text-slate-500 uppercase tracking-widest font-mono">или</span>
+            <div class="flex-grow border-t border-slate-800"></div>
+          </div>
 
-        // ==================== UI ====================
-        const fileInput = document.getElementById('file-input');
-        const btnLoad = document.getElementById('btn-load');
-        const btnExport = document.getElementById('btn-export');
-        const modeBadge = document.getElementById('mode-badge');
-        const infoOverlay = document.getElementById('info-overlay');
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const loadingText = document.getElementById('loading-text');
-        const modelName = document.getElementById('model-name');
-        const toast = document.getElementById('toast');
-        const boneList = document.getElementById('bone-list');
-        const meshList = document.getElementById('mesh-list');
-        const panelToggle = document.getElementById('panel-toggle');
-        const uiPanel = document.getElementById('ui-panel');
+          <!-- Join Input -->
+          <div class="space-y-2">
+            <label for="room-id-input" class="block text-xs text-slate-400 font-medium">Введите ID комнаты:</label>
+            <div class="flex gap-2">
+              <input type="text" id="room-id-input" placeholder="например, meow-1234" class="flex-1 px-3 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-100 font-mono text-sm placeholder:text-slate-600">
+              <button id="btn-join-room" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white rounded-xl font-medium transition-all shadow-lg shadow-emerald-950/40 flex items-center gap-1.5">
+                Войти
+              </button>
+            </div>
+          </div>
+        </div>
 
-        function showToast(msg) {
-            toast.textContent = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2500);
-        }
+        <!-- Room info details (Hidden initially) -->
+        <div id="room-info-zone" class="hidden space-y-4">
+          <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80">
+            <p class="text-xs text-slate-400 mb-1">Вы находитесь в комнате:</p>
+            <div class="flex items-center justify-between gap-2">
+              <span id="active-room-display" class="font-mono text-base font-bold text-indigo-400 tracking-wider">NONE</span>
+              <button id="btn-copy-link" class="p-2 hover:bg-slate-800 active:scale-95 text-slate-400 hover:text-indigo-400 rounded-lg transition-colors" title="Копировать ссылку">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+              </button>
+            </div>
+          </div>
 
-        // ТАБЫ
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-            });
+          <button id="btn-hangup" class="w-full py-3 px-4 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 active:scale-[0.98] text-white rounded-xl font-semibold shadow-lg shadow-rose-950/30 transition-all flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2 2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" /></svg>
+            Завершить звонок / Выйти
+          </button>
+        </div>
+
+      </div>
+
+      <!-- STREAM CONTROLS (MICROPHONE / CAMERA) -->
+      <div class="p-5 rounded-2xl bg-slate-900/40 border border-slate-800/80 shadow-xl backdrop-blur-md space-y-4">
+        <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2 uppercase tracking-wider">
+          <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+          Контроль Медиа
+        </h3>
+
+        <div class="grid grid-cols-3 gap-2">
+          <!-- Mic toggle -->
+          <button id="btn-toggle-mic" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-emerald-400">
+            <svg id="svg-mic-on" class="w-5 h-5 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+            <svg id="svg-mic-off" class="w-5 h-5 mb-1.5 hidden text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+            <span class="text-[10px] font-medium uppercase text-slate-400">Звук</span>
+          </button>
+
+          <!-- Video toggle -->
+          <button id="btn-toggle-video" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-emerald-400">
+            <svg id="svg-video-on" class="w-5 h-5 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+            <svg id="svg-video-off" class="w-5 h-5 mb-1.5 hidden text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+            <span class="text-[10px] font-medium uppercase text-slate-400">Камера</span>
+          </button>
+
+          <!-- Screen share toggle -->
+          <button id="btn-share-screen" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-slate-400">
+            <svg class="w-5 h-5 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+            <span class="text-[10px] font-medium uppercase text-slate-400">Экран</span>
+          </button>
+        </div>
+
+        <!-- Connection Repair (ICE Restart Feature) -->
+        <div class="pt-2 border-t border-slate-800/60">
+          <button id="btn-repair" class="w-full py-2.5 px-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 active:scale-95 text-xs text-slate-300 font-semibold rounded-xl flex items-center justify-center gap-2 transition-all">
+            <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H16V10h5.21M4 9h5.21" /></svg>
+            Восстановить соединение (ICE Restart)
+          </button>
+          <p class="text-[10px] text-slate-500 mt-1.5 text-center leading-relaxed">Нажмите, если звук/видео зависли. Это пересоздаст маршрут обмена трафиком.</p>
+        </div>
+      </div>
+
+      <!-- SIGNALING & WEBRTC DIAGNOSTICS -->
+      <div class="p-5 rounded-2xl bg-slate-900/40 border border-slate-800/80 shadow-xl backdrop-blur-md space-y-4">
+        <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2 uppercase tracking-wider">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+          Телеметрия Соединения
+        </h3>
+
+        <div class="space-y-2.5 font-mono text-[11px]">
+          <!-- Interactive State Badges -->
+          <div class="flex items-center justify-between py-1 border-b border-slate-800/50">
+            <span class="text-slate-500">Signaling State:</span>
+            <span id="stat-signaling-state" class="text-slate-300 font-medium">stable</span>
+          </div>
+          <div class="flex items-center justify-between py-1 border-b border-slate-800/50">
+            <span class="text-slate-500">ICE Connection:</span>
+            <span id="stat-ice-connection-state" class="text-slate-300 font-medium">new</span>
+          </div>
+          <div class="flex items-center justify-between py-1 border-b border-slate-800/50">
+            <span class="text-slate-500">ICE Gathering:</span>
+            <span id="stat-ice-gathering-state" class="text-slate-300 font-medium">new</span>
+          </div>
+          <div class="flex items-center justify-between py-1 border-b border-slate-800/50">
+            <span class="text-slate-500">Round Trip Time (RTT):</span>
+            <span id="stat-rtt" class="text-indigo-400 font-bold">-</span>
+          </div>
+          <div class="flex items-center justify-between py-1 border-b border-slate-800/50">
+            <span class="text-slate-500">Входящий битрейт:</span>
+            <span id="stat-bitrate-in" class="text-emerald-400 font-bold">-</span>
+          </div>
+          <div class="flex items-center justify-between py-1">
+            <span class="text-slate-500">Исходящий битрейт:</span>
+            <span id="stat-bitrate-out" class="text-indigo-400 font-bold">-</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT CONTENT AREA: VIDEOS & LOGS PANEL (8 cols) -->
+    <section class="lg:col-span-8 flex flex-col gap-6 h-full">
+      
+      <!-- VIDEO GRID WINDOW -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <!-- LOCAL VIDEO CONTAINER -->
+        <div class="relative bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden aspect-video shadow-xl flex items-center justify-center">
+          <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover mirrored"></video>
+          
+          <!-- Overlays & Badges -->
+          <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-indigo-500/80 text-white text-[10px] font-bold uppercase tracking-wider">Вы</span>
+              <span id="local-mic-badge" class="p-1 rounded-full bg-slate-950/80 text-emerald-400" title="Микрофон включен">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+              </span>
+              <span id="local-video-badge" class="p-1 rounded-full bg-slate-950/80 text-emerald-400" title="Камера включена">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+              </span>
+            </div>
+            <span class="text-[10px] text-slate-300 font-mono" id="local-resolution-badge">Локальный стрим</span>
+          </div>
+
+          <!-- Video Disabled State Placeholder -->
+          <div id="local-placeholder" class="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center gap-3 hidden">
+            <div class="p-4 rounded-full bg-slate-900 border border-slate-800 text-slate-600">
+              <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+            </div>
+            <p class="text-xs text-slate-500 font-medium">Камера отключена</p>
+          </div>
+        </div>
+
+        <!-- REMOTE VIDEO CONTAINER -->
+        <div class="relative bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden aspect-video shadow-xl flex items-center justify-center">
+          <video id="remote-video" autoplay playsinline class="w-full h-full object-cover"></video>
+          
+          <!-- Overlays & Badges -->
+          <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-emerald-500/80 text-black text-[10px] font-bold uppercase tracking-wider">Собеседник</span>
+              <span id="remote-track-status" class="w-2 h-2 rounded-full bg-slate-500"></span>
+            </div>
+            <span class="text-[10px] text-slate-300 font-mono" id="remote-resolution-badge">Поток отсутствует</span>
+          </div>
+
+          <!-- Connecting / Waiting State Overlay -->
+          <div id="remote-placeholder" class="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center gap-3">
+            <div class="p-4 rounded-full bg-slate-900 border border-slate-800 text-indigo-500 shadow-glow-indigo">
+              <svg class="w-8 h-8 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H16V10h5.21M4 9h5.21" /></svg>
+            </div>
+            <p id="remote-placeholder-text" class="text-xs text-slate-400 font-medium">Ожидание собеседника...</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- INTERACTIVE EVENT LOGS TERMINAL -->
+      <div class="flex-1 flex flex-col p-5 rounded-2xl bg-slate-900/40 border border-slate-800/80 shadow-xl backdrop-blur-md min-h-[250px] lg:min-h-[350px]">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2 uppercase tracking-wider">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            Диагностический Терминал Событий
+          </h3>
+          <button id="btn-clear-logs" class="text-[10px] uppercase font-bold text-slate-500 hover:text-indigo-400 transition-colors">
+            Очистить
+          </button>
+        </div>
+
+        <!-- Terminal log viewport -->
+        <div id="terminal-viewport" class="flex-1 p-4 rounded-xl bg-slate-950/80 border border-slate-800 font-mono text-xs overflow-y-auto space-y-1.5 leading-relaxed text-slate-400 select-text max-h-[300px]">
+          <!-- Logs get injected here dynamically -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ROOT JS CONTROLLER -->
+  <script>
+    // 1. FIREBASE CONFIGURATION
+    const firebaseConfig = {
+      apiKey: "AIzaSyBm0mIvHVznIeF2PoFk6dtdaiT5r877wyA",
+      authDomain: "meow-874ce.firebaseapp.com",
+      databaseURL: "https://meow-874ce-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "meow-874ce",
+      storageBucket: "meow-874ce.firebasestorage.app",
+      messagingSenderId: "471541334599",
+      appId: "1:471541334599:web:567af3e7dbe70a37572762"
+    };
+
+    // Initialize Firebase Compat
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // 2. DOM ELEMENT CACHE
+    const localVideo = document.getElementById('local-video');
+    const remoteVideo = document.getElementById('remote-video');
+    const terminalViewport = document.getElementById('terminal-viewport');
+    
+    const btnCreateRoom = document.getElementById('btn-create-room');
+    const btnJoinRoom = document.getElementById('btn-join-room');
+    const btnHangup = document.getElementById('btn-hangup');
+    const btnCopyLink = document.getElementById('btn-copy-link');
+    const btnClearLogs = document.getElementById('btn-clear-logs');
+    const btnRepair = document.getElementById('btn-repair');
+    
+    const btnToggleMic = document.getElementById('btn-toggle-mic');
+    const btnToggleVideo = document.getElementById('btn-toggle-video');
+    const btnShareScreen = document.getElementById('btn-share-screen');
+    
+    const roomIdInput = document.getElementById('room-id-input');
+    const activeRoomDisplay = document.getElementById('active-room-display');
+    const roomSetupZone = document.getElementById('room-setup-zone');
+    const roomInfoZone = document.getElementById('room-info-zone');
+    
+    const localPlaceholder = document.getElementById('local-placeholder');
+    const remotePlaceholder = document.getElementById('remote-placeholder');
+    const remotePlaceholderText = document.getElementById('remote-placeholder-text');
+    
+    const firebaseStatusEl = document.getElementById('firebase-status');
+    const peerStatusEl = document.getElementById('peer-status');
+    
+    // Status metrics DOM elements
+    const statSignalingState = document.getElementById('stat-signaling-state');
+    const statIceConnectionState = document.getElementById('stat-ice-connection-state');
+    const statIceGatheringState = document.getElementById('stat-ice-gathering-state');
+    const statRtt = document.getElementById('stat-rtt');
+    const statBitrateIn = document.getElementById('stat-bitrate-in');
+    const statBitrateOut = document.getElementById('stat-bitrate-out');
+    
+    const localMicBadge = document.getElementById('local-mic-badge');
+    const localVideoBadge = document.getElementById('local-video-badge');
+    const remoteTrackStatus = document.getElementById('remote-track-status');
+    const localResolutionBadge = document.getElementById('local-resolution-badge');
+    const remoteResolutionBadge = document.getElementById('remote-resolution-badge');
+
+    // 3. INTERNAL WEBRTC & MEDIA STATE variables
+    let localStream = null;
+    let remoteStream = null;
+    let peerConnection = null;
+    let currentRoomId = null;
+    let role = null; // 'HOST' or 'GUEST'
+    let isScreenSharing = false;
+
+    // Safety WebRTC state queues to protect ICE from firing before remote offer is registered
+    let isRemoteDescriptionSet = false;
+    let queuedCandidates = [];
+
+    // Diagnostic stat state
+    let statsIntervalId = null;
+    let prevStats = {};
+
+    // Standard high-performance Google STUN servers with fallbacks
+    const iceConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' }
+      ],
+      iceCandidatePoolSize: 10
+    };
+
+    // Logger helper
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      let colorClass = 'text-slate-400';
+      let icon = '⚡';
+
+      if (type === 'success') {
+        colorClass = 'text-emerald-400 font-semibold';
+        icon = '✓';
+      } else if (type === 'error') {
+        colorClass = 'text-rose-400 font-bold';
+        icon = '⚠';
+      } else if (type === 'warning') {
+        colorClass = 'text-amber-400';
+        icon = '✦';
+      } else if (type === 'telemetry') {
+        colorClass = 'text-indigo-300';
+        icon = '⇆';
+      }
+
+      const logElement = document.createElement('div');
+      logElement.className = `${colorClass} flex items-start gap-2`;
+      logElement.innerHTML = `<span class="text-slate-600 select-none">${timestamp}</span> <span class="select-none">${icon}</span> <span>${message}</span>`;
+      
+      terminalViewport.appendChild(logElement);
+      terminalViewport.scrollTop = terminalViewport.scrollHeight;
+    }
+
+    // 4. FIREBASE CONNECTIVITY TRACKING
+    database.ref(".info/connected").on("value", (snap) => {
+      if (snap.val() === true) {
+        firebaseStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 pulse-glow"></span> Онлайн`;
+        firebaseStatusEl.className = "flex items-center gap-1.5 text-xs font-semibold text-emerald-400";
+        log('Успешное подключение к Firebase Realtime Database!', 'success');
+      } else {
+        firebaseStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span> Офлайн`;
+        firebaseStatusEl.className = "flex items-center gap-1.5 text-xs font-semibold text-rose-500";
+        log('Соединение с Firebase разорвано. Ожидание восстановления сети...', 'warning');
+      }
+    });
+
+    // 5. MEDIA HANDLING (GET MICROPHONE / CAMERA)
+    async function acquireLocalMedia() {
+      if (localStream) return localStream;
+      
+      log('Запрос прав на использование микрофона и камеры...');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: "user"
+          },
+          audio: true
         });
-
-        // СВОРАЧИВАНИЕ
-        let panelCollapsed = false;
-        panelToggle.addEventListener('click', () => {
-            panelCollapsed = !panelCollapsed;
-            uiPanel.classList.toggle('collapsed', panelCollapsed);
-            panelToggle.textContent = panelCollapsed ? '▲' : '▼';
-        });
-
-        // ==================== РЕЖИМЫ ====================
-        function setMode(newMode) {
-            mode = newMode;
-            const badges = {
-                view: { text: '👁 VIEW', cls: 'view' },
-                rig: { text: '🦴 РИГ', cls: 'rig' },
-                pose: { text: '✋ ПОЗА', cls: 'pose' },
-                weight: { text: '⚖️ ВЕСА', cls: 'weight' },
-                anim: { text: '🎬 АНИМ', cls: 'anim' }
-            };
-            const b = badges[newMode];
-            modeBadge.textContent = b.text;
-            modeBadge.className = 'mode-badge ' + b.cls;
-            showToast('Режим: ' + b.text);
+        
+        localStream = stream;
+        localVideo.srcObject = stream;
+        localPlaceholder.classList.add('hidden');
+        
+        // Output track settings
+        const videoTrack = stream.getVideoTracks()[0];
+        const audioTrack = stream.getAudioTracks()[0];
+        
+        if (videoTrack) {
+          const settings = videoTrack.getSettings();
+          localResolutionBadge.textContent = `${settings.width || 'HD'}x${settings.height || '720p'} (${Math.round(settings.frameRate || 30)}fps)`;
         }
+        
+        log('Медиапоток успешно захвачен.', 'success');
+        updateMediaControlUI();
+        return stream;
+      } catch (err) {
+        log('Ошибка захвата локальных медиаресурсов: ' + err.message, 'error');
+        alert('Не удалось получить доступ к микрофону/камере! Пожалуйста, предоставьте необходимые права сайту.');
+        throw err;
+      }
+    }
 
-        document.getElementById('btn-mode-view').addEventListener('click', () => setMode('view'));
-        document.getElementById('btn-mode-rig').addEventListener('click', () => setMode('rig'));
-        document.getElementById('btn-mode-pose').addEventListener('click', () => setMode('pose'));
-        document.getElementById('btn-mode-weight').addEventListener('click', () => setMode('weight'));
-        document.getElementById('btn-mode-anim').addEventListener('click', () => setMode('anim'));
+    // Dynamic mute/unmute visual updates
+    function updateMediaControlUI() {
+      if (!localStream) return;
+      
+      const audioTrack = localStream.getAudioTracks()[0];
+      const videoTrack = localStream.getVideoTracks()[0];
 
-        // ==================== ЗАГРУЗКА GLB ====================
-        btnLoad.addEventListener('click', () => fileInput.click());
+      if (audioTrack && audioTrack.enabled) {
+        document.getElementById('svg-mic-on').classList.remove('hidden');
+        document.getElementById('svg-mic-off').classList.add('hidden');
+        btnToggleMic.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-emerald-400";
+        localMicBadge.className = "p-1 rounded-full bg-slate-950/80 text-emerald-400";
+      } else {
+        document.getElementById('svg-mic-on').classList.add('hidden');
+        document.getElementById('svg-mic-off').classList.remove('hidden');
+        btnToggleMic.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-rose-500";
+        localMicBadge.className = "p-1 rounded-full bg-slate-950/80 text-rose-500";
+      }
 
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            loadingText.textContent = 'Загрузка модели...';
-            loadingOverlay.classList.add('visible');
+      if (videoTrack && videoTrack.enabled) {
+        document.getElementById('svg-video-on').classList.remove('hidden');
+        document.getElementById('svg-video-off').classList.add('hidden');
+        btnToggleVideo.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-emerald-400";
+        localVideoBadge.className = "p-1 rounded-full bg-slate-950/80 text-emerald-400";
+        localPlaceholder.classList.add('hidden');
+      } else {
+        document.getElementById('svg-video-on').classList.add('hidden');
+        document.getElementById('svg-video-off').classList.remove('hidden');
+        btnToggleVideo.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-rose-500";
+        localVideoBadge.className = "p-1 rounded-full bg-slate-950/80 text-rose-500";
+        localPlaceholder.classList.remove('hidden');
+      }
 
-            // Очистка
-            clearAll();
+      if (isScreenSharing) {
+        btnShareScreen.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-indigo-500 hover:border-indigo-400 active:scale-95 transition-all text-indigo-400";
+      } else {
+        btnShareScreen.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-slate-400";
+      }
+    }
 
-            try {
-                const url = URL.createObjectURL(file);
-                const loader = new GLTFLoader();
-                const gltf = await new Promise((resolve, reject) => {
-                    loader.load(url, resolve, (p) => {
-                        const pct = p.total ? Math.round((p.loaded/p.total)*100) : 0;
-                        loadingText.textContent = `Загрузка... ${pct}%`;
-                    }, reject);
-                });
-                URL.revokeObjectURL(url);
+    // Toggles Local Track States
+    btnToggleMic.onclick = () => {
+      if (localStream) {
+        const track = localStream.getAudioTracks()[0];
+        if (track) {
+          track.enabled = !track.enabled;
+          log(track.enabled ? 'Микрофон активирован' : 'Микрофон выключен', 'warning');
+          updateMediaControlUI();
+        }
+      }
+    };
 
-                model = gltf.scene;
-                originalModel = model.clone();
+    btnToggleVideo.onclick = () => {
+      if (localStream) {
+        const track = localStream.getVideoTracks()[0];
+        if (track) {
+          track.enabled = !track.enabled;
+          log(track.enabled ? 'Камера активирована' : 'Камера выключена', 'warning');
+          updateMediaControlUI();
+        }
+      }
+    };
 
-                // Настройка
-                model.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-
-                // Центрирование
-                const box = new THREE.Box3().setFromObject(model);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
-                const maxDim = Math.max(size.x, size.y, size.z);
-                model.position.set(-center.x, -box.min.y, -center.z);
-                if (maxDim > 3 || maxDim < 0.5) {
-                    const s = 2 / maxDim;
-                    model.scale.setScalar(s);
-                }
-
-                scene.add(model);
-
-                // Сбор мешей
-                meshes = [];
-                model.traverse(c => { if (c.isMesh && !c.isSkinnedMesh) meshes.push(c); });
-
-                // Если уже есть скелет — импортируем
-                let existingBones = [];
-                model.traverse(c => { if (c.isBone) existingBones.push(c); });
-                if (existingBones.length > 0) {
-                    bones = existingBones;
-                    updateBoneList();
-                    updateBoneVisuals();
-                    showToast(`Загружено ${existingBones.length} костей из модели!`);
-                }
-
-                // Если уже есть skinned meshes
-                model.traverse(c => { if (c.isSkinnedMesh) skinnedMeshes.push(c); });
-
-                updateMeshList();
-                controls.target.set(0, size.y * 0.4, 0);
-                controls.update();
-
-                modelName.textContent = file.name;
-                infoOverlay.classList.add('hidden');
-                loadingOverlay.classList.remove('visible');
-                showToast('Модель загружена! Переключись в режим РИГ');
-
-            } catch (err) {
-                console.error(err);
-                loadingText.textContent = 'Ошибка!';
-                setTimeout(() => loadingOverlay.classList.remove('visible'), 2000);
+    // Screen Share Toggle Logic
+    btnShareScreen.onclick = async () => {
+      if (!localStream) return;
+      
+      if (!isScreenSharing) {
+        log('Инициализация захвата экрана...');
+        try {
+          const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+          const screenTrack = screenStream.getVideoTracks()[0];
+          
+          if (peerConnection) {
+            const senders = peerConnection.getSenders();
+            const sender = senders.find(s => s.track && s.track.kind === 'video');
+            if (sender) {
+              await sender.replaceTrack(screenTrack);
+              log('Локальное видео изменено на демонстрацию экрана.', 'success');
             }
+          }
+          
+          // Remember previous camera track to restore later
+          localStream.getVideoTracks()[0].enabled = false; // Turn off camera
+          
+          screenTrack.onended = () => {
+            stopScreenSharing();
+          };
+          
+          localVideo.srcObject = screenStream;
+          isScreenSharing = true;
+          updateMediaControlUI();
+          log('Демонстрация экрана активна.', 'success');
+        } catch (err) {
+          log('Ошибка активации захвата экрана: ' + err.message, 'error');
+        }
+      } else {
+        stopScreenSharing();
+      }
+    };
+
+    async function stopScreenSharing() {
+      if (!isScreenSharing) return;
+      log('Возврат к стандартной видеокамере...');
+      try {
+        const videoTrack = localStream.getVideoTracks()[0];
+        videoTrack.enabled = true;
+        
+        if (peerConnection) {
+          const senders = peerConnection.getSenders();
+          const sender = senders.find(s => s.track && s.track.kind === 'video');
+          if (sender) {
+            await sender.replaceTrack(videoTrack);
+          }
+        }
+        
+        localVideo.srcObject = localStream;
+        isScreenSharing = false;
+        updateMediaControlUI();
+        log('Камера снова подключена к P2P трансляции.', 'success');
+      } catch (err) {
+        log('Ошибка восстановления исходного видеопотока: ' + err.message, 'error');
+      }
+    }
+
+
+    // 6. ULTIMATE WEBRTC ENGINE IMPLEMENTATION
+    function createPeerConnection(roomId) {
+      log('Создание объекта RTCPeerConnection...');
+      peerConnection = new RTCPeerConnection(iceConfig);
+
+      // Add local stream tracks to our WebRTC channel
+      if (localStream) {
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
+          log(`Добавлен локальный трек: ${track.kind}`);
         });
+      }
 
-        function clearAll() {
-            if (model) { scene.remove(model); model = null; }
-            boneHelpers.forEach(h => scene.remove(h));
-            boneLines.forEach(l => scene.remove(l));
-            boneHelpers = []; boneLines = []; bones = []; meshes = []; skinnedMeshes = [];
-            selectedBone = null; selectedMesh = null; keyframes = []; isPlaying = false;
-            if (mixer) { mixer.stopAllAction(); mixer = null; }
-            updateBoneList(); updateMeshList();
-            document.getElementById('weight-bone-name').textContent = '—';
-            document.getElementById('pose-bone-name').textContent = '—';
+      // Stream reception setup
+      remoteStream = new MediaStream();
+      remoteVideo.srcObject = remoteStream;
+
+      peerConnection.ontrack = (event) => {
+        log(`Получен входящий медиа-трек: ${event.track.kind}`, 'success');
+        event.streams[0].getTracks().forEach(track => {
+          remoteStream.addTrack(track);
+        });
+        
+        // Hide overlay placeholder
+        remotePlaceholder.classList.add('hidden');
+        remoteTrackStatus.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-glow";
+        
+        // Extract remote stats metadata
+        const remoteVideoTrack = remoteStream.getVideoTracks()[0];
+        if (remoteVideoTrack) {
+          remoteResolutionBadge.textContent = 'Трансляция активна';
+        }
+      };
+
+      // Handle ICE Candidates generated locally
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          const candidateRef = database.ref(`rooms/${roomId}/${role === 'HOST' ? 'hostCandidates' : 'guestCandidates'}`);
+          candidateRef.push(event.candidate.toJSON());
+          log(`Отправлен ICE-кандидат во Firebase (${role})`);
+        }
+      };
+
+      // Robust connection health listeners
+      peerConnection.oniceconnectionstatechange = () => {
+        const state = peerConnection.iceConnectionState;
+        statIceConnectionState.textContent = state;
+        log(`[Событие ICE] Статус соединения: ${state}`, 'warning');
+        
+        // Update UI dynamic status indicator
+        if (state === 'connected' || state === 'completed') {
+          peerStatusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-glow"></span> Активен`;
+          peerStatusEl.className = "flex items-center gap-1.5 text-xs font-bold text-emerald-400";
+          remotePlaceholder.classList.add('hidden');
+        } else if (state === 'checking') {
+          peerStatusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-amber-400 pulse-glow"></span> Поиск маршрутов...`;
+          peerStatusEl.className = "flex items-center gap-1.5 text-xs font-semibold text-amber-400";
+        } else if (state === 'disconnected') {
+          peerStatusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-amber-500 pulse-glow"></span> Потеря связи`;
+          peerStatusEl.className = "flex items-center gap-1.5 text-xs font-semibold text-amber-500";
+          log('Обрыв связи. Пытаемся автоматически восстановить...', 'warning');
+        } else if (state === 'failed') {
+          peerStatusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span> Сбой`;
+          peerStatusEl.className = "flex items-center gap-1.5 text-xs font-bold text-rose-500";
+          log('Критическая ошибка соединения WebRTC. Попробуйте нажать кнопку восстановления.', 'error');
+        }
+      };
+
+      peerConnection.onsignalingstatechange = () => {
+        statSignalingState.textContent = peerConnection.signalingState;
+        log(`[Событие Сигналов] Сигнальный статус: ${peerConnection.signalingState}`, 'telemetry');
+      };
+
+      peerConnection.onicegatheringstatechange = () => {
+        statIceGatheringState.textContent = peerConnection.iceGatheringState;
+        log(`[Событие Сбора ICE] Сбор кандидатов: ${peerConnection.iceGatheringState}`, 'telemetry');
+      };
+
+      startStatsTelemetry();
+    }
+
+
+    // 7. COMPREHENSIVE SAFEST ICE CANDIDATE HANDLER (Prevents Standard Race Conditions)
+    async function processRemoteIceCandidate(candidateData) {
+      const candidate = new RTCIceCandidate(candidateData);
+      
+      if (isRemoteDescriptionSet) {
+        try {
+          await peerConnection.addIceCandidate(candidate);
+          log('Успешно применен удаленный ICE кандидат.');
+        } catch (e) {
+          log('Ошибка применения ICE кандидата: ' + e.toString(), 'error');
+        }
+      } else {
+        queuedCandidates.push(candidate);
+        log('Удаленный ICE кандидат сохранен в очередь (ожидание SDP Remote Description)...', 'warning');
+      }
+    }
+
+    async function applyQueuedCandidates() {
+      log(`Обработка накопленной очереди ICE кандидатов (${queuedCandidates.length} шт.)...`);
+      for (const candidate of queuedCandidates) {
+        try {
+          await peerConnection.addIceCandidate(candidate);
+          log('ICE кандидат из очереди успешно применен.');
+        } catch (e) {
+          log('Ошибка применения отложенного ICE кандидата: ' + e.toString(), 'error');
+        }
+      }
+      queuedCandidates = [];
+    }
+
+
+    // 8. ROOM GENERATION & HOST FLOW
+    btnCreateRoom.onclick = async () => {
+      // 1. Capture media first
+      try {
+        await acquireLocalMedia();
+      } catch (err) {
+        return; // Early return if camera access is blocked
+      }
+
+      // 2. Generate a highly unique room name
+      const roomId = 'nexus-' + Math.floor(Math.random() * 900000 + 100000);
+      currentRoomId = roomId;
+      role = 'HOST';
+
+      log(`Инициализация создания комнаты ${roomId}...`, 'info');
+
+      // Clear any previous signaling remnants at this DB location
+      const roomRef = database.ref(`rooms/${roomId}`);
+      await roomRef.remove();
+
+      // Setup Peer Connection
+      createPeerConnection(roomId);
+
+      // Create WebRTC Offer SDP
+      const offerDescription = await peerConnection.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true
+      });
+      await peerConnection.setLocalDescription(offerDescription);
+
+      // Write Offer to Firebase DB
+      const offer = {
+        sdp: offerDescription.sdp,
+        type: offerDescription.type
+      };
+      await roomRef.set({ offer });
+      log(`Локальное SDP Offer успешно записано в Firebase Realtime DB.`, 'success');
+
+      // Setup Listeners for Guest Answers
+      roomRef.child('answer').on('value', async (snapshot) => {
+        const answer = snapshot.val();
+        if (answer && !peerConnection.currentRemoteDescription) {
+          log('Получено SDP Answer от собеседника. Установка...', 'success');
+          const answerDesc = new RTCSessionDescription(answer);
+          await peerConnection.setRemoteDescription(answerDesc);
+          
+          isRemoteDescriptionSet = true;
+          await applyQueuedCandidates();
+        }
+      });
+
+      // Setup Listeners for Guest ICE candidates
+      roomRef.child('guestCandidates').on('child_added', (snapshot) => {
+        const candidateData = snapshot.val();
+        if (candidateData) {
+          processRemoteIceCandidate(candidateData);
+        }
+      });
+
+      // Update UI panels
+      activeRoomDisplay.textContent = roomId;
+      roomSetupZone.classList.add('hidden');
+      roomInfoZone.classList.remove('hidden');
+      remotePlaceholderText.textContent = 'Ожидание подключения собеседника...';
+      
+      // Auto-populate URL hash
+      window.location.hash = roomId;
+    };
+
+
+    // 9. JOIN GUEST FLOW
+    btnJoinRoom.onclick = async () => {
+      const roomId = roomIdInput.value.trim();
+      if (!roomId) {
+        alert('Пожалуйста, укажите верный ID комнаты!');
+        return;
+      }
+      joinRoomById(roomId);
+    };
+
+    async function joinRoomById(roomId) {
+      try {
+        await acquireLocalMedia();
+      } catch (err) {
+        return; // Stop if media capture is rejected
+      }
+
+      currentRoomId = roomId;
+      role = 'GUEST';
+      log(`Попытка подключения к комнате: ${roomId}...`);
+
+      const roomRef = database.ref(`rooms/${roomId}`);
+      const roomSnapshot = await roomRef.once('value');
+
+      if (!roomSnapshot.exists()) {
+        log(`Ошибка! Комнаты с ID ${roomId} не существует.`, 'error');
+        alert(`Комната ${roomId} не найдена! Убедитесь, что Хост создал её и не завершил вызов.`);
+        return;
+      }
+
+      const roomData = roomSnapshot.val();
+      if (!roomData.offer) {
+        log('Критическая ошибка: В комнате отсутствует активное предложение (SDP Offer) от Хоста.', 'error');
+        alert('Комната не готова для подключения. В ней отсутствует SDP Offer.');
+        return;
+      }
+
+      // Initialize peer connection as guest
+      createPeerConnection(roomId);
+
+      // Listen to Host's ICE Candidates (Listen to existing + newly added ones)
+      roomRef.child('hostCandidates').on('child_added', (snapshot) => {
+        const candidateData = snapshot.val();
+        if (candidateData) {
+          processRemoteIceCandidate(candidateData);
+        }
+      });
+
+      // Apply Remote Offer SDP
+      log('Установка удаленного SDP Offer...');
+      const offerDesc = new RTCSessionDescription(roomData.offer);
+      await peerConnection.setRemoteDescription(offerDesc);
+      
+      isRemoteDescriptionSet = true;
+      await applyQueuedCandidates();
+
+      // Create Local Answer SDP
+      log('Создание локального SDP Answer...');
+      const answerDescription = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answerDescription);
+
+      const answer = {
+        sdp: answerDescription.sdp,
+        type: answerDescription.type
+      };
+      await roomRef.child('answer').set(answer);
+      log('Ответ SDP Answer отправлен хосту.', 'success');
+
+      // Update UI panels
+      activeRoomDisplay.textContent = roomId;
+      roomSetupZone.classList.add('hidden');
+      roomInfoZone.classList.remove('hidden');
+      remotePlaceholderText.textContent = 'Установка защищенного P2P соединения...';
+    }
+
+
+    // 10. ADVANCED CONNECTION HEAL / ICE RESTART
+    btnRepair.onclick = async () => {
+      if (!peerConnection) {
+        log('Нет активной сессии для восстановления.', 'warning');
+        return;
+      }
+
+      log('Инициализация ручной пересборки маршрута P2P (ICE Restart)...', 'warning');
+      try {
+        if (role === 'HOST') {
+          // Creates a new offer with ICE restart flag enabled
+          const offerDescription = await peerConnection.createOffer({ iceRestart: true });
+          await peerConnection.setLocalDescription(offerDescription);
+
+          // Reset existing candidates collection to avoid confusion
+          await database.ref(`rooms/${currentRoomId}/hostCandidates`).remove();
+          await database.ref(`rooms/${currentRoomId}/guestCandidates`).remove();
+
+          // Push new Offer to Signaling
+          await database.ref(`rooms/${currentRoomId}/offer`).set({
+            sdp: offerDescription.sdp,
+            type: offerDescription.type
+          });
+          log('Новое предложение ICE Restart отправлено собеседнику.', 'success');
+        } else {
+          // Guest requests host to trigger ICE restart
+          log('В качестве Гостя отправлен запрос Хосту на перезапуск ICE...', 'warning');
+          alert('Только Хост может принудительно перезапустить обмен ICE-кандидатами на этой стадии. Попросите хоста нажать кнопку "Восстановить соединение".');
+        }
+      } catch (err) {
+        log('Ошибка восстановления соединения: ' + err.message, 'error');
+      }
+    };
+
+
+    // 11. WEBRTC STATS TELEMETRY & QUALITY TRACKER
+    function startStatsTelemetry() {
+      if (statsIntervalId) clearInterval(statsIntervalId);
+      prevStats = {};
+
+      statsIntervalId = setInterval(async () => {
+        if (!peerConnection || peerConnection.connectionState === 'closed' || peerConnection.connectionState === 'new') {
+          resetStatsUI();
+          return;
         }
 
-        // ==================== ВИЗУАЛ КОСТЕЙ ====================
-        function updateBoneVisuals() {
-            boneHelpers.forEach(h => scene.remove(h));
-            boneLines.forEach(l => scene.remove(l));
-            boneHelpers = []; boneLines = [];
+        try {
+          const stats = await peerConnection.getStats();
+          let rtt = null;
+          let incomingBytes = 0;
+          let outgoingBytes = 0;
 
-            bones.forEach((bone, i) => {
-                const color = boneColors[i % boneColors.length];
+          stats.forEach(report => {
+            // Find active ICE Candidate Pair
+            if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+              if (report.currentRoundTripTime !== undefined) {
+                rtt = Math.round(report.currentRoundTripTime * 1000); // convert to ms
+              }
+            }
+            
+            // Collect media track stats
+            if (report.type === 'inbound-rtp' && (report.kind === 'video' || report.kind === 'audio')) {
+              incomingBytes += report.bytesReceived || 0;
+            }
+            if (report.type === 'outbound-rtp' && (report.kind === 'video' || report.kind === 'audio')) {
+              outgoingBytes += report.bytesSent || 0;
+            }
+          });
 
-                // Сфера на конце кости
-                const sphere = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.03, 8, 8),
-                    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8 })
-                );
-                sphere.position.copy(bone.getWorldPosition(new THREE.Vector3()));
-                sphere.userData.boneIndex = i;
-                sphere.userData.isBoneHelper = true;
-                scene.add(sphere);
-                boneHelpers.push(sphere);
+          // Calculate Bitrates dynamically based on previous intervals
+          const now = Date.now();
+          const timeDelta = (now - (prevStats.timestamp || now)) / 1000;
+          
+          if (timeDelta > 0 && prevStats.incomingBytes !== undefined) {
+            const bitrateIn = Math.round(((incomingBytes - prevStats.incomingBytes) * 8) / (1024 * timeDelta)); // kbps
+            const bitrateOut = Math.round(((outgoingBytes - prevStats.outgoingBytes) * 8) / (1024 * timeDelta)); // kbps
 
-                // Линия к родителю
-                if (bone.parent && bone.parent.isBone) {
-                    const start = bone.parent.getWorldPosition(new THREE.Vector3());
-                    const end = bone.getWorldPosition(new THREE.Vector3());
-                    const lineGeo = new THREE.BufferGeometry().setFromPoints([start, end]);
-                    const line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color, opacity: 0.5, transparent: true }));
-                    line.userData.isBoneLine = true;
-                    scene.add(line);
-                    boneLines.push(line);
-                }
-            });
-        }
+            statBitrateIn.textContent = `${bitrateIn} kbps`;
+            statBitrateOut.textContent = `${bitrateOut} kbps`;
+          }
 
-        function updateBoneVisualsDynamic() {
-            boneHelpers.forEach((sphere, i) => {
-                if (bones[i]) {
-                    sphere.position.copy(bones[i].getWorldPosition(new THREE.Vector3()));
-                }
-            });
-            boneLines.forEach(line => {
-                if (line.userData.boneStart && line.userData.boneEnd) {
-                    const positions = line.geometry.attributes.position.array;
-                    const start = line.userData.boneStart.getWorldPosition(new THREE.Vector3());
-                    const end = line.userData.boneEnd.getWorldPosition(new THREE.Vector3());
-                    positions[0] = start.x; positions[1] = start.y; positions[2] = start.z;
-                    positions[3] = end.x; positions[4] = end.y; positions[5] = end.z;
-                    line.geometry.attributes.position.needsUpdate = true;
-                }
-            });
-        }
-
-        // ==================== СОЗДАНИЕ КОСТЕЙ ====================
-        document.getElementById('btn-add-root').addEventListener('click', () => {
-            if (!model) { showToast('Сначала загрузи модель!'); return; }
-
-            const bone = new THREE.Bone();
-            bone.name = 'Bone_' + bones.length;
-            bone.position.set(0, 1, 0);
-
-            if (selectedBone && bones.includes(selectedBone)) {
-                selectedBone.add(bone);
-                bone.position.set(0, 0.5, 0); // Относительно родителя
+          if (rtt !== null) {
+            statRtt.textContent = `${rtt} ms`;
+            if (rtt < 50) {
+              statRtt.className = "text-emerald-400 font-bold";
+            } else if (rtt < 150) {
+              statRtt.className = "text-amber-400 font-bold";
             } else {
-                model.add(bone);
+              statRtt.className = "text-rose-400 font-bold";
             }
+          } else {
+            statRtt.textContent = '-';
+          }
 
-            bones.push(bone);
-            selectedBone = bone;
-            updateBoneList();
-            updateBoneVisuals();
-            showToast('Кость создана: ' + bone.name);
-        });
+          // Save current state as historical
+          prevStats = {
+            timestamp: now,
+            incomingBytes,
+            outgoingBytes
+          };
 
-        document.getElementById('btn-del-bone').addEventListener('click', () => {
-            if (!selectedBone) { showToast('Выбери кость для удаления'); return; }
-            const idx = bones.indexOf(selectedBone);
-            if (idx > -1) {
-                // Переносим детей к родителю
-                const children = selectedBone.children.filter(c => c.isBone);
-                children.forEach(c => {
-                    if (selectedBone.parent) selectedBone.parent.add(c);
-                });
-
-                if (selectedBone.parent) selectedBone.parent.remove(selectedBone);
-                bones.splice(idx, 1);
-                selectedBone = null;
-                updateBoneList();
-                updateBoneVisuals();
-                showToast('Кость удалена');
-            }
-        });
-
-        document.getElementById('btn-clear-bones').addEventListener('click', () => {
-            bones.forEach(b => { if (b.parent) b.parent.remove(b); });
-            bones = []; selectedBone = null;
-            updateBoneList();
-            updateBoneVisuals();
-            showToast('Все кости удалены');
-        });
-
-        function updateBoneList() {
-            boneList.innerHTML = '';
-            if (bones.length === 0) {
-                boneList.innerHTML = '<div style="color:#555; font-size:12px; text-align:center; padding:10px;">Нет костей</div>';
-                return;
-            }
-            bones.forEach((bone, i) => {
-                const div = document.createElement('div');
-                div.className = 'bone-item' + (bone === selectedBone ? ' selected' : '');
-                const depth = getBoneDepth(bone);
-                const color = '#' + boneColors[i % boneColors.length].toString(16).padStart(6, '0');
-                div.innerHTML = `
-                    <div class="bone-color" style="background:${color};"></div>
-                    <span class="bone-name">${bone.name}</span>
-                    <span class="bone-depth">${'—'.repeat(depth)}</span>
-                `;
-                div.addEventListener('click', () => {
-                    selectedBone = bone;
-                    updateBoneList();
-                    document.getElementById('weight-bone-name').textContent = bone.name;
-                    document.getElementById('pose-bone-name').textContent = bone.name;
-                    // Обновляем слайдеры позы
-                    const euler = new THREE.Euler().setFromQuaternion(bone.quaternion);
-                    document.getElementById('rot-x').value = Math.round(euler.x * 180 / Math.PI);
-                    document.getElementById('rot-y').value = Math.round(euler.y * 180 / Math.PI);
-                    document.getElementById('rot-z').value = Math.round(euler.z * 180 / Math.PI);
-                    document.getElementById('rot-x-val').textContent = document.getElementById('rot-x').value + '°';
-                    document.getElementById('rot-y-val').textContent = document.getElementById('rot-y').value + '°';
-                    document.getElementById('rot-z-val').textContent = document.getElementById('rot-z').value + '°';
-                });
-                boneList.appendChild(div);
-            });
+        } catch (e) {
+          console.warn("Stats capture issue", e);
         }
+      }, 1000);
+    }
 
-        function getBoneDepth(bone) {
-            let d = 0;
-            let p = bone.parent;
-            while (p) { if (p.isBone) d++; p = p.parent; }
-            return d;
+    function resetStatsUI() {
+      statRtt.textContent = '-';
+      statRtt.className = "text-slate-300";
+      statBitrateIn.textContent = '-';
+      statBitrateOut.textContent = '-';
+    }
+
+
+    // 12. CLEANUP & EXIT HANDLERS (HANGUP)
+    btnHangup.onclick = () => {
+      terminateSession();
+    };
+
+    async function terminateSession() {
+      log('Завершение звонка и удаление сессии...');
+      
+      if (statsIntervalId) {
+        clearInterval(statsIntervalId);
+        statsIntervalId = null;
+      }
+
+      // Close and destroy WebRTC connection
+      if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+      }
+
+      // Stop all active Media tracks (camera/mic)
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      
+      // Stop screen share fallback
+      isScreenSharing = false;
+
+      // Clean up remote components
+      if (remoteStream) {
+        remoteStream.getTracks().forEach(track => track.stop());
+        remoteStream = null;
+      }
+
+      // Clear Firebase entries for the current room
+      if (currentRoomId) {
+        try {
+          const roomRef = database.ref(`rooms/${currentRoomId}`);
+          await roomRef.remove();
+          log('Данные сигнальной комнаты удалены с серверов.', 'success');
+        } catch (e) {
+          console.warn('Firebase node clean warning:', e);
         }
+      }
 
-        // ==================== МЕШИ ====================
-        function updateMeshList() {
-            meshList.innerHTML = '';
-            if (meshes.length === 0) {
-                meshList.innerHTML = '<div style="color:#555; font-size:12px; text-align:center; padding:10px;">Нет мешей</div>';
-                return;
-            }
-            meshes.forEach((mesh, i) => {
-                const div = document.createElement('div');
-                div.className = 'mesh-item' + (mesh === selectedMesh ? ' selected' : '');
-                const vertCount = mesh.geometry.attributes.position ? mesh.geometry.attributes.position.count : 0;
-                const isBound = mesh.isSkinnedMesh ? '🔗' : '';
-                div.innerHTML = `
-                    <span class="mesh-name">${isBound} ${mesh.name || 'Mesh_' + i}</span>
-                    <span class="mesh-verts">${vertCount} вершин</span>
-                `;
-                div.addEventListener('click', () => {
-                    selectedMesh = mesh;
-                    updateMeshList();
-                });
-                meshList.appendChild(div);
-            });
-        }
+      // Reset DOM state
+      currentRoomId = null;
+      role = null;
+      isRemoteDescriptionSet = false;
+      queuedCandidates = [];
+      localVideo.srcObject = null;
+      remoteVideo.srcObject = null;
+      activeRoomDisplay.textContent = 'NONE';
+      
+      peerStatusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-slate-600"></span> Свободен`;
+      peerStatusEl.className = "flex items-center gap-1.5 text-xs font-semibold text-slate-500";
+      
+      statSignalingState.textContent = 'stable';
+      statIceConnectionState.textContent = 'new';
+      statIceGatheringState.textContent = 'new';
+      remoteTrackStatus.className = "w-2 h-2 rounded-full bg-slate-500";
+      localResolutionBadge.textContent = "Локальный стрим";
+      remoteResolutionBadge.textContent = "Поток отсутствует";
+      
+      localPlaceholder.classList.add('hidden');
+      remotePlaceholder.classList.remove('hidden');
+      remotePlaceholderText.textContent = 'Ожидание собеседника...';
+      
+      roomSetupZone.classList.remove('hidden');
+      roomInfoZone.classList.add('hidden');
+      
+      resetStatsUI();
+      window.location.hash = '';
+      log('Сессия успешно очищена. Готов к новым вызовам.', 'success');
+    }
 
-        // ==================== ПРИВЯЗКА МЕША К СКЕЛЕТУ ====================
-        document.getElementById('btn-bind-mesh').addEventListener('click', () => {
-            if (!selectedMesh) { showToast('Выбери меш!'); return; }
-            if (bones.length === 0) { showToast('Сначала создай кости!'); return; }
 
-            try {
-                const geometry = selectedMesh.geometry.clone();
-                const material = selectedMesh.material.clone();
+    // 13. UTILITIES (Copy & Auto-Join by link)
+    btnCopyLink.onclick = () => {
+      if (!currentRoomId) return;
+      const inviteUrl = `${window.location.origin}${window.location.pathname}#${currentRoomId}`;
+      
+      navigator.clipboard.writeText(inviteUrl).then(() => {
+        log('Инвайт-ссылка успешно скопирована в буфер обмена.', 'success');
+        
+        // Visual feedback
+        const oldHtml = btnCopyLink.innerHTML;
+        btnCopyLink.innerHTML = `<svg class="w-4 h-4 text-emerald-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+        setTimeout(() => {
+          btnCopyLink.innerHTML = oldHtml;
+        }, 2000);
+      }).catch(err => {
+        log('Ошибка копирования ссылки: ' + err, 'error');
+      });
+    };
 
-                // Создаём скелет
-                const rootBones = bones.filter(b => !b.parent || !b.parent.isBone);
-                const skeleton = new THREE.Skeleton(bones);
+    btnClearLogs.onclick = () => {
+      terminalViewport.innerHTML = '';
+      log('Журнал логов очищен.', 'info');
+    };
 
-                // Создаём SkinnedMesh
-                const skinnedMesh = new THREE.SkinnedMesh(geometry, material);
-                skinnedMesh.name = selectedMesh.name;
-                skinnedMesh.castShadow = true;
-                skinnedMesh.receiveShadow = true;
+    // Auto-Join if URL Hash room code is present on load
+    window.addEventListener('load', () => {
+      const hashRoomId = window.location.hash.substring(1);
+      if (hashRoomId) {
+        log(`Обнаружен ID комнаты в ссылке: ${hashRoomId}. Автоматический вход...`, 'warning');
+        roomIdInput.value = hashRoomId;
+        joinRoomById(hashRoomId);
+      } else {
+        log('NexusRTC готов. Создайте или введите ID комнаты, чтобы начать стабильный P2P звонок.', 'success');
+      }
+    });
 
-                // Копируем трансформации
-                skinnedMesh.position.copy(selectedMesh.position);
-                skinnedMesh.rotation.copy(selectedMesh.rotation);
-                skinnedMesh.scale.copy(selectedMesh.scale);
+  </script>
 
-                // Привязываем скелет
-                skinnedMesh.bind(skeleton);
-
-                // Заменяем старый меш
-                if (selectedMesh.parent) {
-                    selectedMesh.parent.add(skinnedMesh);
-                    selectedMesh.parent.remove(selectedMesh);
-                }
-
-                // Обновляем списки
-                const idx = meshes.indexOf(selectedMesh);
-                if (idx > -1) meshes.splice(idx, 1);
-                skinnedMeshes.push(skinnedMesh);
-                selectedMesh = skinnedMesh;
-
-                updateMeshList();
-                showToast('Меш привязан к скелету! Теперь настрой веса.');
-
-            } catch (err) {
-                console.error(err);
-                showToast('Ошибка привязки: ' + err.message);
-            }
-        });
-
-        document.getElementById('btn-unbind-mesh').addEventListener('click', () => {
-            if (!selectedMesh || !selectedMesh.isSkinnedMesh) {
-                showToast('Выбери SkinnedMesh!'); return;
-            }
-            // Просто отмечаем — полная отвязка сложна
-            showToast('Используй Undo в браузере или перезагрузи модель');
-        });
-
-        // ==================== АВТО-ВЕСА ====================
-        document.getElementById('btn-auto-weights').addEventListener('click', () => {
-            if (!selectedMesh || !selectedMesh.isSkinnedMesh) {
-                showToast('Выбери привязанный меш!'); return;
-            }
-            if (bones.length === 0) { showToast('Нет костей!'); return; }
-
-            const geo = selectedMesh.geometry;
-            const posAttr = geo.attributes.position;
-            const vertexCount = posAttr.count;
-            const boneCount = bones.length;
-
-            // Создаём skin weights
-            const skinIndices = new Float32Array(vertexCount * 4);
-            const skinWeights = new Float32Array(vertexCount * 4);
-
-            const meshWorldPos = new THREE.Vector3();
-            selectedMesh.getWorldPosition(meshWorldPos);
-
-            for (let v = 0; v < vertexCount; v++) {
-                const vx = posAttr.getX(v);
-                const vy = posAttr.getY(v);
-                const vz = posAttr.getZ(v);
-                const vertexLocal = new THREE.Vector3(vx, vy, vz);
-                const vertexWorld = vertexLocal.clone().applyMatrix4(selectedMesh.matrixWorld);
-
-                // Находим ближайшие 4 кости
-                const distances = bones.map((bone, i) => {
-                    const boneWorld = bone.getWorldPosition(new THREE.Vector3());
-                    return { index: i, dist: vertexWorld.distanceTo(boneWorld) };
-                }).sort((a, b) => a.dist - b.dist);
-
-                // Назначаем веса (обратно пропорционально расстоянию)
-                let totalWeight = 0;
-                const weights = [];
-                for (let k = 0; k < 4 && k < distances.length; k++) {
-                    const w = 1 / (distances[k].dist + 0.001);
-                    weights.push({ idx: distances[k].index, w });
-                    totalWeight += w;
-                }
-
-                for (let k = 0; k < 4; k++) {
-                    if (k < weights.length) {
-                        skinIndices[v * 4 + k] = weights[k].idx;
-                        skinWeights[v * 4 + k] = weights[k].w / totalWeight;
-                    } else {
-                        skinIndices[v * 4 + k] = 0;
-                        skinWeights[v * 4 + k] = 0;
-                    }
-                }
-            }
-
-            geo.setAttribute('skinIndex', new THREE.BufferAttribute(skinIndices, 4));
-            geo.setAttribute('skinWeight', new THREE.BufferAttribute(skinWeights, 4));
-
-            // Перепривязываем
-            const skeleton = new THREE.Skeleton(bones);
-            selectedMesh.bind(skeleton);
-
-            showToast(`Авто-веса применены! ${vertexCount} вершин`);
-        });
-
-        // ==================== ПОЗА (РОТАЦИЯ КОСТЕЙ) ====================
-        ['rot-x', 'rot-y', 'rot-z'].forEach(id => {
-            document.getElementById(id).addEventListener('input', (e) => {
-                if (!selectedBone) { showToast('Выбери кость!'); return; }
-                const deg = parseFloat(e.target.value);
-                document.getElementById(id + '-val').textContent = deg + '°';
-
-                const radX = parseFloat(document.getElementById('rot-x').value) * Math.PI / 180;
-                const radY = parseFloat(document.getElementById('rot-y').value) * Math.PI / 180;
-                const radZ = parseFloat(document.getElementById('rot-z').value) * Math.PI / 180;
-
-                selectedBone.rotation.set(radX, radY, radZ);
-                updateBoneVisualsDynamic();
-            });
-        });
-
-        // ==================== АНИМАЦИЯ ====================
-        document.getElementById('btn-keyframe').addEventListener('click', () => {
-            if (!selectedBone) { showToast('Выбери кость для ключевого кадра!'); return; }
-
-            const time = parseFloat(document.getElementById('timeline').value);
-            const euler = new THREE.Euler().setFromQuaternion(selectedBone.quaternion);
-
-            keyframes.push({
-                time,
-                boneName: selectedBone.name,
-                rotation: [euler.x, euler.y, euler.z],
-                position: [selectedBone.position.x, selectedBone.position.y, selectedBone.position.z]
-            });
-
-            document.getElementById('keyframe-count').textContent = keyframes.length;
-            showToast(`Ключ на ${time.toFixed(1)}с для ${selectedBone.name}`);
-        });
-
-        document.getElementById('btn-anim-play').addEventListener('click', () => {
-            if (keyframes.length === 0) { showToast('Нет ключевых кадров!'); return; }
-
-            // Создаём AnimationClip из ключевых кадров
-            const tracks = [];
-            const boneGroups = {};
-
-            keyframes.forEach(kf => {
-                if (!boneGroups[kf.boneName]) boneGroups[kf.boneName] = [];
-                boneGroups[kf.boneName].push(kf);
-            });
-
-            Object.entries(boneGroups).forEach(([boneName, kfs]) => {
-                kfs.sort((a, b) => a.time - b.time);
-                const times = kfs.map(k => k.time);
-                const rotations = [];
-                kfs.forEach(k => {
-                    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(k.rotation[0], k.rotation[1], k.rotation[2]));
-                    rotations.push(q.x, q.y, q.z, q.w);
-                });
-
-                if (times.length > 0) {
-                    tracks.push(new THREE.QuaternionKeyframeTrack(boneName + '.quaternion', times, rotations));
-                }
-            });
-
-            if (tracks.length > 0) {
-                const clip = new THREE.AnimationClip('CustomAnim', Math.max(...keyframes.map(k => k.time)), tracks);
-                if (!mixer) mixer = new THREE.AnimationMixer(model);
-                const action = mixer.clipAction(clip);
-                action.setLoop(THREE.LoopRepeat);
-                action.play();
-                isPlaying = true;
-                showToast('Анимация запущена!');
-            }
-        });
-
-        document.getElementById('btn-anim-stop').addEventListener('click', () => {
-            if (mixer) { mixer.stopAllAction(); isPlaying = false; }
-        });
-
-        document.getElementById('btn-clear-anim').addEventListener('click', () => {
-            keyframes = [];
-            document.getElementById('keyframe-count').textContent = '0';
-            if (mixer) mixer.stopAllAction();
-            isPlaying = false;
-            showToast('Анимация сброшена');
-        });
-
-        document.getElementById('timeline').addEventListener('input', (e) => {
-            document.getElementById('time-display').textContent = parseFloat(e.target.value).toFixed(1) + 's';
-        });
-
-        // ==================== ЭКСПОРТ GLB ====================
-        btnExport.addEventListener('click', () => {
-            if (!model) { showToast('Нет модели для экспорта!'); return; }
-
-            loadingText.textContent = 'Экспорт GLB...';
-            loadingOverlay.classList.add('visible');
-
-            const exporter = new GLTFExporter();
-            exporter.parse(
-                model,
-                (gltf) => {
-                    const blob = new Blob([JSON.stringify(gltf)], { type: 'application/json' });
-                    // Для бинарного GLB нужен другой подход, но glTF JSON тоже работает
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'rigged_model.gltf';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    loadingOverlay.classList.remove('visible');
-                    showToast('Модель экспортирована!');
-                },
-                (err) => {
-                    console.error(err);
-                    loadingOverlay.classList.remove('visible');
-                    showToast('Ошибка экспорта!');
-                },
-                { binary: false, animations: mixer ? mixer._actions.map(a => a._clip) : [] }
-            );
-        });
-
-        // ==================== ТАП ПО ЭКРАНУ (РИГ-МОД) ====================
-        canvas.addEventListener('pointerdown', (e) => {
-            if (mode !== 'rig') return;
-
-            const rect = canvas.getBoundingClientRect();
-            mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-            mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-
-            // Проверяем клик по хелперам костей
-            const helperIntersects = raycaster.intersectObjects(boneHelpers);
-            if (helperIntersects.length > 0) {
-                const idx = helperIntersects[0].object.userData.boneIndex;
-                if (idx !== undefined && bones[idx]) {
-                    selectedBone = bones[idx];
-                    updateBoneList();
-                    document.getElementById('weight-bone-name').textContent = selectedBone.name;
-                    document.getElementById('pose-bone-name').textContent = selectedBone.name;
-                    showToast('Выбрана кость: ' + selectedBone.name);
-                    return;
-                }
-            }
-
-            // Клик по модели — создаём кость
-            if (!model) return;
-            const meshIntersects = raycaster.intersectObjects(meshes, true);
-            if (meshIntersects.length > 0) {
-                const point = meshIntersects[0].point;
-
-                const bone = new THREE.Bone();
-                bone.name = 'Bone_' + bones.length;
-
-                if (selectedBone && bones.includes(selectedBone)) {
-                    selectedBone.add(bone);
-                    const parentWorld = selectedBone.getWorldPosition(new THREE.Vector3());
-                    bone.position.copy(point).sub(parentWorld);
-                } else {
-                    model.add(bone);
-                    bone.position.copy(point).sub(model.position).divide(model.scale);
-                }
-
-                bones.push(bone);
-                selectedBone = bone;
-                updateBoneList();
-                updateBoneVisuals();
-                showToast('Кость создана в точке клика!');
-            }
-        });
-
-        // ==================== РЕНДЕР ====================
-        function animate() {
-            requestAnimationFrame(animate);
-            const delta = clock.getDelta();
-            if (mixer && isPlaying) mixer.update(delta);
-            if (bones.length > 0) updateBoneVisualsDynamic();
-            controls.update();
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        // ==================== РЕСАЙЗ ====================
-        window.addEventListener('resize', () => {
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        });
-    </script>
 </body>
 </html>
