@@ -1,334 +1,625 @@
 <!DOCTYPE html>
-<html lang="ru" class="dark">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NexusRTC - Ultra Stable P2P Calling Platform</title>
+  <title>Ultra-Stable P2P Call — WebRTC + Firebase RTDB</title>
   
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Google Fonts (Inter & JetBrains Mono for logs) -->
+  <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          boxShadow: {
-            'glow-emerald': '0 0 15px -3px rgba(16, 185, 129, 0.4)',
-            'glow-indigo': '0 0 15px -3px rgba(99, 102, 241, 0.4)',
-            'glow-rose': '0 0 15px -3px rgba(244, 63, 94, 0.4)',
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Firebase SDK JS (Compat version for zero-build GitHub Pages deployment) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
   <style>
-    /* Premium custom scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+    :root {
+      --bg-dark: #07090e;
+      --bg-card: rgba(18, 22, 33, 0.75);
+      --bg-card-border: rgba(255, 255, 255, 0.08);
+      --accent-primary: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.35);
+      --accent-cyan: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --glass-bg: rgba(15, 20, 32, 0.65);
+      --glass-blur: blur(20px);
     }
-    ::-webkit-scrollbar-track {
-      background: #0f172a;
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
     }
-    ::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 4px;
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.10) 0%, transparent 40%);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #475569;
+
+    /* Top Navigation Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--bg-card-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    
-    /* Elegant pulse indicator */
-    .pulse-glow {
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 20px;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #ffffff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--bg-card-border);
+      transition: all 0.3s ease;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .status-badge.connecting .status-dot { background: var(--warning); color: var(--warning); animation: pulse 1.5s infinite; }
+    .status-badge.connected .status-dot { background: var(--success); color: var(--success); animation: pulse-slow 2s infinite; }
+    .status-badge.disconnected .status-dot { background: var(--danger); color: var(--danger); }
+
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: .4; transform: scale(1.15); }
+      50% { opacity: 0.4; transform: scale(0.85); }
     }
-    
-    /* Mirror local camera */
-    .mirrored {
-      transform: scaleX(-1);
+    @keyframes pulse-slow {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.8; }
+    }
+
+    /* Main Container Layout */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+      gap: 20px;
+    }
+
+    /* Join / Create Screen */
+    .lobby-card {
+      background: var(--bg-card);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      max-width: 540px;
+      margin: 40px auto;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .lobby-card h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .lobby-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .input-field {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 24px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      color: white;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary), #4f46e5);
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--bg-card-border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+    }
+
+    .btn-danger:hover {
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Video View Grid */
+    .call-container {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      position: relative;
+      flex: 1;
+      min-height: 520px;
+    }
+
+    @media (min-width: 900px) {
+      .video-grid.two-peers {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .video-wrapper {
+      position: relative;
+      background: #000;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--bg-card-border);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #0d1117;
+    }
+
+    .video-overlay-info {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 10;
+    }
+
+    .audio-meter {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    /* PIP local video fallback when alone */
+    .video-grid.pip-mode .local-wrapper {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 280px;
+      height: 180px;
+      z-index: 20;
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Floating Call Controls */
+    .controls-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 16px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      margin: 0 auto;
+      max-width: fit-content;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .icon-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--bg-card-border);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      transform: scale(1.08);
+    }
+
+    .icon-btn.active-off {
+      background: var(--danger);
+      color: white;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+    }
+
+    .icon-btn.danger {
+      background: var(--danger);
+    }
+
+    /* Detailed Telemetry & Diagnostics Drawer */
+    .telemetry-panel {
+      background: var(--bg-card);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .telemetry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--bg-card-border);
+      padding-bottom: 12px;
+    }
+
+    .telemetry-title {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #a5b4fc;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .metric-sub {
+      font-size: 0.72rem;
+      color: var(--accent-cyan);
+      margin-top: 2px;
+    }
+
+    /* Diagnostics Log Box */
+    .log-container {
+      background: #04060a;
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      height: 140px;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: #d1d5db;
+    }
+
+    .log-item {
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+
+    .log-item .time { color: var(--text-muted); margin-right: 8px; }
+    .log-item.info { color: #60a5fa; }
+    .log-item.success { color: #34d399; }
+    .log-item.warn { color: #fbbf24; }
+    .log-item.error { color: #f87171; }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: rgba(18, 22, 33, 0.95);
+      border: 1px solid var(--bg-card-border);
+      backdrop-filter: blur(10px);
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      color: #fff;
+      font-size: 0.88rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
   </style>
-
-  <!-- Firebase Legacy Compat SDK (Most stable & foolproof for single HTML scripts) -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500/30 selection:text-indigo-200 antialiased overflow-x-hidden">
+<body>
 
-  <!-- TOP HEADER BANNER -->
-  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50 px-4 py-3 lg:px-8">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-      
-      <!-- Logo and App Title -->
-      <div class="flex items-center gap-3">
-        <div class="p-2 bg-gradient-to-tr from-indigo-600 to-violet-500 rounded-xl shadow-glow-indigo">
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-50 to-slate-200">
-            NexusRTC <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">v2.0 Stable</span>
-          </h1>
-          <p class="text-[10px] text-slate-400 font-mono">Ultra-stable WebRTC P2P + Firebase Signaling</p>
-        </div>
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">
+        <i class="fa-solid fa-bolt"></i>
       </div>
-
-      <!-- Realtime Connection Status Dashboard -->
-      <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-        <!-- Firebase DB State -->
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800">
-          <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Signaling:</span>
-          <span id="firebase-status" class="flex items-center gap-1.5 text-xs font-medium text-amber-400">
-            <span class="w-2 h-2 rounded-full bg-amber-500 pulse-glow"></span> Connecting...
-          </span>
-        </div>
-
-        <!-- WebRTC Peer State -->
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800">
-          <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">P2P Peer:</span>
-          <span id="peer-status" class="flex items-center gap-1.5 text-xs font-medium text-rose-500">
-            <span class="w-2 h-2 rounded-full bg-rose-500"></span> Idle
-          </span>
-        </div>
+      <div>
+        <div class="brand-title">P2P UltraStream</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">Firebase RTDB + WebRTC Engine</div>
       </div>
+    </div>
 
+    <div id="connectionStatusBadge" class="status-badge disconnected">
+      <div class="status-dot"></div>
+      <span id="statusText">Не подключено</span>
     </div>
   </header>
 
-  <!-- MAIN APP GRID -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-    
-    <!-- LEFT SIDEBAR: CONTROLS & STATISTICS (4 cols) -->
-    <section class="lg:col-span-4 space-y-6">
-      
-      <!-- ROOM PANEL -->
-      <div class="p-5 rounded-2xl bg-slate-900/40 border border-slate-800/80 shadow-xl backdrop-blur-md">
-        <h3 class="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2 uppercase tracking-wider">
-          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-          Управление Комнатой
-        </h3>
+  <!-- Main Container -->
+  <main>
+    <!-- Lobby View -->
+    <div id="lobbyCard" class="lobby-card">
+      <i class="fa-solid fa-shield-halved" style="font-size: 42px; color: var(--accent-primary); margin-bottom: 16px;"></i>
+      <h2>Защищенный P2P Звонок</h2>
+      <p>Создайте новую комнатy или введите ID для прямого peer-to-peer подключения с высокой стабильностью и низким пингом.</p>
 
-        <!-- Actions -->
-        <div id="room-setup-zone" class="space-y-4">
-          <!-- Create button -->
-          <button id="btn-create-room" class="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:scale-[0.98] text-white rounded-xl font-medium shadow-lg shadow-indigo-900/20 transition-all flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-            Создать новую комнату
-          </button>
-
-          <div class="relative flex items-center">
-            <div class="flex-grow border-t border-slate-800"></div>
-            <span class="flex-shrink mx-4 text-xs text-slate-500 uppercase tracking-widest font-mono">или</span>
-            <div class="flex-grow border-t border-slate-800"></div>
-          </div>
-
-          <!-- Join Input -->
-          <div class="space-y-2">
-            <label for="room-id-input" class="block text-xs text-slate-400 font-medium">Введите ID комнаты:</label>
-            <div class="flex gap-2">
-              <input type="text" id="room-id-input" placeholder="например, meow-1234" class="flex-1 px-3 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-100 font-mono text-sm placeholder:text-slate-600">
-              <button id="btn-join-room" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white rounded-xl font-medium transition-all shadow-lg shadow-emerald-950/40 flex items-center gap-1.5">
-                Войти
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Room info details (Hidden initially) -->
-        <div id="room-info-zone" class="hidden space-y-4">
-          <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80">
-            <p class="text-xs text-slate-400 mb-1">Вы находитесь в комнате:</p>
-            <div class="flex items-center justify-between gap-2">
-              <span id="active-room-display" class="font-mono text-base font-bold text-indigo-400 tracking-wider">NONE</span>
-              <button id="btn-copy-link" class="p-2 hover:bg-slate-800 active:scale-95 text-slate-400 hover:text-indigo-400 rounded-lg transition-colors" title="Копировать ссылку">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
-              </button>
-            </div>
-          </div>
-
-          <button id="btn-hangup" class="w-full py-3 px-4 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 active:scale-[0.98] text-white rounded-xl font-semibold shadow-lg shadow-rose-950/30 transition-all flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2 2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" /></svg>
-            Завершить звонок / Выйти
-          </button>
-        </div>
-
+      <div class="input-group">
+        <input type="text" id="roomIdInput" class="input-field" placeholder="ID Комнаты (например: ultra-call-123)" />
       </div>
 
-      <!-- STREAM CONTROLS (MICROPHONE / CAMERA) -->
-      <div class="p-5 rounded-2xl bg-slate-900/40 border border-slate-800/80 shadow-xl backdrop-blur-md space-y-4">
-        <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2 uppercase tracking-wider">
-          <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-          Контроль Медиа
-        </h3>
-
-        <div class="grid grid-cols-3 gap-2">
-          <!-- Mic toggle -->
-          <button id="btn-toggle-mic" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-emerald-400">
-            <svg id="svg-mic-on" class="w-5 h-5 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-            <svg id="svg-mic-off" class="w-5 h-5 mb-1.5 hidden text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
-            <span class="text-[10px] font-medium uppercase text-slate-400">Звук</span>
-          </button>
-
-          <!-- Video toggle -->
-          <button id="btn-toggle-video" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-emerald-400">
-            <svg id="svg-video-on" class="w-5 h-5 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-            <svg id="svg-video-off" class="w-5 h-5 mb-1.5 hidden text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-            <span class="text-[10px] font-medium uppercase text-slate-400">Камера</span>
-          </button>
-
-          <!-- Screen share toggle -->
-          <button id="btn-share-screen" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-slate-400">
-            <svg class="w-5 h-5 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-            <span class="text-[10px] font-medium uppercase text-slate-400">Экран</span>
-          </button>
-        </div>
-
-        <!-- Connection Repair (ICE Restart Feature) -->
-        <div class="pt-2 border-t border-slate-800/60">
-          <button id="btn-repair" class="w-full py-2.5 px-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 active:scale-95 text-xs text-slate-300 font-semibold rounded-xl flex items-center justify-center gap-2 transition-all">
-            <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H16V10h5.21M4 9h5.21" /></svg>
-            Восстановить соединение (ICE Restart)
-          </button>
-          <p class="text-[10px] text-slate-500 mt-1.5 text-center leading-relaxed">Нажмите, если звук/видео зависли. Это пересоздаст маршрут обмена трафиком.</p>
-        </div>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button id="createRoomBtn" class="btn btn-primary" onclick="createRoom()">
+          <i class="fa-solid fa-plus"></i> Создать комнатy
+        </button>
+        <button id="joinRoomBtn" class="btn btn-secondary" onclick="joinRoom()">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Подключиться
+        </button>
       </div>
+    </div>
 
-      <!-- SIGNALING & WEBRTC DIAGNOSTICS -->
-      <div class="p-5 rounded-2xl bg-slate-900/40 border border-slate-800/80 shadow-xl backdrop-blur-md space-y-4">
-        <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2 uppercase tracking-wider">
-          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-          Телеметрия Соединения
-        </h3>
+    <!-- Active Call Area -->
+    <div id="callContainer" class="call-container">
+      <!-- Video Grid -->
+      <div id="videoGrid" class="video-grid two-peers">
+        <!-- Remote Video (Primary) -->
+        <div class="video-wrapper">
+          <video id="remoteVideo" autoplay playsinline></video>
+          <div class="video-overlay-info">
+            <div class="audio-meter"></div>
+            <span id="remoteLabel">Собеседник (Ожидание...)</span>
+          </div>
+        </div>
 
-        <div class="space-y-2.5 font-mono text-[11px]">
-          <!-- Interactive State Badges -->
-          <div class="flex items-center justify-between py-1 border-b border-slate-800/50">
-            <span class="text-slate-500">Signaling State:</span>
-            <span id="stat-signaling-state" class="text-slate-300 font-medium">stable</span>
-          </div>
-          <div class="flex items-center justify-between py-1 border-b border-slate-800/50">
-            <span class="text-slate-500">ICE Connection:</span>
-            <span id="stat-ice-connection-state" class="text-slate-300 font-medium">new</span>
-          </div>
-          <div class="flex items-center justify-between py-1 border-b border-slate-800/50">
-            <span class="text-slate-500">ICE Gathering:</span>
-            <span id="stat-ice-gathering-state" class="text-slate-300 font-medium">new</span>
-          </div>
-          <div class="flex items-center justify-between py-1 border-b border-slate-800/50">
-            <span class="text-slate-500">Round Trip Time (RTT):</span>
-            <span id="stat-rtt" class="text-indigo-400 font-bold">-</span>
-          </div>
-          <div class="flex items-center justify-between py-1 border-b border-slate-800/50">
-            <span class="text-slate-500">Входящий битрейт:</span>
-            <span id="stat-bitrate-in" class="text-emerald-400 font-bold">-</span>
-          </div>
-          <div class="flex items-center justify-between py-1">
-            <span class="text-slate-500">Исходящий битрейт:</span>
-            <span id="stat-bitrate-out" class="text-indigo-400 font-bold">-</span>
+        <!-- Local Video -->
+        <div class="video-wrapper local-wrapper">
+          <video id="localVideo" autoplay playsinline muted></video>
+          <div class="video-overlay-info">
+            <i class="fa-solid fa-user"></i>
+            <span>Вы (Локальное видео)</span>
           </div>
         </div>
       </div>
 
-    </section>
-
-    <!-- RIGHT CONTENT AREA: VIDEOS & LOGS PANEL (8 cols) -->
-    <section class="lg:col-span-8 flex flex-col gap-6 h-full">
-      
-      <!-- VIDEO GRID WINDOW -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
-        <!-- LOCAL VIDEO CONTAINER -->
-        <div class="relative bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden aspect-video shadow-xl flex items-center justify-center">
-          <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover mirrored"></video>
-          
-          <!-- Overlays & Badges -->
-          <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded bg-indigo-500/80 text-white text-[10px] font-bold uppercase tracking-wider">Вы</span>
-              <span id="local-mic-badge" class="p-1 rounded-full bg-slate-950/80 text-emerald-400" title="Микрофон включен">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-              </span>
-              <span id="local-video-badge" class="p-1 rounded-full bg-slate-950/80 text-emerald-400" title="Камера включена">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-              </span>
-            </div>
-            <span class="text-[10px] text-slate-300 font-mono" id="local-resolution-badge">Локальный стрим</span>
-          </div>
-
-          <!-- Video Disabled State Placeholder -->
-          <div id="local-placeholder" class="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center gap-3 hidden">
-            <div class="p-4 rounded-full bg-slate-900 border border-slate-800 text-slate-600">
-              <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-            </div>
-            <p class="text-xs text-slate-500 font-medium">Камера отключена</p>
-          </div>
-        </div>
-
-        <!-- REMOTE VIDEO CONTAINER -->
-        <div class="relative bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden aspect-video shadow-xl flex items-center justify-center">
-          <video id="remote-video" autoplay playsinline class="w-full h-full object-cover"></video>
-          
-          <!-- Overlays & Badges -->
-          <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded bg-emerald-500/80 text-black text-[10px] font-bold uppercase tracking-wider">Собеседник</span>
-              <span id="remote-track-status" class="w-2 h-2 rounded-full bg-slate-500"></span>
-            </div>
-            <span class="text-[10px] text-slate-300 font-mono" id="remote-resolution-badge">Поток отсутствует</span>
-          </div>
-
-          <!-- Connecting / Waiting State Overlay -->
-          <div id="remote-placeholder" class="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center gap-3">
-            <div class="p-4 rounded-full bg-slate-900 border border-slate-800 text-indigo-500 shadow-glow-indigo">
-              <svg class="w-8 h-8 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H16V10h5.21M4 9h5.21" /></svg>
-            </div>
-            <p id="remote-placeholder-text" class="text-xs text-slate-400 font-medium">Ожидание собеседника...</p>
-          </div>
-        </div>
-
+      <!-- Floating Controls -->
+      <div class="controls-bar">
+        <button class="icon-btn" id="micBtn" onclick="toggleMic()" title="Включить/Выключить микрофон">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+        <button class="icon-btn" id="camBtn" onclick="toggleCam()" title="Включить/Выключить камеру">
+          <i class="fa-solid fa-video"></i>
+        </button>
+        <button class="icon-btn" id="screenBtn" onclick="toggleScreenShare()" title="Демонстрация экрана">
+          <i class="fa-solid fa-desktop"></i>
+        </button>
+        <button class="icon-btn" onclick="copyRoomLink()" title="Скопировать ссылку на комнату">
+          <i class="fa-solid fa-link"></i>
+        </button>
+        <button class="icon-btn" onclick="triggerIceRestart()" title="Перезапустить ICE (Восстановление)">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+        <button class="icon-btn danger" onclick="hangup()" title="Завершить звонок">
+          <i class="fa-solid fa-phone-slash"></i>
+        </button>
       </div>
 
-      <!-- INTERACTIVE EVENT LOGS TERMINAL -->
-      <div class="flex-1 flex flex-col p-5 rounded-2xl bg-slate-900/40 border border-slate-800/80 shadow-xl backdrop-blur-md min-h-[250px] lg:min-h-[350px]">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2 uppercase tracking-wider">
-            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-            Диагностический Терминал Событий
-          </h3>
-          <button id="btn-clear-logs" class="text-[10px] uppercase font-bold text-slate-500 hover:text-indigo-400 transition-colors">
-            Очистить
-          </button>
+      <!-- Telemetry & Diagnostic Panel -->
+      <div class="telemetry-panel">
+        <div class="telemetry-header">
+          <div class="telemetry-title">
+            <i class="fa-solid fa-chart-line"></i> Телеметрия Соединения и Сетевой Мониторинг
+          </div>
+          <div style="font-size: 0.8rem; color: var(--accent-cyan); font-family: var(--font-mono);" id="currentRoomDisplay">
+            ROOM: ---
+          </div>
         </div>
 
-        <!-- Terminal log viewport -->
-        <div id="terminal-viewport" class="flex-1 p-4 rounded-xl bg-slate-950/80 border border-slate-800 font-mono text-xs overflow-y-auto space-y-1.5 leading-relaxed text-slate-400 select-text max-h-[300px]">
-          <!-- Logs get injected here dynamically -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">ICE Состояние</div>
+            <div class="metric-value" id="iceStateVal">New</div>
+            <div class="metric-sub" id="signalingStateVal">stable</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Пинг / Задержка</div>
+            <div class="metric-value" id="rttVal">0 ms</div>
+            <div class="metric-sub" id="jitterVal">Jitter: 0 ms</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Битрейт Приема</div>
+            <div class="metric-value" id="bitrateRxVal">0 kbps</div>
+            <div class="metric-sub" id="fpsVal">0 FPS</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Потеря Пакетов</div>
+            <div class="metric-value" id="packetLossVal">0.0%</div>
+            <div class="metric-sub" id="typeVal">Type: Direct</div>
+          </div>
         </div>
+
+        <!-- Realtime System Log -->
+        <div class="log-container" id="systemLogs"></div>
       </div>
-
-    </section>
-
+    </div>
   </main>
 
-  <!-- ROOT JS CONTROLLER -->
+  <div id="toastContainer" class="toast-container"></div>
+
   <script>
-    // 1. FIREBASE CONFIGURATION
+    // =========================================================================
+    // 1. FIREBASE CONFIGURATION & INITIALIZATION
+    // =========================================================================
     const firebaseConfig = {
       apiKey: "AIzaSyBm0mIvHVznIeF2PoFk6dtdaiT5r877wyA",
       authDomain: "meow-874ce.firebaseapp.com",
@@ -339,773 +630,497 @@
       appId: "1:471541334599:web:567af3e7dbe70a37572762"
     };
 
-    // Initialize Firebase Compat
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
 
-    // 2. DOM ELEMENT CACHE
-    const localVideo = document.getElementById('local-video');
-    const remoteVideo = document.getElementById('remote-video');
-    const terminalViewport = document.getElementById('terminal-viewport');
-    
-    const btnCreateRoom = document.getElementById('btn-create-room');
-    const btnJoinRoom = document.getElementById('btn-join-room');
-    const btnHangup = document.getElementById('btn-hangup');
-    const btnCopyLink = document.getElementById('btn-copy-link');
-    const btnClearLogs = document.getElementById('btn-clear-logs');
-    const btnRepair = document.getElementById('btn-repair');
-    
-    const btnToggleMic = document.getElementById('btn-toggle-mic');
-    const btnToggleVideo = document.getElementById('btn-toggle-video');
-    const btnShareScreen = document.getElementById('btn-share-screen');
-    
-    const roomIdInput = document.getElementById('room-id-input');
-    const activeRoomDisplay = document.getElementById('active-room-display');
-    const roomSetupZone = document.getElementById('room-setup-zone');
-    const roomInfoZone = document.getElementById('room-info-zone');
-    
-    const localPlaceholder = document.getElementById('local-placeholder');
-    const remotePlaceholder = document.getElementById('remote-placeholder');
-    const remotePlaceholderText = document.getElementById('remote-placeholder-text');
-    
-    const firebaseStatusEl = document.getElementById('firebase-status');
-    const peerStatusEl = document.getElementById('peer-status');
-    
-    // Status metrics DOM elements
-    const statSignalingState = document.getElementById('stat-signaling-state');
-    const statIceConnectionState = document.getElementById('stat-ice-connection-state');
-    const statIceGatheringState = document.getElementById('stat-ice-gathering-state');
-    const statRtt = document.getElementById('stat-rtt');
-    const statBitrateIn = document.getElementById('stat-bitrate-in');
-    const statBitrateOut = document.getElementById('stat-bitrate-out');
-    
-    const localMicBadge = document.getElementById('local-mic-badge');
-    const localVideoBadge = document.getElementById('local-video-badge');
-    const remoteTrackStatus = document.getElementById('remote-track-status');
-    const localResolutionBadge = document.getElementById('local-resolution-badge');
-    const remoteResolutionBadge = document.getElementById('remote-resolution-badge');
-
-    // 3. INTERNAL WEBRTC & MEDIA STATE variables
-    let localStream = null;
-    let remoteStream = null;
-    let peerConnection = null;
-    let currentRoomId = null;
-    let role = null; // 'HOST' or 'GUEST'
-    let isScreenSharing = false;
-
-    // Safety WebRTC state queues to protect ICE from firing before remote offer is registered
-    let isRemoteDescriptionSet = false;
-    let queuedCandidates = [];
-
-    // Diagnostic stat state
-    let statsIntervalId = null;
-    let prevStats = {};
-
-    // Standard high-performance Google STUN servers with fallbacks
-    const iceConfig = {
+    // High Reliability STUN / ICE Servers list
+    const rtcConfig = {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
         { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' }
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:stun.services.mozilla.com' },
+        { urls: 'stun:global.stun.twilio.com:3478' }
       ],
       iceCandidatePoolSize: 10
     };
 
-    // Logger helper
-    function log(message, type = 'info') {
-      const timestamp = new Date().toLocaleTimeString();
-      let colorClass = 'text-slate-400';
-      let icon = '⚡';
+    // Global State Variables
+    let peerConnection = null;
+    let localStream = null;
+    let remoteStream = null;
+    let screenStream = null;
+    let currentRoomId = null;
+    let isHost = false;
 
-      if (type === 'success') {
-        colorClass = 'text-emerald-400 font-semibold';
-        icon = '✓';
-      } else if (type === 'error') {
-        colorClass = 'text-rose-400 font-bold';
-        icon = '⚠';
-      } else if (type === 'warning') {
-        colorClass = 'text-amber-400';
-        icon = '✦';
-      } else if (type === 'telemetry') {
-        colorClass = 'text-indigo-300';
-        icon = '⇆';
-      }
+    // Track state controls
+    let isAudioMuted = false;
+    let isVideoMuted = false;
+    let isScreenSharing = false;
 
-      const logElement = document.createElement('div');
-      logElement.className = `${colorClass} flex items-start gap-2`;
-      logElement.innerHTML = `<span class="text-slate-600 select-none">${timestamp}</span> <span class="select-none">${icon}</span> <span>${message}</span>`;
-      
-      terminalViewport.appendChild(logElement);
-      terminalViewport.scrollTop = terminalViewport.scrollHeight;
-    }
+    // Telemetry tracking
+    let statsInterval = null;
+    let prevBytesReceived = 0;
+    let prevStatsTimestamp = 0;
+    let pendingCandidates = [];
 
-    // 4. FIREBASE CONNECTIVITY TRACKING
-    database.ref(".info/connected").on("value", (snap) => {
-      if (snap.val() === true) {
-        firebaseStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 pulse-glow"></span> Онлайн`;
-        firebaseStatusEl.className = "flex items-center gap-1.5 text-xs font-semibold text-emerald-400";
-        log('Успешное подключение к Firebase Realtime Database!', 'success');
-      } else {
-        firebaseStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span> Офлайн`;
-        firebaseStatusEl.className = "flex items-center gap-1.5 text-xs font-semibold text-rose-500";
-        log('Соединение с Firebase разорвано. Ожидание восстановления сети...', 'warning');
+    // Elements
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const statusText = document.getElementById('statusText');
+    const statusBadge = document.getElementById('connectionStatusBadge');
+    const systemLogs = document.getElementById('systemLogs');
+
+    // Auto-detect room from URL parameter on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomParam = urlParams.get('room');
+      if (roomParam) {
+        document.getElementById('roomIdInput').value = roomParam;
+        log(`Обнаружена ссылка на комнату: ${roomParam}`, 'info');
       }
     });
 
-    // 5. MEDIA HANDLING (GET MICROPHONE / CAMERA)
-    async function acquireLocalMedia() {
-      if (localStream) return localStream;
-      
-      log('Запрос прав на использование микрофона и камеры...');
+    // Logging helper
+    function log(msg, type = 'info') {
+      const timeStr = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      div.className = `log-item ${type}`;
+      div.innerHTML = `<span class="time">[${timeStr}]</span>${msg}`;
+      systemLogs.appendChild(div);
+      systemLogs.scrollTop = systemLogs.scrollHeight;
+    }
+
+    function showToast(message) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerText = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    function updateStatus(state, text) {
+      statusBadge.className = `status-badge ${state}`;
+      statusText.innerText = text;
+    }
+
+    // =========================================================================
+    // 2. MEDIA STREAM HANDLING
+    // =========================================================================
+    async function initLocalStream() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        log('Запрос доступа к микрофону и камере...', 'info');
+        localStream = await navigator.mediaDevices.getUserMedia({
           video: {
             width: { ideal: 1280 },
             height: { ideal: 720 },
-            facingMode: "user"
+            frameRate: { ideal: 30 }
           },
-          audio: true
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
         });
-        
-        localStream = stream;
-        localVideo.srcObject = stream;
-        localPlaceholder.classList.add('hidden');
-        
-        // Output track settings
-        const videoTrack = stream.getVideoTracks()[0];
-        const audioTrack = stream.getAudioTracks()[0];
-        
-        if (videoTrack) {
-          const settings = videoTrack.getSettings();
-          localResolutionBadge.textContent = `${settings.width || 'HD'}x${settings.height || '720p'} (${Math.round(settings.frameRate || 30)}fps)`;
-        }
-        
-        log('Медиапоток успешно захвачен.', 'success');
-        updateMediaControlUI();
-        return stream;
-      } catch (err) {
-        log('Ошибка захвата локальных медиаресурсов: ' + err.message, 'error');
-        alert('Не удалось получить доступ к микрофону/камере! Пожалуйста, предоставьте необходимые права сайту.');
-        throw err;
-      }
-    }
-
-    // Dynamic mute/unmute visual updates
-    function updateMediaControlUI() {
-      if (!localStream) return;
-      
-      const audioTrack = localStream.getAudioTracks()[0];
-      const videoTrack = localStream.getVideoTracks()[0];
-
-      if (audioTrack && audioTrack.enabled) {
-        document.getElementById('svg-mic-on').classList.remove('hidden');
-        document.getElementById('svg-mic-off').classList.add('hidden');
-        btnToggleMic.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-emerald-400";
-        localMicBadge.className = "p-1 rounded-full bg-slate-950/80 text-emerald-400";
-      } else {
-        document.getElementById('svg-mic-on').classList.add('hidden');
-        document.getElementById('svg-mic-off').classList.remove('hidden');
-        btnToggleMic.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-rose-500";
-        localMicBadge.className = "p-1 rounded-full bg-slate-950/80 text-rose-500";
-      }
-
-      if (videoTrack && videoTrack.enabled) {
-        document.getElementById('svg-video-on').classList.remove('hidden');
-        document.getElementById('svg-video-off').classList.add('hidden');
-        btnToggleVideo.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-emerald-400";
-        localVideoBadge.className = "p-1 rounded-full bg-slate-950/80 text-emerald-400";
-        localPlaceholder.classList.add('hidden');
-      } else {
-        document.getElementById('svg-video-on').classList.add('hidden');
-        document.getElementById('svg-video-off').classList.remove('hidden');
-        btnToggleVideo.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-rose-500";
-        localVideoBadge.className = "p-1 rounded-full bg-slate-950/80 text-rose-500";
-        localPlaceholder.classList.remove('hidden');
-      }
-
-      if (isScreenSharing) {
-        btnShareScreen.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-indigo-500 hover:border-indigo-400 active:scale-95 transition-all text-indigo-400";
-      } else {
-        btnShareScreen.className = "flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-95 transition-all text-slate-400";
-      }
-    }
-
-    // Toggles Local Track States
-    btnToggleMic.onclick = () => {
-      if (localStream) {
-        const track = localStream.getAudioTracks()[0];
-        if (track) {
-          track.enabled = !track.enabled;
-          log(track.enabled ? 'Микрофон активирован' : 'Микрофон выключен', 'warning');
-          updateMediaControlUI();
-        }
-      }
-    };
-
-    btnToggleVideo.onclick = () => {
-      if (localStream) {
-        const track = localStream.getVideoTracks()[0];
-        if (track) {
-          track.enabled = !track.enabled;
-          log(track.enabled ? 'Камера активирована' : 'Камера выключена', 'warning');
-          updateMediaControlUI();
-        }
-      }
-    };
-
-    // Screen Share Toggle Logic
-    btnShareScreen.onclick = async () => {
-      if (!localStream) return;
-      
-      if (!isScreenSharing) {
-        log('Инициализация захвата экрана...');
-        try {
-          const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-          const screenTrack = screenStream.getVideoTracks()[0];
-          
-          if (peerConnection) {
-            const senders = peerConnection.getSenders();
-            const sender = senders.find(s => s.track && s.track.kind === 'video');
-            if (sender) {
-              await sender.replaceTrack(screenTrack);
-              log('Локальное видео изменено на демонстрацию экрана.', 'success');
-            }
-          }
-          
-          // Remember previous camera track to restore later
-          localStream.getVideoTracks()[0].enabled = false; // Turn off camera
-          
-          screenTrack.onended = () => {
-            stopScreenSharing();
-          };
-          
-          localVideo.srcObject = screenStream;
-          isScreenSharing = true;
-          updateMediaControlUI();
-          log('Демонстрация экрана активна.', 'success');
-        } catch (err) {
-          log('Ошибка активации захвата экрана: ' + err.message, 'error');
-        }
-      } else {
-        stopScreenSharing();
-      }
-    };
-
-    async function stopScreenSharing() {
-      if (!isScreenSharing) return;
-      log('Возврат к стандартной видеокамере...');
-      try {
-        const videoTrack = localStream.getVideoTracks()[0];
-        videoTrack.enabled = true;
-        
-        if (peerConnection) {
-          const senders = peerConnection.getSenders();
-          const sender = senders.find(s => s.track && s.track.kind === 'video');
-          if (sender) {
-            await sender.replaceTrack(videoTrack);
-          }
-        }
-        
         localVideo.srcObject = localStream;
-        isScreenSharing = false;
-        updateMediaControlUI();
-        log('Камера снова подключена к P2P трансляции.', 'success');
+        log('Медиапоток успешно получен', 'success');
+        return true;
       } catch (err) {
-        log('Ошибка восстановления исходного видеопотока: ' + err.message, 'error');
+        log(`Ошибка доступа к медиаустройствам: ${err.message}`, 'error');
+        alert('Не удалось получить доступ к камере или микрофону. Проверьте разрешения!');
+        return false;
       }
     }
 
-
-    // 6. ULTIMATE WEBRTC ENGINE IMPLEMENTATION
-    function createPeerConnection(roomId) {
-      log('Создание объекта RTCPeerConnection...');
-      peerConnection = new RTCPeerConnection(iceConfig);
-
-      // Add local stream tracks to our WebRTC channel
-      if (localStream) {
-        localStream.getTracks().forEach(track => {
-          peerConnection.addTrack(track, localStream);
-          log(`Добавлен локальный трек: ${track.kind}`);
-        });
-      }
-
-      // Stream reception setup
+    // =========================================================================
+    // 3. WEBRTC CONNECTION SETUP
+    // =========================================================================
+    function createPeerConnection() {
+      log('Инициализация RTCPeerConnection...', 'info');
+      peerConnection = new RTCPeerConnection(rtcConfig);
       remoteStream = new MediaStream();
       remoteVideo.srcObject = remoteStream;
 
+      // Add local tracks
+      if (localStream) {
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
+        });
+      }
+
+      // Handle incoming remote tracks
       peerConnection.ontrack = (event) => {
-        log(`Получен входящий медиа-трек: ${event.track.kind}`, 'success');
+        log(`Получен трек от собеседника: ${event.track.kind}`, 'success');
         event.streams[0].getTracks().forEach(track => {
           remoteStream.addTrack(track);
         });
-        
-        // Hide overlay placeholder
-        remotePlaceholder.classList.add('hidden');
-        remoteTrackStatus.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-glow";
-        
-        // Extract remote stats metadata
-        const remoteVideoTrack = remoteStream.getVideoTracks()[0];
-        if (remoteVideoTrack) {
-          remoteResolutionBadge.textContent = 'Трансляция активна';
-        }
+        document.getElementById('remoteLabel').innerText = 'Собеседник (В эфире)';
       };
 
-      // Handle ICE Candidates generated locally
+      // Handle ICE Candidates
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          const candidateRef = database.ref(`rooms/${roomId}/${role === 'HOST' ? 'hostCandidates' : 'guestCandidates'}`);
-          candidateRef.push(event.candidate.toJSON());
-          log(`Отправлен ICE-кандидат во Firebase (${role})`);
+          const candidatePath = isHost ? `rooms/${currentRoomId}/hostCandidates` : `rooms/${currentRoomId}/guestCandidates`;
+          db.ref(candidatePath).push(event.candidate.toJSON());
         }
       };
 
-      // Robust connection health listeners
+      // State Listeners for detailed diagnostics
       peerConnection.oniceconnectionstatechange = () => {
         const state = peerConnection.iceConnectionState;
-        statIceConnectionState.textContent = state;
-        log(`[Событие ICE] Статус соединения: ${state}`, 'warning');
-        
-        // Update UI dynamic status indicator
+        document.getElementById('iceStateVal').innerText = state;
+        log(`Изменение ICE State: ${state}`, state === 'connected' || state === 'completed' ? 'success' : 'warn');
+
         if (state === 'connected' || state === 'completed') {
-          peerStatusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-glow"></span> Активен`;
-          peerStatusEl.className = "flex items-center gap-1.5 text-xs font-bold text-emerald-400";
-          remotePlaceholder.classList.add('hidden');
-        } else if (state === 'checking') {
-          peerStatusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-amber-400 pulse-glow"></span> Поиск маршрутов...`;
-          peerStatusEl.className = "flex items-center gap-1.5 text-xs font-semibold text-amber-400";
+          updateStatus('connected', 'Соединение установлено (P2P)');
         } else if (state === 'disconnected') {
-          peerStatusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-amber-500 pulse-glow"></span> Потеря связи`;
-          peerStatusEl.className = "flex items-center gap-1.5 text-xs font-semibold text-amber-500";
-          log('Обрыв связи. Пытаемся автоматически восстановить...', 'warning');
+          updateStatus('connecting', 'Потеря сигнала... Переподключение');
         } else if (state === 'failed') {
-          peerStatusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span> Сбой`;
-          peerStatusEl.className = "flex items-center gap-1.5 text-xs font-bold text-rose-500";
-          log('Критическая ошибка соединения WebRTC. Попробуйте нажать кнопку восстановления.', 'error');
+          updateStatus('disconnected', 'Сбой P2P соединения');
+          triggerIceRestart();
         }
       };
 
       peerConnection.onsignalingstatechange = () => {
-        statSignalingState.textContent = peerConnection.signalingState;
-        log(`[Событие Сигналов] Сигнальный статус: ${peerConnection.signalingState}`, 'telemetry');
+        document.getElementById('signalingStateVal').innerText = peerConnection.signalingState;
       };
 
-      peerConnection.onicegatheringstatechange = () => {
-        statIceGatheringState.textContent = peerConnection.iceGatheringState;
-        log(`[Событие Сбора ICE] Сбор кандидатов: ${peerConnection.iceGatheringState}`, 'telemetry');
+      peerConnection.onconnectionstatechange = () => {
+        log(`Общее состояние соединения: ${peerConnection.connectionState}`, 'info');
       };
 
-      startStatsTelemetry();
+      startTelemetryMonitoring();
     }
 
-
-    // 7. COMPREHENSIVE SAFEST ICE CANDIDATE HANDLER (Prevents Standard Race Conditions)
-    async function processRemoteIceCandidate(candidateData) {
-      const candidate = new RTCIceCandidate(candidateData);
-      
-      if (isRemoteDescriptionSet) {
-        try {
-          await peerConnection.addIceCandidate(candidate);
-          log('Успешно применен удаленный ICE кандидат.');
-        } catch (e) {
-          log('Ошибка применения ICE кандидата: ' + e.toString(), 'error');
+    // Process queued candidates once RemoteDescription is set
+    async function processPendingCandidates() {
+      if (pendingCandidates.length > 0) {
+        log(`Обработка накопленных ICE candidates (${pendingCandidates.length})...`, 'info');
+        for (const candidate of pendingCandidates) {
+          try {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (e) {
+            log(`Ошибка добавления candidate: ${e.message}`, 'warn');
+          }
         }
-      } else {
-        queuedCandidates.push(candidate);
-        log('Удаленный ICE кандидат сохранен в очередь (ожидание SDP Remote Description)...', 'warning');
+        pendingCandidates = [];
       }
     }
 
-    async function applyQueuedCandidates() {
-      log(`Обработка накопленной очереди ICE кандидатов (${queuedCandidates.length} шт.)...`);
-      for (const candidate of queuedCandidates) {
-        try {
-          await peerConnection.addIceCandidate(candidate);
-          log('ICE кандидат из очереди успешно применен.');
-        } catch (e) {
-          log('Ошибка применения отложенного ICE кандидата: ' + e.toString(), 'error');
-        }
+    // =========================================================================
+    // 4. SIGNALING & ROOM MANAGEMENT (HOST & GUEST)
+    // =========================================================================
+    async function createRoom() {
+      let roomId = document.getElementById('roomIdInput').value.trim();
+      if (!roomId) {
+        roomId = Math.random().toString(36).substring(2, 9);
       }
-      queuedCandidates = [];
-    }
-
-
-    // 8. ROOM GENERATION & HOST FLOW
-    btnCreateRoom.onclick = async () => {
-      // 1. Capture media first
-      try {
-        await acquireLocalMedia();
-      } catch (err) {
-        return; // Early return if camera access is blocked
-      }
-
-      // 2. Generate a highly unique room name
-      const roomId = 'nexus-' + Math.floor(Math.random() * 900000 + 100000);
       currentRoomId = roomId;
-      role = 'HOST';
+      isHost = true;
 
-      log(`Инициализация создания комнаты ${roomId}...`, 'info');
+      const mediaReady = await initLocalStream();
+      if (!mediaReady) return;
 
-      // Clear any previous signaling remnants at this DB location
-      const roomRef = database.ref(`rooms/${roomId}`);
+      document.getElementById('lobbyCard').style.display = 'none';
+      document.getElementById('callContainer').style.display = 'flex';
+      document.getElementById('currentRoomDisplay').innerText = `ROOM: ${currentRoomId}`;
+      updateStatus('connecting', 'Создание комнаты...');
+
+      createPeerConnection();
+
+      const roomRef = db.ref(`rooms/${currentRoomId}`);
+      
+      // Clean previous data if room re-used
       await roomRef.remove();
 
-      // Setup Peer Connection
-      createPeerConnection(roomId);
+      // Create Offer
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
 
-      // Create WebRTC Offer SDP
-      const offerDescription = await peerConnection.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: true
-      });
-      await peerConnection.setLocalDescription(offerDescription);
-
-      // Write Offer to Firebase DB
-      const offer = {
-        sdp: offerDescription.sdp,
-        type: offerDescription.type
+      const roomData = {
+        offer: {
+          type: offer.type,
+          sdp: offer.sdp
+        },
+        createdAt: firebase.database.ServerValue.TIMESTAMP
       };
-      await roomRef.set({ offer });
-      log(`Локальное SDP Offer успешно записано в Firebase Realtime DB.`, 'success');
 
-      // Setup Listeners for Guest Answers
+      await roomRef.set(roomData);
+      log(`Комната ${currentRoomId} создана. Ожидание собеседника...`, 'success');
+      updateStatus('connecting', 'Ожидание подключения собеседника...');
+
+      // Listen for Answer
       roomRef.child('answer').on('value', async (snapshot) => {
         const answer = snapshot.val();
         if (answer && !peerConnection.currentRemoteDescription) {
-          log('Получено SDP Answer от собеседника. Установка...', 'success');
-          const answerDesc = new RTCSessionDescription(answer);
-          await peerConnection.setRemoteDescription(answerDesc);
-          
-          isRemoteDescriptionSet = true;
-          await applyQueuedCandidates();
+          log('Получен Answer от собеседника. Установка RemoteDescription...', 'success');
+          const rtcAnswer = new RTCSessionDescription(answer);
+          await peerConnection.setRemoteDescription(rtcAnswer);
+          await processPendingCandidates();
         }
       });
 
-      // Setup Listeners for Guest ICE candidates
+      // Listen for Remote Guest Candidates
       roomRef.child('guestCandidates').on('child_added', (snapshot) => {
-        const candidateData = snapshot.val();
-        if (candidateData) {
-          processRemoteIceCandidate(candidateData);
+        const candidate = snapshot.val();
+        if (candidate) {
+          if (peerConnection.remoteDescription) {
+            peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+          } else {
+            pendingCandidates.push(candidate);
+          }
         }
       });
-
-      // Update UI panels
-      activeRoomDisplay.textContent = roomId;
-      roomSetupZone.classList.add('hidden');
-      roomInfoZone.classList.remove('hidden');
-      remotePlaceholderText.textContent = 'Ожидание подключения собеседника...';
-      
-      // Auto-populate URL hash
-      window.location.hash = roomId;
-    };
-
-
-    // 9. JOIN GUEST FLOW
-    btnJoinRoom.onclick = async () => {
-      const roomId = roomIdInput.value.trim();
-      if (!roomId) {
-        alert('Пожалуйста, укажите верный ID комнаты!');
-        return;
-      }
-      joinRoomById(roomId);
-    };
-
-    async function joinRoomById(roomId) {
-      try {
-        await acquireLocalMedia();
-      } catch (err) {
-        return; // Stop if media capture is rejected
-      }
-
-      currentRoomId = roomId;
-      role = 'GUEST';
-      log(`Попытка подключения к комнате: ${roomId}...`);
-
-      const roomRef = database.ref(`rooms/${roomId}`);
-      const roomSnapshot = await roomRef.once('value');
-
-      if (!roomSnapshot.exists()) {
-        log(`Ошибка! Комнаты с ID ${roomId} не существует.`, 'error');
-        alert(`Комната ${roomId} не найдена! Убедитесь, что Хост создал её и не завершил вызов.`);
-        return;
-      }
-
-      const roomData = roomSnapshot.val();
-      if (!roomData.offer) {
-        log('Критическая ошибка: В комнате отсутствует активное предложение (SDP Offer) от Хоста.', 'error');
-        alert('Комната не готова для подключения. В ней отсутствует SDP Offer.');
-        return;
-      }
-
-      // Initialize peer connection as guest
-      createPeerConnection(roomId);
-
-      // Listen to Host's ICE Candidates (Listen to existing + newly added ones)
-      roomRef.child('hostCandidates').on('child_added', (snapshot) => {
-        const candidateData = snapshot.val();
-        if (candidateData) {
-          processRemoteIceCandidate(candidateData);
-        }
-      });
-
-      // Apply Remote Offer SDP
-      log('Установка удаленного SDP Offer...');
-      const offerDesc = new RTCSessionDescription(roomData.offer);
-      await peerConnection.setRemoteDescription(offerDesc);
-      
-      isRemoteDescriptionSet = true;
-      await applyQueuedCandidates();
-
-      // Create Local Answer SDP
-      log('Создание локального SDP Answer...');
-      const answerDescription = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answerDescription);
-
-      const answer = {
-        sdp: answerDescription.sdp,
-        type: answerDescription.type
-      };
-      await roomRef.child('answer').set(answer);
-      log('Ответ SDP Answer отправлен хосту.', 'success');
-
-      // Update UI panels
-      activeRoomDisplay.textContent = roomId;
-      roomSetupZone.classList.add('hidden');
-      roomInfoZone.classList.remove('hidden');
-      remotePlaceholderText.textContent = 'Установка защищенного P2P соединения...';
     }
 
+    async function joinRoom() {
+      const roomId = document.getElementById('roomIdInput').value.trim();
+      if (!roomId) {
+        alert('Пожалуйста, введите ID комнаты!');
+        return;
+      }
+      currentRoomId = roomId;
+      isHost = false;
 
-    // 10. ADVANCED CONNECTION HEAL / ICE RESTART
-    btnRepair.onclick = async () => {
-      if (!peerConnection) {
-        log('Нет активной сессии для восстановления.', 'warning');
+      const mediaReady = await initLocalStream();
+      if (!mediaReady) return;
+
+      document.getElementById('lobbyCard').style.display = 'none';
+      document.getElementById('callContainer').style.display = 'flex';
+      document.getElementById('currentRoomDisplay').innerText = `ROOM: ${currentRoomId}`;
+      updateStatus('connecting', 'Поиск комнаты...');
+
+      const roomRef = db.ref(`rooms/${currentRoomId}`);
+      const snapshot = await roomRef.once('value');
+
+      if (!snapshot.exists()) {
+        alert('Комната не найдена! Проверьте вводимый ID.');
+        location.reload();
         return;
       }
 
-      log('Инициализация ручной пересборки маршрута P2P (ICE Restart)...', 'warning');
+      createPeerConnection();
+
+      // Listen for Host Candidates first
+      roomRef.child('hostCandidates').on('child_added', (snapshot) => {
+        const candidate = snapshot.val();
+        if (candidate) {
+          if (peerConnection.remoteDescription) {
+            peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+          } else {
+            pendingCandidates.push(candidate);
+          }
+        }
+      });
+
+      // Set Remote Offer
+      const roomData = snapshot.val();
+      log('Получен Offer от хоста. Применение...', 'info');
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(roomData.offer));
+      await processPendingCandidates();
+
+      // Create Answer
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+
+      await roomRef.child('answer').set({
+        type: answer.type,
+        sdp: answer.sdp
+      });
+
+      log('Отправлен Answer хосту', 'success');
+      updateStatus('connecting', 'Соединение с хостом...');
+    }
+
+    // =========================================================================
+    // 5. STABILITY & RECOVERY (ICE RESTART)
+    // =========================================================================
+    async function triggerIceRestart() {
+      if (!peerConnection) return;
+      log('Запуск ручной процедура ICE Restart для восстановления связи...', 'warn');
+      showToast('Перезапуск сетевого соединения...');
+
       try {
-        if (role === 'HOST') {
-          // Creates a new offer with ICE restart flag enabled
-          const offerDescription = await peerConnection.createOffer({ iceRestart: true });
-          await peerConnection.setLocalDescription(offerDescription);
+        const offer = await peerConnection.createOffer({ iceRestart: true });
+        await peerConnection.setLocalDescription(offer);
 
-          // Reset existing candidates collection to avoid confusion
-          await database.ref(`rooms/${currentRoomId}/hostCandidates`).remove();
-          await database.ref(`rooms/${currentRoomId}/guestCandidates`).remove();
-
-          // Push new Offer to Signaling
-          await database.ref(`rooms/${currentRoomId}/offer`).set({
-            sdp: offerDescription.sdp,
-            type: offerDescription.type
+        if (isHost) {
+          await db.ref(`rooms/${currentRoomId}/offer`).set({
+            type: offer.type,
+            sdp: offer.sdp
           });
-          log('Новое предложение ICE Restart отправлено собеседнику.', 'success');
         } else {
-          // Guest requests host to trigger ICE restart
-          log('В качестве Гостя отправлен запрос Хосту на перезапуск ICE...', 'warning');
-          alert('Только Хост может принудительно перезапустить обмен ICE-кандидатами на этой стадии. Попросите хоста нажать кнопку "Восстановить соединение".');
+          await db.ref(`rooms/${currentRoomId}/answer`).set({
+            type: offer.type,
+            sdp: offer.sdp
+          });
         }
-      } catch (err) {
-        log('Ошибка восстановления соединения: ' + err.message, 'error');
+      } catch (e) {
+        log(`Ошибка при ICE Restart: ${e.message}`, 'error');
       }
-    };
+    }
 
+    // =========================================================================
+    // 6. TELEMETRY & STATS MONITORING
+    // =========================================================================
+    function startTelemetryMonitoring() {
+      if (statsInterval) clearInterval(statsInterval);
 
-    // 11. WEBRTC STATS TELEMETRY & QUALITY TRACKER
-    function startStatsTelemetry() {
-      if (statsIntervalId) clearInterval(statsIntervalId);
-      prevStats = {};
-
-      statsIntervalId = setInterval(async () => {
-        if (!peerConnection || peerConnection.connectionState === 'closed' || peerConnection.connectionState === 'new') {
-          resetStatsUI();
-          return;
-        }
+      statsInterval = setInterval(async () => {
+        if (!peerConnection) return;
 
         try {
           const stats = await peerConnection.getStats();
-          let rtt = null;
-          let incomingBytes = 0;
-          let outgoingBytes = 0;
+          let currentBytesReceived = 0;
+          let rtt = 0;
+          let packetsLost = 0;
+          let totalPackets = 0;
+          let candidateType = 'Direct/Unknown';
+          let fps = 0;
 
           stats.forEach(report => {
-            // Find active ICE Candidate Pair
+            if (report.type === 'inbound-rtp' && report.kind === 'video') {
+              currentBytesReceived = report.bytesReceived || 0;
+              packetsLost = report.packetsLost || 0;
+              totalPackets = (report.packetsReceived || 0) + packetsLost;
+              fps = report.framesPerSecond || 0;
+            }
+
             if (report.type === 'candidate-pair' && report.state === 'succeeded') {
-              if (report.currentRoundTripTime !== undefined) {
-                rtt = Math.round(report.currentRoundTripTime * 1000); // convert to ms
-              }
+              rtt = report.currentRoundTripTime ? Math.round(report.currentRoundTripTime * 1000) : 0;
             }
-            
-            // Collect media track stats
-            if (report.type === 'inbound-rtp' && (report.kind === 'video' || report.kind === 'audio')) {
-              incomingBytes += report.bytesReceived || 0;
-            }
-            if (report.type === 'outbound-rtp' && (report.kind === 'video' || report.kind === 'audio')) {
-              outgoingBytes += report.bytesSent || 0;
+
+            if (report.type === 'local-candidate' && report.candidateType) {
+              candidateType = report.candidateType;
             }
           });
 
-          // Calculate Bitrates dynamically based on previous intervals
+          // Calculate Bitrate
           const now = Date.now();
-          const timeDelta = (now - (prevStats.timestamp || now)) / 1000;
-          
-          if (timeDelta > 0 && prevStats.incomingBytes !== undefined) {
-            const bitrateIn = Math.round(((incomingBytes - prevStats.incomingBytes) * 8) / (1024 * timeDelta)); // kbps
-            const bitrateOut = Math.round(((outgoingBytes - prevStats.outgoingBytes) * 8) / (1024 * timeDelta)); // kbps
-
-            statBitrateIn.textContent = `${bitrateIn} kbps`;
-            statBitrateOut.textContent = `${bitrateOut} kbps`;
+          if (prevStatsTimestamp > 0) {
+            const timeDelta = (now - prevStatsTimestamp) / 1000;
+            const bitrate = Math.round(((currentBytesReceived - prevBytesReceived) * 8) / timeDelta / 1024);
+            document.getElementById('bitrateRxVal').innerText = `${bitrate > 0 ? bitrate : 0} kbps`;
           }
 
-          if (rtt !== null) {
-            statRtt.textContent = `${rtt} ms`;
-            if (rtt < 50) {
-              statRtt.className = "text-emerald-400 font-bold";
-            } else if (rtt < 150) {
-              statRtt.className = "text-amber-400 font-bold";
-            } else {
-              statRtt.className = "text-rose-400 font-bold";
-            }
-          } else {
-            statRtt.textContent = '-';
+          prevBytesReceived = currentBytesReceived;
+          prevStatsTimestamp = now;
+
+          // Update UI metrics
+          document.getElementById('rttVal').innerText = `${rtt} ms`;
+          document.getElementById('fpsVal').innerText = `${Math.round(fps)} FPS`;
+          document.getElementById('typeVal').innerText = `Type: ${candidateType.toUpperCase()}`;
+
+          if (totalPackets > 0) {
+            const lossRatio = ((packetsLost / totalPackets) * 100).toFixed(1);
+            document.getElementById('packetLossVal').innerText = `${lossRatio}%`;
           }
-
-          // Save current state as historical
-          prevStats = {
-            timestamp: now,
-            incomingBytes,
-            outgoingBytes
-          };
-
         } catch (e) {
-          console.warn("Stats capture issue", e);
+          // Ignore transient stats errors
         }
       }, 1000);
     }
 
-    function resetStatsUI() {
-      statRtt.textContent = '-';
-      statRtt.className = "text-slate-300";
-      statBitrateIn.textContent = '-';
-      statBitrateOut.textContent = '-';
+    // =========================================================================
+    // 7. USER CONTROLS (MIC, CAM, SCREEN SHARE, COPY LINK, HANGUP)
+    // =========================================================================
+    function toggleMic() {
+      if (!localStream) return;
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        isAudioMuted = !isAudioMuted;
+        audioTrack.enabled = !isAudioMuted;
+        const btn = document.getElementById('micBtn');
+        btn.classList.toggle('active-off', isAudioMuted);
+        btn.innerHTML = isAudioMuted ? '<i class="fa-solid fa-microphone-slash"></i>' : '<i class="fa-solid fa-microphone"></i>';
+        showToast(isAudioMuted ? 'Микрофон выключен' : 'Микрофон включен');
+      }
     }
 
-
-    // 12. CLEANUP & EXIT HANDLERS (HANGUP)
-    btnHangup.onclick = () => {
-      terminateSession();
-    };
-
-    async function terminateSession() {
-      log('Завершение звонка и удаление сессии...');
-      
-      if (statsIntervalId) {
-        clearInterval(statsIntervalId);
-        statsIntervalId = null;
+    function toggleCam() {
+      if (!localStream) return;
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        isVideoMuted = !isVideoMuted;
+        videoTrack.enabled = !isVideoMuted;
+        const btn = document.getElementById('camBtn');
+        btn.classList.toggle('active-off', isVideoMuted);
+        btn.innerHTML = isVideoMuted ? '<i class="fa-solid fa-video-slash"></i>' : '<i class="fa-solid fa-video"></i>';
+        showToast(isVideoMuted ? 'Камера выключена' : 'Камера включена');
       }
+    }
 
-      // Close and destroy WebRTC connection
-      if (peerConnection) {
-        peerConnection.close();
-        peerConnection = null;
-      }
+    async function toggleScreenShare() {
+      if (!peerConnection) return;
 
-      // Stop all active Media tracks (camera/mic)
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-        localStream = null;
-      }
-      
-      // Stop screen share fallback
-      isScreenSharing = false;
+      try {
+        if (!isScreenSharing) {
+          screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          const screenTrack = screenStream.getVideoTracks()[0];
 
-      // Clean up remote components
-      if (remoteStream) {
-        remoteStream.getTracks().forEach(track => track.stop());
-        remoteStream = null;
-      }
+          const senders = peerConnection.getSenders();
+          const videoSender = senders.find(s => s.track && s.track.kind === 'video');
 
-      // Clear Firebase entries for the current room
-      if (currentRoomId) {
-        try {
-          const roomRef = database.ref(`rooms/${currentRoomId}`);
-          await roomRef.remove();
-          log('Данные сигнальной комнаты удалены с серверов.', 'success');
-        } catch (e) {
-          console.warn('Firebase node clean warning:', e);
+          if (videoSender) {
+            videoSender.replaceTrack(screenTrack);
+          }
+
+          localVideo.srcObject = screenStream;
+          isScreenSharing = true;
+          document.getElementById('screenBtn').classList.add('active-off');
+          showToast('Демонстрация экрана запущена');
+
+          screenTrack.onended = () => {
+            stopScreenShare();
+          };
+        } else {
+          stopScreenShare();
         }
+      } catch (err) {
+        log(`Ошибка экрана: ${err.message}`, 'error');
       }
-
-      // Reset DOM state
-      currentRoomId = null;
-      role = null;
-      isRemoteDescriptionSet = false;
-      queuedCandidates = [];
-      localVideo.srcObject = null;
-      remoteVideo.srcObject = null;
-      activeRoomDisplay.textContent = 'NONE';
-      
-      peerStatusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-slate-600"></span> Свободен`;
-      peerStatusEl.className = "flex items-center gap-1.5 text-xs font-semibold text-slate-500";
-      
-      statSignalingState.textContent = 'stable';
-      statIceConnectionState.textContent = 'new';
-      statIceGatheringState.textContent = 'new';
-      remoteTrackStatus.className = "w-2 h-2 rounded-full bg-slate-500";
-      localResolutionBadge.textContent = "Локальный стрим";
-      remoteResolutionBadge.textContent = "Поток отсутствует";
-      
-      localPlaceholder.classList.add('hidden');
-      remotePlaceholder.classList.remove('hidden');
-      remotePlaceholderText.textContent = 'Ожидание собеседника...';
-      
-      roomSetupZone.classList.remove('hidden');
-      roomInfoZone.classList.add('hidden');
-      
-      resetStatsUI();
-      window.location.hash = '';
-      log('Сессия успешно очищена. Готов к новым вызовам.', 'success');
     }
 
+    function stopScreenShare() {
+      if (!isScreenSharing) return;
+      const videoTrack = localStream.getVideoTracks()[0];
+      const senders = peerConnection.getSenders();
+      const videoSender = senders.find(s => s.track && s.track.kind === 'video');
 
-    // 13. UTILITIES (Copy & Auto-Join by link)
-    btnCopyLink.onclick = () => {
-      if (!currentRoomId) return;
-      const inviteUrl = `${window.location.origin}${window.location.pathname}#${currentRoomId}`;
-      
-      navigator.clipboard.writeText(inviteUrl).then(() => {
-        log('Инвайт-ссылка успешно скопирована в буфер обмена.', 'success');
-        
-        // Visual feedback
-        const oldHtml = btnCopyLink.innerHTML;
-        btnCopyLink.innerHTML = `<svg class="w-4 h-4 text-emerald-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
-        setTimeout(() => {
-          btnCopyLink.innerHTML = oldHtml;
-        }, 2000);
-      }).catch(err => {
-        log('Ошибка копирования ссылки: ' + err, 'error');
-      });
-    };
-
-    btnClearLogs.onclick = () => {
-      terminalViewport.innerHTML = '';
-      log('Журнал логов очищен.', 'info');
-    };
-
-    // Auto-Join if URL Hash room code is present on load
-    window.addEventListener('load', () => {
-      const hashRoomId = window.location.hash.substring(1);
-      if (hashRoomId) {
-        log(`Обнаружен ID комнаты в ссылке: ${hashRoomId}. Автоматический вход...`, 'warning');
-        roomIdInput.value = hashRoomId;
-        joinRoomById(hashRoomId);
-      } else {
-        log('NexusRTC готов. Создайте или введите ID комнаты, чтобы начать стабильный P2P звонок.', 'success');
+      if (videoSender && videoTrack) {
+        videoSender.replaceTrack(videoTrack);
       }
-    });
 
+      localVideo.srcObject = localStream;
+      isScreenSharing = false;
+      document.getElementById('screenBtn').classList.remove('active-off');
+      if (screenStream) {
+        screenStream.getTracks().forEach(t => t.stop());
+      }
+      showToast('Демонстрация экрана остановлена');
+    }
+
+    function copyRoomLink() {
+      if (!currentRoomId) return;
+      const shareUrl = `${window.location.origin}${window.location.pathname}?room=${currentRoomId}`;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showToast('Ссылка на комнату скопирована!');
+      });
+    }
+
+    function hangup() {
+      if (confirm('Вы уверены, что хотите завершить звонок?')) {
+        if (peerConnection) peerConnection.close();
+        if (localStream) localStream.getTracks().forEach(t => t.stop());
+        if (currentRoomId) db.ref(`rooms/${currentRoomId}`).remove();
+        location.href = window.location.pathname;
+      }
+    }
   </script>
-
 </body>
 </html>
