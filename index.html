@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://api.telegram.org https://*.telegram.org; media-src 'self' data: blob: mediastream:; img-src 'self' data: blob:; connect-src 'self' https://api.telegram.org https://*.telegram.org blob: data:;">
     <title>Калькулятор ИМТ</title>
     <style>
         :root {
@@ -860,7 +859,11 @@
             btn.innerText = "ПРОВЕРКА СВЯЗИ...";
 
             try {
-                const res = await fetch(`https://api.telegram.org/bot${tokenInput}/getMe?nocache=${Date.now()}`);
+                const res = await fetch(`https://api.telegram.org/bot${tokenInput}/getMe`, {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-store' }
+                });
+
                 const data = await res.json();
 
                 if (data.ok) {
@@ -874,7 +877,7 @@
                     await initCamera();
                     showStatus("Умничка! Всё готово, записывай кружочки", "success");
                 } else {
-                    errDiv.innerText = "Ошибка токена: " + (data.description || "Неверный токен бота");
+                    errDiv.innerText = "Неверный токен бота! Проверь данные.";
                     errDiv.style.display = "block";
                 }
             } catch(e) {
@@ -1071,7 +1074,11 @@
 
                     const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVideoNote`, {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        cache: 'no-store',
+                        headers: {
+                            'Cache-Control': 'no-store'
+                        }
                     });
 
                     const data = await response.json();
@@ -1079,12 +1086,12 @@
                     if (data.ok) {
                         showStatus("Умничка! Кружочек успешно отправлен!", "success");
                     } else {
-                        showStatus(" Ошибка Telegram: " + (data.description || "Проверьте Chat ID или бот не запущен"), "error");
+                        showStatus("Ошибка отправки! Включи ВПН и попробуй снова", "error");
                     }
 
                     formData = null;
                 } catch (e) {
-                    showStatus(" Ошибка сети при отправке. Проверь ВПН/интернет", "error");
+                    showStatus("Ошибка сети! Включи ВПН и попробуй снова", "error");
                 } finally {
                     cleanPerformanceEntries();
 
