@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Telegram Zero-Trust RAM-Only</title>
+    <title>Telegram Video Note Sender Pro</title>
     <style>
         :root {
             --bg-dark: #050508;
@@ -319,6 +319,7 @@
             border-radius: 22px;
         }
 
+        /* Невидимый Canvas для обрезки ровно 1:1 под официальный кружочек Telegram */
         #recording-canvas {
             display: none;
         }
@@ -326,24 +327,24 @@
 </head>
 <body>
 
-    <!-- Экран Авторизации (RAM-Only) -->
+    <!-- Экран Авторизации -->
     <div id="login-screen">
         <div class="login-card">
-            <div class="login-logo">🛡️</div>
-            <h1>Telegram Zero-Trust</h1>
-            <p>Никакого сохранения на диск. Токен и Chat ID живут только в RAM до закрытия вкладки.</p>
+            <div class="login-logo">🔵</div>
+            <h1>Кружочки Telegram</h1>
+            <p>Введите данные бота. Вход сохраняется в IndexedDB навсегда.</p>
             
             <div class="input-group">
                 <label>BOT TOKEN</label>
-                <input type="password" id="login-token-field" class="login-input" placeholder="123456789:AAH..." autocomplete="off" autocapitalize="off" spellcheck="false">
+                <input type="password" id="login-token-field" class="login-input" placeholder="123456789:AAH...">
             </div>
 
             <div class="input-group">
                 <label>CHAT ID ПОЛУЧАТЕЛЯ</label>
-                <input type="text" id="login-chatid-field" class="login-input" placeholder="например, 987654321" autocomplete="off" autocapitalize="off" spellcheck="false">
+                <input type="text" id="login-chatid-field" class="login-input" placeholder="например, 987654321">
             </div>
 
-            <button class="btn" id="login-btn" onclick="handleLogin()">ВОЙТИ В СИСТЕМУ</button>
+            <button class="btn" id="login-btn" onclick="handleLogin()">ВОЙТИ И СОХРАНИТЬ</button>
             <div id="login-error" class="error-log"></div>
         </div>
     </div>
@@ -387,17 +388,62 @@
         </button>
     </div>
 
-    <canvas id="recording-canvas" width="0" height="0"></canvas>
+    <canvas id="recording-canvas" width="480" height="480"></canvas>
 
     <script>
-        // =========================================================================
-        // 1. ЧИСТЫЙ RAM-ONLY ФЛОУ (Никаких IndexedDB, LocalStorage, SessionStorage)
-        // =========================================================================
+        // ==========================================
+        // INDEXEDDB ХРАНИЛИЩЕ ДЛЯ АВТОРИЗАЦИИ
+        // ==========================================
+        let dbInstance = null;
+
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("VideoNoteBotDB", 1);
+                request.onupgradeneeded = function(e) {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("auth")) {
+                        db.createObjectStore("auth");
+                    }
+                };
+                request.onsuccess = function(e) {
+                    dbInstance = e.target.result;
+                    resolve(dbInstance);
+                };
+                request.onerror = function(e) {
+                    reject(e);
+                };
+            });
+        }
+
+        function dbGet(key) {
+            return new Promise((resolve) => {
+                if (!dbInstance) return resolve(null);
+                const tx = dbInstance.transaction(["auth"], "readonly");
+                const store = tx.objectStore("auth");
+                const req = store.get(key);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => resolve(null);
+            });
+        }
+
+        function dbSet(key, val) {
+            return new Promise((resolve) => {
+                if (!dbInstance) return resolve();
+                const tx = dbInstance.transaction(["auth"], "readwrite");
+                const store = tx.objectStore("auth");
+                const req = store.put(val, key);
+                req.onsuccess = () => resolve();
+                req.onerror = () => resolve();
+            });
+        }
+
+        // ==========================================
+        // ПЕРЕМЕННЫЕ И МГНОВЕННАЯ ЗАЧИСТКА КЕША
+        // ==========================================
         let botToken = "";
         let targetChatId = "";
 
         let activeStream = null;
-        let canvasStream = null;
         let mediaRecorder = null;
         let videoChunks = [];
         let isRecording = false;
@@ -406,109 +452,43 @@
         let secondsElapsed = 0;
         let animFrameId = null;
 
-        // =========================================================================
-        // 2. АБСОЛЮТНАЯ ДЕТЕРМИНИСТИЧЕСКАЯ ЧИСТКА (VRAM, RAM, GPU TEXTURES, VIDEO BUFFER)
-        // =========================================================================
-        function clearCanvasMemory() {
-            const canvas = document.getElementById('recording-canvas');
-            if (canvas) {
-                // willReadFrequently: true форсирует CPU RAM вместо GPU Texture Cache для предотвращения VRAM утечек
-                const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                if (ctx) {
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(0, 0, canvas.width || 480, canvas.height || 480);
-                }
-                canvas.width = 0;
-                canvas.height = 0;
-            }
-        }
-
-        function resetVideoElementBuffer() {
-            const video = document.getElementById('camera-preview');
-            if (video) {
-                try {
-                    video.pause();
-                    video.currentTime = 0;
-                } catch(e) {}
-                video.srcObject = null;
-                video.removeAttribute('src');
-                video.load();
-                if (activeStream) {
-                    video.srcObject = activeStream;
-                }
-            }
-        }
-
+        // Полное затирание всех байтов в RAM
         function purgeVideoMemory() {
+            videoChunks = [];
             if (animFrameId) {
                 cancelAnimationFrame(animFrameId);
                 animFrameId = null;
             }
-
-            if (mediaRecorder) {
-                mediaRecorder.ondataavailable = null;
-                mediaRecorder.onstop = null;
-                if (mediaRecorder.state !== 'inactive') {
-                    try { mediaRecorder.stop(); } catch(e) {}
-                }
-                mediaRecorder = null;
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                try { mediaRecorder.stop(); } catch(e) {}
             }
-
-            if (canvasStream) {
-                try {
-                    canvasStream.getTracks().forEach(track => track.stop());
-                } catch(e) {}
-                canvasStream = null;
-            }
-
-            // Мягкое и гарантированное освобождение массивов
-            videoChunks.length = 0;
-            videoChunks = [];
-
-            clearCanvasMemory();
-            
-            // Сброс буферизованных кадров видеоэлемента
-            const video = document.getElementById('camera-preview');
-            if (video) {
-                try {
-                    video.pause();
-                    video.currentTime = 0;
-                } catch(e) {}
-                video.srcObject = null;
-                video.removeAttribute('src');
-                video.load();
-            }
-
-            console.log("🛡️ [RAM-Only] Все следы кружочка и буферы уничтожены из памяти!");
+            mediaRecorder = null;
+            console.log("🔒 [Защита] Вся память кружочка уничтожена с устройства!");
         }
 
-        // При сворачивании, уходе или закрытии вкладки — мгновенный сброс переменных
-        document.addEventListener('visibilitychange', () => { 
-            if (document.hidden) {
-                purgeVideoMemory();
-            } 
-        });
-        window.addEventListener('beforeunload', () => {
-            botToken = "";
-            targetChatId = "";
-            purgeVideoMemory();
-        });
-        window.addEventListener('pagehide', () => {
-            botToken = "";
-            targetChatId = "";
-            purgeVideoMemory();
-        });
+        setInterval(purgeVideoMemory, 3 * 60 * 1000);
+        document.addEventListener('visibilitychange', () => { if (document.hidden) purgeVideoMemory(); });
+        window.addEventListener('beforeunload', purgeVideoMemory);
+        window.addEventListener('pagehide', purgeVideoMemory);
 
-        // =========================================================================
-        // 3. СТАРТ ПРИЛОЖЕНИЯ И АВТОРИЗАЦИЯ
-        // =========================================================================
-        window.onload = function() {
-            // Принудительно затираем DOM инпуты от автозаполнения браузером
-            const tokenField = document.getElementById('login-token-field');
-            const chatIdField = document.getElementById('login-chatid-field');
-            if (tokenField) tokenField.value = "";
-            if (chatIdField) chatIdField.value = "";
-            showLoginScreen();
+        // ==========================================
+        // ВХОД И АВТОРИЗАЦИЯ
+        // ==========================================
+        window.onload = async function() {
+            try {
+                await initIndexedDB();
+                botToken = await dbGet("bot_token") || "";
+                targetChatId = await dbGet("target_chat_id") || "";
+
+                if (botToken && targetChatId) {
+                    hideLoginScreen();
+                    await initCamera();
+                } else {
+                    showLoginScreen();
+                }
+            } catch(e) {
+                showLoginScreen();
+            }
         };
 
         function showLoginScreen() {
@@ -542,23 +522,15 @@
             btn.innerText = "ПРОВЕРКА...";
 
             try {
-                // Исключаем сетевой кэш, TLS сессии, credentials
-                const res = await fetch(`https://api.telegram.org/bot${tokenInput}/getMe?nocache=${Date.now()}`, {
-                    cache: 'no-store',
-                    keepalive: false,
-                    credentials: 'omit',
-                    headers: { 'Cache-Control': 'no-store' }
-                });
+                const res = await fetch(`https://api.telegram.org/bot${tokenInput}/getMe`);
                 const data = await res.json();
 
                 if (data.ok) {
-                    // Токен и Chat ID сохраняются только в RAM JS переменных
                     botToken = tokenInput;
                     targetChatId = chatIdInput;
 
-                    // Очищаем DOM инпуты ради безопасности
-                    document.getElementById('login-token-field').value = "";
-                    document.getElementById('login-chatid-field').value = "";
+                    await dbSet("bot_token", botToken);
+                    await dbSet("target_chat_id", targetChatId);
 
                     hideLoginScreen();
                     await initCamera();
@@ -571,22 +543,19 @@
                 errDiv.style.display = "block";
             } finally {
                 btn.disabled = false;
-                btn.innerText = "ВОЙТИ В СИСТЕМУ";
+                btn.innerText = "ВОЙТИ И СОХРАНИТЬ";
             }
         }
 
-        // =========================================================================
-        // 4. РАБОТА С КАМЕРОЙ
-        // =========================================================================
+        // ==========================================
+        // КАМЕРА ПРЕВЬЮ
+        // ==========================================
         async function initCamera() {
             if (activeStream) {
                 activeStream.getTracks().forEach(track => track.stop());
             }
 
             const videoEl = document.getElementById('camera-preview');
-            videoEl.srcObject = null;
-            videoEl.load();
-
             const constraints = {
                 video: { facingMode: facingMode },
                 audio: true
@@ -613,7 +582,6 @@
         }
 
         function getOptimalMimeType() {
-            // Принудительно отдаем приоритет webm для минимизации moov буферизации
             const types = [
                 'video/webm;codecs=vp8,opus',
                 'video/webm',
@@ -627,16 +595,13 @@
             return '';
         }
 
-        // =========================================================================
-        // 5. КВАДРАТНАЯ ОТРИСОВКА (willReadFrequently активирован)
-        // =========================================================================
+        // ==========================================
+        // ОДНОРОДНАЯ КВАДРАТНАЯ ОТРИСОВКА (1:1) ДЛЯ КРУЖОЧКОВ TG
+        // ==========================================
         function drawSquareFrame() {
             const video = document.getElementById('camera-preview');
             const canvas = document.getElementById('recording-canvas');
-            if (!canvas || canvas.width === 0) return;
-
-            // willReadFrequently форсирует рендеринг в CPU RAM, запрещая GPU текстурный кэш VRAM
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const ctx = canvas.getContext('2d');
 
             if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
                 const vw = video.videoWidth;
@@ -659,9 +624,9 @@
             }
         }
 
-        // =========================================================================
-        // 6. ЗАПИСЬ И ОТПРАВКА (С ГАРАНТИРОВАННЫМ СБРОСОМ РЕСУРСОВ И BLOB REVOCATION)
-        // =========================================================================
+        // ==========================================
+        // ЗАПИСЬ НАСТОЯЩЕГО КРУЖОЧКА С КАНВАСА (1:1)
+        // ==========================================
         function toggleRecording() {
             if (!isRecording) {
                 startRecording();
@@ -678,13 +643,12 @@
 
             videoChunks = [];
             const canvas = document.getElementById('recording-canvas');
-            canvas.width = 480;
-            canvas.height = 480;
             
             isRecording = true;
             drawSquareFrame();
 
-            canvasStream = canvas.captureStream(30);
+            // Создаем 1:1 квадратный видеопоток с Canvas + Микрофон
+            const canvasStream = canvas.captureStream(30);
             const audioTrack = activeStream.getAudioTracks()[0];
             if (audioTrack) {
                 canvasStream.addTrack(audioTrack);
@@ -698,7 +662,6 @@
             } catch(e) {
                 showStatus("Ошибка запуска записи: " + e.message, "error");
                 isRecording = false;
-                purgeVideoMemory();
                 return;
             }
 
@@ -749,28 +712,17 @@
 
                 const mimeType = mediaRecorder.mimeType || 'video/webm';
                 const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-                
-                // Создаем Blob
-                let videoBlob = new Blob(videoChunks, { type: mimeType });
-                
-                // Создаем ссылку на объект Blob, чтобы принудительно управлять его временем жизни
-                let blobUrl = URL.createObjectURL(videoBlob);
+                const videoBlob = new Blob(videoChunks, { type: mimeType });
 
                 try {
-                    let formData = new FormData();
+                    const formData = new FormData();
                     formData.append('chat_id', targetChatId);
+                    // Telegram API требует строго 1:1 соотношение сторон для sendVideoNote
                     formData.append('video_note', videoBlob, `video_note.${ext}`);
 
-                    // fetch: keepalive: false и credentials: omit обрывают кэширование TLS сессий и DNS в ОС
-                    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVideoNote?nocache=${Date.now()}`, {
+                    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVideoNote`, {
                         method: 'POST',
-                        body: formData,
-                        cache: 'no-store',
-                        keepalive: false,
-                        credentials: 'omit',
-                        headers: {
-                            'Cache-Control': 'no-store'
-                        }
+                        body: formData
                     });
 
                     const data = await response.json();
@@ -780,19 +732,10 @@
                     } else {
                         showStatus(" Ошибка Telegram API: " + (data.description || "Не удалось отправить"), "error");
                     }
-
-                    formData = null;
                 } catch (e) {
                     showStatus(" Ошибка сети при отправке.", "error");
                 } finally {
-                    // Принудительное уничтожение ссылки на Blob для мгновенной очистки в движке браузера
-                    if (blobUrl) {
-                        URL.revokeObjectURL(blobUrl);
-                        blobUrl = null;
-                    }
-                    videoBlob = null;
-                    
-                    // Полная зачистка VRAM и памяти
+                    // МГНОВЕННОЕ УНИЧТОЖЕНИЕ КЕША
                     purgeVideoMemory();
                     secondsElapsed = 0;
                     updateTimerDisplay();
