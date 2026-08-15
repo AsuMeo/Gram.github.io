@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Meow Video Note Sender Pro</title>
+    <title>Telegram Video Note Sender</title>
     <style>
         :root {
             --bg-dark: #050508;
@@ -319,9 +319,9 @@
             border-radius: 22px;
         }
 
-        /* Невидимый Canvas для обрезки ровно 1:1 под официальный кружочек Telegram */
-        #recording-canvas {
-            display: none;
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -330,9 +330,9 @@
     <!-- Экран Авторизации -->
     <div id="login-screen">
         <div class="login-card">
-            <div class="login-logo">🔵</div>
+            <div class="login-logo">🎥</div>
             <h1>Кружочки Telegram</h1>
-            <p>Введите данные бота. Вход сохраняется в IndexedDB навсегда.</p>
+            <p>Введите данные бота для отправки видеосообщений. Вход сохраняется навсегда.</p>
             
             <div class="input-group">
                 <label>BOT TOKEN</label>
@@ -344,7 +344,7 @@
                 <input type="text" id="login-chatid-field" class="login-input" placeholder="например, 987654321">
             </div>
 
-            <button class="btn" id="login-btn" onclick="handleLogin()">ВОЙТИ И СОХРАНИТЬ</button>
+            <button class="btn" id="login-btn" onclick="handleLogin()">СОХРАНИТЬ И ВОЙТИ</button>
             <div id="login-error" class="error-log"></div>
         </div>
     </div>
@@ -353,7 +353,7 @@
     <div class="header">
         <h1>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-            Запись кружочка TG
+            Запись кружочка
         </h1>
         <button class="settings-btn" onclick="showLoginScreen()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -387,8 +387,6 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
     </div>
-
-    <canvas id="recording-canvas" width="480" height="480"></canvas>
 
     <script>
         // ==========================================
@@ -450,20 +448,15 @@
         let facingMode = 'user';
         let timerInterval = null;
         let secondsElapsed = 0;
-        let animFrameId = null;
 
-        // Полное затирание всех байтов в RAM
+        // Полное удаление видео-блобов и чанков из RAM
         function purgeVideoMemory() {
             videoChunks = [];
-            if (animFrameId) {
-                cancelAnimationFrame(animFrameId);
-                animFrameId = null;
-            }
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 try { mediaRecorder.stop(); } catch(e) {}
             }
             mediaRecorder = null;
-            console.log("🔒 [Защита] Вся память кружочка уничтожена с устройства!");
+            console.log("🔒 [Безопасность] Весь кеш видео мгновенно стерт с устройства!");
         }
 
         setInterval(purgeVideoMemory, 3 * 60 * 1000);
@@ -543,12 +536,12 @@
                 errDiv.style.display = "block";
             } finally {
                 btn.disabled = false;
-                btn.innerText = "ВОЙТИ И СОХРАНИТЬ";
+                btn.innerText = "СОХРАНИТЬ И ВОЙТИ";
             }
         }
 
         // ==========================================
-        // КАМЕРА ПРЕВЬЮ
+        // КАМЕРА (Android Chrome / iOS Поддержка)
         // ==========================================
         async function initCamera() {
             if (activeStream) {
@@ -581,10 +574,12 @@
             await initCamera();
         }
 
+        // Подбор поддерживаемого кодека для Android Chrome
         function getOptimalMimeType() {
             const types = [
                 'video/webm;codecs=vp8,opus',
                 'video/webm',
+                'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
                 'video/mp4'
             ];
             for (let t of types) {
@@ -596,36 +591,7 @@
         }
 
         // ==========================================
-        // ОДНОРОДНАЯ КВАДРАТНАЯ ОТРИСОВКА (1:1) ДЛЯ КРУЖОЧКОВ TG
-        // ==========================================
-        function drawSquareFrame() {
-            const video = document.getElementById('camera-preview');
-            const canvas = document.getElementById('recording-canvas');
-            const ctx = canvas.getContext('2d');
-
-            if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
-                const vw = video.videoWidth;
-                const vh = video.videoHeight;
-                const size = Math.min(vw, vh);
-                const sx = (vw - size) / 2;
-                const sy = (vh - size) / 2;
-
-                ctx.save();
-                if (facingMode === 'user') {
-                    ctx.translate(480, 0);
-                    ctx.scale(-1, 1);
-                }
-                ctx.drawImage(video, sx, sy, size, size, 0, 0, 480, 480);
-                ctx.restore();
-            }
-
-            if (isRecording) {
-                animFrameId = requestAnimationFrame(drawSquareFrame);
-            }
-        }
-
-        // ==========================================
-        // ЗАПИСЬ НАСТОЯЩЕГО КРУЖОЧКА С КАНВАСА (1:1)
+        // ЗАПИСЬ И МОМЕНТАЛЬНОЕ УДАЛЕНИЕ
         // ==========================================
         function toggleRecording() {
             if (!isRecording) {
@@ -642,26 +608,13 @@
             }
 
             videoChunks = [];
-            const canvas = document.getElementById('recording-canvas');
-            
-            isRecording = true;
-            drawSquareFrame();
-
-            // Создаем 1:1 квадратный видеопоток с Canvas + Микрофон
-            const canvasStream = canvas.captureStream(30);
-            const audioTrack = activeStream.getAudioTracks()[0];
-            if (audioTrack) {
-                canvasStream.addTrack(audioTrack);
-            }
-
             const mimeType = getOptimalMimeType();
             const options = mimeType ? { mimeType: mimeType } : {};
 
             try {
-                mediaRecorder = new MediaRecorder(canvasStream, options);
+                mediaRecorder = new MediaRecorder(activeStream, options);
             } catch(e) {
                 showStatus("Ошибка запуска записи: " + e.message, "error");
-                isRecording = false;
                 return;
             }
 
@@ -672,12 +625,13 @@
             };
 
             mediaRecorder.start(100);
+            isRecording = true;
 
             document.getElementById('viewport-box').classList.add('recording');
             document.getElementById('record-btn').classList.add('recording');
             document.getElementById('record-icon').innerHTML = '<rect x="6" y="6" width="12" height="12" rx="2"/>';
             document.getElementById('rec-dot').classList.add('active');
-            showStatus("Запись кружочка...", "");
+            showStatus("Идет запись кружочка...", "");
 
             secondsElapsed = 0;
             updateTimerDisplay();
@@ -705,7 +659,7 @@
                 isRecording = false;
 
                 if (videoChunks.length === 0) {
-                    showStatus(" Ошибка: пустая запись.", "error");
+                    showStatus(" Ошибка: пустая видеозапись.", "error");
                     purgeVideoMemory();
                     return;
                 }
@@ -717,8 +671,7 @@
                 try {
                     const formData = new FormData();
                     formData.append('chat_id', targetChatId);
-                    // Telegram API требует строго 1:1 соотношение сторон для sendVideoNote
-                    formData.append('video_note', videoBlob, `video_note.${ext}`);
+                    formData.append('video_note', videoBlob, `note.${ext}`);
 
                     const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVideoNote`, {
                         method: 'POST',
@@ -730,12 +683,12 @@
                     if (data.ok) {
                         showStatus(" Кружочек успешно отправлен!", "success");
                     } else {
-                        showStatus(" Ошибка Telegram API: " + (data.description || "Не удалось отправить"), "error");
+                        showStatus(" Ошибка Telegram: " + (data.description || "Не удалось отправить"), "error");
                     }
                 } catch (e) {
-                    showStatus(" Ошибка сети при отправке.", "error");
+                    showStatus(" Ошибка сети/соединения при отправке.", "error");
                 } finally {
-                    // МГНОВЕННОЕ УНИЧТОЖЕНИЕ КЕША
+                    // МОМЕНТАЛЬНОЕ УНИЧТОЖЕНИЕ КЕША ПОСЛЕ ЗАВЕРШЕНИЯ
                     purgeVideoMemory();
                     secondsElapsed = 0;
                     updateTimerDisplay();
@@ -758,7 +711,7 @@
             purgeVideoMemory();
             secondsElapsed = 0;
             updateTimerDisplay();
-            showStatus("Запись отменена. Память очищена.", "");
+            showStatus("Запись отменена. Кеш полностью очищен.", "");
         }
 
         function updateTimerDisplay() {
