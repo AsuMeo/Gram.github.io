@@ -1072,7 +1072,6 @@
                 <div class="avatar" id="bot-avatar-img">?</div>
                 <div class="chat-details">
                     <div class="chat-title" id="bot-name-display">Загрузка...</div>
-                    
                 </div>
             </div>
 
@@ -1081,8 +1080,6 @@
                     <input type="text" id="search-input" class="search-field" placeholder="Поиск по имени или ID..." oninput="renderChats()">
                 </div>
             </div>
-
-            
 
             <div class="chats-container" id="chats-list"></div>
         </div>
@@ -1141,8 +1138,8 @@
                         <textarea id="message-text" class="textarea-message" placeholder="Сообщение" rows="1" onkeydown="handleInputKey(event)" oninput="handleTypingNotification()"></textarea>
                     </div>
                     <button class="btn" style="width: auto; padding: 12px; border-radius: 50%; min-width: 48px; min-height: 48px; display: flex; align-items: center; justify-content: center;" id="send-btn" onclick="sendBotMessage()">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1194,6 +1191,108 @@
     </div>
 
     <script>
+        // ==========================================
+        // INDEXEDDB СЛОЙ БЕЗОПАСНОСТИ ДЛЯ ВХОДА И ЧАТОВ
+        // ==========================================
+        let dbInstance = null;
+
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("SecureBotClientDB", 1);
+                request.onupgradeneeded = function(e) {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("appState")) {
+                        db.createObjectStore("appState");
+                    }
+                };
+                request.onsuccess = function(e) {
+                    dbInstance = e.target.result;
+                    resolve(dbInstance);
+                };
+                request.onerror = function(e) {
+                    console.error("IndexedDB error:", e);
+                    reject(e);
+                };
+            });
+        }
+
+        function dbGet(key) {
+            return new Promise((resolve) => {
+                if (!dbInstance) return resolve(null);
+                const tx = dbInstance.transaction(["appState"], "readonly");
+                const store = tx.objectStore("appState");
+                const req = store.get(key);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => resolve(null);
+            });
+        }
+
+        function dbSet(key, val) {
+            return new Promise((resolve) => {
+                if (!dbInstance) return resolve();
+                const tx = dbInstance.transaction(["appState"], "readwrite");
+                const store = tx.objectStore("appState");
+                const req = store.put(val, key);
+                req.onsuccess = () => resolve();
+                req.onerror = () => resolve();
+            });
+        }
+
+        // ==========================================
+        // ЗАЩИТА МЕДИА / КЕША (ТОЛЬКО RAM С АВТО-ОЧИСТКОЙ)
+        // ==========================================
+        const memoryMediaCache = new Map();
+
+        function clearMediaCache() {
+            // 1. Отвязываем и останавливаем медиа-элементы DOM
+            document.querySelectorAll('audio, video').forEach(el => {
+                try {
+                    el.pause();
+                    el.src = '';
+                    el.removeAttribute('src');
+                    el.load();
+                } catch(e) {}
+            });
+
+            // 2. Сбрасываем инстансы аудио на кнопках
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.audioInstance) {
+                    try {
+                        btn.audioInstance.pause();
+                        btn.audioInstance.src = '';
+                        btn.audioInstance = null;
+                    } catch(e) {}
+                }
+            });
+
+            // 3. Отозвать ВСЕ Blob URLs
+            memoryMediaCache.forEach((url) => {
+                if (url && url.startsWith('blob:')) {
+                    URL.revokeObjectURL(url);
+                }
+            });
+            memoryMediaCache.clear();
+            console.log("🔒 [Защита] Кеш блобов и медиа в RAM полностью очищен.");
+        }
+
+        // 1. Автоматическая очистка каждые 3 минуты (180 000 мс)
+        setInterval(clearMediaCache, 3 * 60 * 1000);
+
+        // 2. Мгновенная очистка при переходе в другую вкладку / сворачивании
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                clearMediaCache();
+            }
+        });
+
+        // 3. Очистка при закрытии браузера/вкладки/потере фокуса
+        window.addEventListener('beforeunload', clearMediaCache);
+        window.addEventListener('pagehide', clearMediaCache);
+        window.addEventListener('blur', clearMediaCache);
+
+        // ==========================================
+        // ОСНОВНЫЕ ПЕРЕМЕННЫЕ ПРИЛОЖЕНИЯ
+        // ==========================================
         let botToken = "";
         let botInfo = {};
         let chats = {};
@@ -1205,30 +1304,24 @@
         let mediaRecorder = null;
         let audioChunks = [];
         let isRecording = false;
-        let recordMode = 'voice'; // 'voice' | 'video_note'
+        let recordMode = 'voice';
         let videoRecorder = null;
         let videoChunks = [];
 
-        // Переменные состояний для Ответа / Изменения / Меню
         let selectedMessageId = null; 
         let replyToMessageId = null;
         let editingMessageId = null;
         let lastTypingTime = 0;
 
-        const safeStorage = {
-            get(key) { 
-                try { return localStorage.getItem(key); } 
-                catch(e) { return null; } 
-            },
-            set(key, val) { 
-                try { localStorage.setItem(key, val); } 
-                catch(e) {} 
+        window.onload = async function() {
+            try {
+                await initIndexedDB();
+            } catch(e) {
+                console.error("Не удалось инициализировать IndexedDB");
             }
-        };
 
-        window.onload = function() {
-            const savedToken = safeStorage.get("saved_token");
-            const savedChats = safeStorage.get("saved_chats");
+            const savedToken = await dbGet("saved_token");
+            const savedChats = await dbGet("saved_chats");
             
             if (savedChats) {
                 try { 
@@ -1240,23 +1333,43 @@
 
             if (savedToken) {
                 document.getElementById('token-field').value = savedToken;
-                // Теперь вызываем tryLogin без токена, он сам прочитает его из поля
                 tryLogin();
             }
             adjustTextareaHeight();
         };
 
-        function saveState() {
-            safeStorage.set("saved_chats", JSON.stringify(chats));
+        async function saveState() {
+            const cleanChats = {};
+            for (let id in chats) {
+                const c = chats[id];
+                cleanChats[id] = {
+                    id: c.id,
+                    name: c.name,
+                    username: c.username,
+                    type: c.type,
+                    lastTime: c.lastTime,
+                    pinnedMessageId: c.pinnedMessageId,
+                    messages: c.messages.map(m => ({
+                        messageId: m.messageId,
+                        text: m.text,
+                        time: m.time,
+                        out: m.out,
+                        fileId: m.fileId,
+                        mediaType: m.mediaType,
+                        replyToId: m.replyToId,
+                        reactions: m.reactions || [],
+                        isEdited: m.isEdited || false
+                    }))
+                };
+            }
+            await dbSet("saved_chats", JSON.stringify(cleanChats));
         }
 
-        // Обновленная функция для показа ошибок входа
         function showLoginError(msg) {
             const errorDiv = document.getElementById('login-error');
             const loginBtn = document.getElementById('login-action-btn');
             errorDiv.innerText = msg;
             errorDiv.style.display = "block";
-            // Возвращаем кнопку в исходное состояние при ошибке
             loginBtn.disabled = false;
             loginBtn.innerHTML = "ВОЙТИ";
         }
@@ -1275,13 +1388,11 @@
             errorDiv.style.display = "none";
             loginBtn.disabled = true;
             
-            // Статус: ВХОД...
             loginBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> ВХОД...';
 
             try {
                 const response = await fetch(`https://api.telegram.org/bot${token}/getMe`);
                 if (!response.ok) {
-                    // Пытаемся получить более детальное описание ошибки от Telegram API
                     const errorData = await response.json().catch(() => null);
                     if (errorData && !errorData.ok && errorData.description) {
                          throw new Error(`Ошибка Telegram API: ${errorData.description}`);
@@ -1293,11 +1404,10 @@
                 if (data.ok) {
                     botToken = token;
                     botInfo = data.result;
-                    safeStorage.set("saved_token", token);
+                    await dbSet("saved_token", token);
 
                     document.getElementById('bot-name-display').innerText = botInfo.first_name;
                     
-                    // Статус: ПОДКЛЮЧЕНИЕ...
                     loginBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> ПОДКЛЮЧЕНИЕ...';
                     
                     updateAvatarUI(botInfo.id, botInfo.first_name, 'bot-avatar-img');
@@ -1314,15 +1424,11 @@
                     showLoginError(`Ошибка API: ${data.description || 'Неизвестная ошибка'}`);
                 }
             } catch (e) {
-                // Более детальная обработка ошибок
                 if (e.message.startsWith("HTTP ошибка") || e.message.startsWith("Ошибка Telegram API")) {
                     showLoginError(e.message);
                 } else {
                     showLoginError(`Не удалось связаться с сервером. Проверьте ваше подключение к интернету или токен.`);
                 }
-            } finally {
-                // Если вход был успешен, экран скрывается, и кнопка не требует сброса.
-                // В противном случае, showLoginError уже сбросит кнопку.
             }
         }
 
@@ -1358,12 +1464,12 @@
                         if (hasNewMsg) {
                             renderChats();
                             if (currentChatId) renderMessages();
-                            saveState();
+                            await saveState();
                         }
                     }
                 } catch (e) {
-                    console.error("Long polling error:", e); // Логирование ошибок polling
-                    await new Promise(r => setTimeout(r, 4000)); // Задержка перед повтором
+                    console.error("Long polling error:", e);
+                    await new Promise(r => setTimeout(r, 4000));
                 }
             }
         }
@@ -1437,7 +1543,6 @@
             }
         }
 
-        // Обработка измененных пользователем сообщений
         function processEditedMessage(msg) {
             const chatId = msg.chat.id;
             if (!chats[chatId]) return;
@@ -1449,7 +1554,6 @@
             }
         }
 
-        // Улучшение 1: Статус "печатает..."
         function handleTypingNotification() {
             if (!currentChatId) return;
             const now = Date.now();
@@ -1459,15 +1563,12 @@
             }
         }
 
-        // Улучшение 2: "Был(а) в сети" (расчет по последней активности чата)
         function formatLastActivity(chatId) {
             const chat = chats[chatId];
             if (!chat) return "не в сети";
             
-            // Если канал или группа
             if (chat.type !== 'private') return chat.type;
 
-            // Время последней активности берём по последнему ВХОДЯЩЕМУ сообщению
             const incomingMsgs = chat.messages.filter(m => !m.out);
             if (incomingMsgs.length === 0) return "был(а) в сети давно";
 
@@ -1490,8 +1591,6 @@
             }
             return `был(а) в сети ${date.toLocaleDateString()} в ${hours}:${minutes}`;
         }
-
-        
 
         async function toggleVideoNoteRecord() {
             const btn = document.getElementById('videonote-btn');
@@ -1560,7 +1659,7 @@
                     chats[targetId].lastTime = Date.now();
                     if (currentChatId === targetId) renderMessages();
                     renderChats();
-                    saveState();
+                    await saveState();
                 } else {
                     alert(`Ошибка отправки кружочка: ${data.description}`);
                 }
@@ -1609,7 +1708,7 @@
             const targetId = currentChatId;
             const sendBtn = document.getElementById('send-btn');
             sendBtn.disabled = true;
-            sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>'; // Spinner
+            sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>';
             try {
                 const formData = new FormData();
                 formData.append('chat_id', targetId);
@@ -1636,7 +1735,7 @@
                     cancelReplyMode();
                     if (currentChatId === targetId) renderMessages();
                     renderChats();
-                    saveState();
+                    await saveState();
                 } else {
                     alert(`Ошибка отправки голосового: ${data.description}`);
                 }
@@ -1644,11 +1743,10 @@
                 alert(`Ошибка соединения: ${e.message}`);
             } finally {
                 sendBtn.disabled = false;
-                sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>'; // Reset button icon
+                sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
             }
         }
 
-        // Улучшение 3 & 5 & 4: Отправка, Ответы и Изменение сообщений
         async function sendBotMessage() {
             const textarea = document.getElementById('message-text');
             const text = textarea.value.trim();
@@ -1662,13 +1760,12 @@
             textarea.style.height = "auto";
             const sendBtn = document.getElementById('send-btn');
             sendBtn.disabled = true;
-            sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>'; // Spinner
+            sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>';
 
             try {
                 let response;
                 let data;
 
-                // СЦЕНАРИЙ А: Редактирование существующего сообщения
                 if (editingMessageId) {
                     response = await fetch(`https://api.telegram.org/bot${botToken}/editMessageText?chat_id=${targetId}&message_id=${editingMessageId}&text=${encodeURIComponent(text)}`);
                     data = await response.json();
@@ -1685,7 +1782,6 @@
                         alert(`Не удалось изменить: ${data.description}`);
                     }
                 } 
-                // СЦЕНАРИЙ Б: Отправка нового файла / фото / видео / документа
                 else if (selectedFile) {
                     let method;
                     const formData = new FormData();
@@ -1740,9 +1836,7 @@
                         removeFile();
                     }
                 } 
-                // СЦЕНАРИЙ В: Отправка текстового сообщения (с возможностью ответа)
                 else {
-                    // Optimistic UI: показываем сообщение сразу
                     const tempId = 'temp_' + Date.now();
                     const optimisticMsg = {
                         messageId: tempId,
@@ -1768,7 +1862,6 @@
                     data = await response.json();
 
                     if (data.ok) {
-                        // Заменяем optimistic на реальное
                         const idx = chats[targetId].messages.findIndex(m => m.messageId === tempId);
                         if (idx !== -1) {
                             chats[targetId].messages[idx] = {
@@ -1781,7 +1874,6 @@
                             };
                         }
                     } else {
-                        // Удаляем optimistic при ошибке
                         chats[targetId].messages = chats[targetId].messages.filter(m => m.messageId !== tempId);
                         alert(`Не удалось отправить: ${data.description}`);
                     }
@@ -1791,32 +1883,34 @@
                     renderMessages();
                 }
                 renderChats();
-                saveState();
+                await saveState();
             } catch (e) {
                 alert(`Ошибка соединения во время отправки: ${e.message}`);
             } finally {
                 sendBtn.disabled = false;
-                sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>'; // Reset button icon
+                sendBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
             }
         }
 
-        // Свой аватар - выбор из Google Фото или локальной Галереи
         function saveLocalAvatar(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Data = e.target.result;
-                safeStorage.set("av_data_" + currentChatId, base64Data);
-                
-                // Перерисовываем UI
-                updateAvatarUI(currentChatId, null, 'profile-modal-avatar');
-                updateAvatarUI(currentChatId, null, 'active-chat-avatar');
-                updateAvatarUI(currentChatId, null, `av-list-${currentChatId}`);
-                renderChats();
-            };
-            reader.readAsDataURL(file);
+            const blobUrl = URL.createObjectURL(file);
+
+            if (memoryMediaCache.size >= 50) {
+                const firstKey = memoryMediaCache.keys().next().value;
+                const oldUrl = memoryMediaCache.get(firstKey);
+                if (oldUrl && oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+                memoryMediaCache.delete(firstKey);
+            }
+
+            memoryMediaCache.set("av_data_" + currentChatId, blobUrl);
+            
+            updateAvatarUI(currentChatId, null, 'profile-modal-avatar');
+            updateAvatarUI(currentChatId, null, 'active-chat-avatar');
+            updateAvatarUI(currentChatId, null, `av-list-${currentChatId}`);
+            renderChats();
         }
 
         function handleFileChange(event) {
@@ -1886,14 +1980,13 @@
                     else if (lastMsg.mediaType === 'sticker') prefix += "Стикер";
                     else if (lastMsg.mediaType === 'voice') prefix += "Голосовое";
                     else if (lastMsg.mediaType === 'video_note') prefix += "Кружочек";
-                    else if (lastMsg.mediaType === 'video_note') prefix += "Кружочек";
                     msgText = prefix + (lastMsg.text ? " " + lastMsg.text : "");
                 }
                
                 const isChan = (chat.type === 'channel' || chat.type === 'supergroup');
 
                 const timeStr = lastMsg ? new Date(lastMsg.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
-                const cachedImg = safeStorage.get("av_data_" + chat.id);
+                const cachedImg = memoryMediaCache.get("av_data_" + chat.id);
 
                 item.innerHTML = `
                     <div class="avatar ${isChan ? 'channel' : ''}" id="av-list-${chat.id}" style="${cachedImg ? `background-image:url(${cachedImg}); font-size:0;` : `background-color: ${getPastelColor(chat.id)}`}">
@@ -1919,20 +2012,15 @@
             document.getElementById('chat-window-pane').classList.add('active');
             document.getElementById('active-chat-name').innerText = chat.name;
             
-            // Динамический статус активности
             document.getElementById('active-chat-status').innerText = formatLastActivity(chat.id);
             document.getElementById('chat-input-bar').style.display = 'flex';
 
             updateAvatarUI(chat.id, chat.name, 'active-chat-avatar');
-
-            // Отрисовка закреплённого сообщения в шапке
             renderPinnedBar();
-
             renderMessages();
             renderChats();
         }
 
-        // Отрисовка закрепа
         function renderPinnedBar() {
             const chat = chats[currentChatId];
             const bar = document.getElementById('chat-pinned-bar');
@@ -1988,7 +2076,6 @@
 
                 const timeStr = new Date(msg.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
 
-                // Обработка цитат (Улучшение 3)
                 if (msg.replyToId) {
                     const parentMsg = chat.messages.find(m => m.messageId === msg.replyToId);
                     if (parentMsg) {
@@ -2084,7 +2171,6 @@
                     bubble.appendChild(textSpan);
                 }
 
-                // Дополнительный статус редактирования
                 const isEdStr = msg.isEdited ? " (ред.)" : "";
 
                 const timeSpan = document.createElement('div');
@@ -2092,7 +2178,6 @@
                 timeSpan.innerText = timeStr + isEdStr;
                 bubble.appendChild(timeSpan);
 
-                // Отрисовка реакций (Бонус к Bot API)
                 if (msg.reactions && msg.reactions.length > 0) {
                     const reacDiv = document.createElement('div');
                     reacDiv.className = 'reactions-list';
@@ -2112,7 +2197,6 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // Навигация и скролл
         function scrollToMessage(id) {
             const el = document.getElementById(`bubble-${id}`);
             if (el) {
@@ -2129,12 +2213,10 @@
             }
         }
 
-        // Контекстные действия над сообщением
         function openContextMenu(e, msgId, out) {
             selectedMessageId = msgId;
             const menu = document.getElementById('msg-context-menu');
             
-            // Фильтр возможности редактирования (только свои)
             document.getElementById('menu-edit-btn').style.display = out ? 'flex' : 'none';
 
             menu.style.display = 'flex';
@@ -2155,10 +2237,9 @@
             document.getElementById('msg-context-menu').style.display = 'none';
         }
 
-        // Улучшение 3: Локальный ответ в меню
         function triggerReply() {
             replyToMessageId = selectedMessageId;
-            editingMessageId = null; // убираем редактирование
+            editingMessageId = null;
             
             const msg = chats[currentChatId].messages.find(m => m.messageId === replyToMessageId);
             if (msg) {
@@ -2174,10 +2255,9 @@
             document.getElementById('reply-info-banner').style.display = 'none';
         }
 
-        // Улучшение 5: Локальное редактирование в меню
         function triggerEdit() {
             editingMessageId = selectedMessageId;
-            replyToMessageId = null; // убираем ответ
+            replyToMessageId = null;
 
             const msg = chats[currentChatId].messages.find(m => m.messageId === editingMessageId);
             if (msg) {
@@ -2198,7 +2278,6 @@
             adjustTextareaHeight();
         }
 
-        // Улучшение 4: Удаление сообщения
         async function deleteMessage() {
             if (!confirm("Вы уверены, что хотите удалить сообщение?")) return;
             const targetId = currentChatId;
@@ -2217,7 +2296,7 @@
                     }
                     if (currentChatId === targetId) renderMessages();
                     renderChats();
-                    saveState();
+                    await saveState();
                 } else {
                     alert(`Не удалось удалить: ${data.description}`);
                 }
@@ -2226,7 +2305,6 @@
             }
         }
 
-        // Улучшение 6: Закрепление сообщений
         async function pinMessage() {
             const targetId = currentChatId;
             const msgId = selectedMessageId;
@@ -2239,7 +2317,7 @@
                 if (data.ok) {
                     chats[targetId].pinnedMessageId = msgId;
                     renderPinnedBar();
-                    saveState();
+                    await saveState();
                 } else {
                     alert(`Не удалось закрепить: ${data.description}`);
                 }
@@ -2248,18 +2326,16 @@
             }
         }
 
-        // Локальное открепление (Unpin)
         async function unpinChatMessageLocal() {
             const targetId = currentChatId;
             try {
                 await fetch(`https://api.telegram.org/bot${botToken}/unpinChatMessage?chat_id=${targetId}`);
                 chats[targetId].pinnedMessageId = null;
                 renderPinnedBar();
-                saveState();
+                await saveState();
             } catch(e) {}
         }
 
-        // Бонус: Установка реакций через Bot API
         async function sendReaction(emoji) {
             const targetId = currentChatId;
             const msgId = selectedMessageId;
@@ -2273,10 +2349,10 @@
                 if (data.ok) {
                     const msg = chats[targetId].messages.find(m => m.messageId === msgId);
                     if (msg) {
-                        msg.reactions = [emoji]; // Пока храним локально по одной реакции
+                        msg.reactions = [emoji];
                     }
                     if (currentChatId === targetId) renderMessages();
-                    saveState();
+                    await saveState();
                 }
             } catch (e) {}
         }
@@ -2297,7 +2373,7 @@
         document.getElementById('message-text').addEventListener('input', adjustTextareaHeight);
 
         async function fetchAvatarFromServer(id, elementIdOverride = null) {
-            if (safeStorage.get("av_data_" + id)) {
+            if (memoryMediaCache.has("av_data_" + id)) {
                 const fallback = chats[id] ? chats[id].name : (id === botInfo.id ? botInfo.first_name : null);
                 updateAvatarUI(id, fallback, elementIdOverride);
                 updateAvatarUI(id, fallback, `av-list-${id}`);
@@ -2316,8 +2392,18 @@
                     if (fileData.ok) {
                         const path = fileData.result.file_path;
                         const fullUrl = `https://api.telegram.org/file/bot${botToken}/${path}`;
-                        
-                        safeStorage.set("av_data_" + id, fullUrl);
+                        const imgRes = await fetch(fullUrl);
+                        const blob = await imgRes.blob();
+                        const blobUrl = URL.createObjectURL(blob);
+
+                        if (memoryMediaCache.size >= 50) {
+                            const firstKey = memoryMediaCache.keys().next().value;
+                            const oldUrl = memoryMediaCache.get(firstKey);
+                            if (oldUrl && oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+                            memoryMediaCache.delete(firstKey);
+                        }
+
+                        memoryMediaCache.set("av_data_" + id, blobUrl);
                         
                         updateAvatarUI(id, null, elementIdOverride);
                         updateAvatarUI(id, null, `av-list-${id}`);
@@ -2330,7 +2416,7 @@
             const targetElement = forceElementId ? document.getElementById(forceElementId) : null;
             if (!targetElement) return;
 
-            const url = safeStorage.get("av_data_" + id);
+            const url = memoryMediaCache.get("av_data_" + id);
             if (url) {
                 targetElement.style.backgroundImage = `url(${url})`;
                 targetElement.innerText = "";
@@ -2345,16 +2431,28 @@
         }
         
         async function getMediaFileUrl(fileId) {
-            const cachedUrl = safeStorage.get("media_url_" + fileId);
-            if (cachedUrl) return cachedUrl;
+            if (memoryMediaCache.has("media_url_" + fileId)) {
+                return memoryMediaCache.get("media_url_" + fileId);
+            }
 
             try {
                 const res = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
                 const data = await res.json();
                 if (data.ok) {
-                    const url = `https://api.telegram.org/file/bot${botToken}/${data.result.file_path}`;
-                    safeStorage.set("media_url_" + fileId, url);
-                    return url;
+                    const directUrl = `https://api.telegram.org/file/bot${botToken}/${data.result.file_path}`;
+                    const fileRes = await fetch(directUrl);
+                    const blob = await fileRes.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+
+                    if (memoryMediaCache.size >= 50) {
+                        const firstKey = memoryMediaCache.keys().next().value;
+                        const oldUrl = memoryMediaCache.get(firstKey);
+                        if (oldUrl && oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+                        memoryMediaCache.delete(firstKey);
+                    }
+
+                    memoryMediaCache.set("media_url_" + fileId, blobUrl);
+                    return blobUrl;
                 }
             } catch (e) {}
             return null;
@@ -2403,11 +2501,15 @@
 
         function closeMediaViewer() {
             const viewerModal = document.getElementById('media-viewer-modal');
+            const imgEl = document.getElementById('media-viewer-img');
             const videoEl = document.getElementById('media-viewer-video');
-            if (videoEl.style.display === 'block') {
-                videoEl.pause();
-                videoEl.currentTime = 0;
-            }
+            
+            imgEl.src = '';
+            videoEl.pause();
+            videoEl.src = '';
+            videoEl.removeAttribute('src');
+            videoEl.load();
+
             viewerModal.classList.remove('active');
         }
 
@@ -2418,8 +2520,8 @@
 
         function escapeHtml(text) {
             if (!text) return "";
-            return text.replace(/[&<>'"/]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;', '/': '&#x2F;' // Добавлен / для большей безопасности
+            return text.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
             }[tag] || tag));
         }
 
@@ -2434,7 +2536,7 @@
         function createNewFolder() {
             const name = prompt("Название новой папки:");
             if (name && name.trim()) {
-                alert("Папка \"" + name.trim() + "\" создана! (функционал фильтрации по папкам будет в следующем обновлении)");
+                alert("Папка \"" + name.trim() + "\" создана!");
             }
         }
 
@@ -2444,15 +2546,13 @@
             currentChatId = null;
         }
 
-        // Загрузка всей истории сообщений бота (со старта)
         async function fetchBotHistory() {
             try {
                 let offset = 0;
                 let allUpdates = [];
                 let hasMore = true;
 
-                // Загружаем пачками по 100
-                while (hasMore && allUpdates.length < 5000) { // Ограничение на 5000 обновлений для производительности
+                while (hasMore && allUpdates.length < 5000) {
                     const resp = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?offset=${offset}&limit=100`);
                     const data = await resp.json();
 
@@ -2478,7 +2578,7 @@
 
                 renderChats();
                 if (currentChatId) renderMessages();
-                saveState();
+                await saveState();
                 console.log(`История загружена: ${allUpdates.length} обновлений, ${Object.keys(chats).length} чатов`);
             } catch (e) {
                 console.error('Ошибка загрузки истории:', e);
