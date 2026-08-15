@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Калькулятор ИМТ</title>
+    <title>Калькулятор Мяу</title>
     <style>
         :root {
             --bg-dark: #050508;
@@ -801,22 +801,12 @@
             window.addEventListener(evt, resetInactivityTimer, { passive: true });
         });
 
-        document.addEventListener('visibilitychange', () => { 
-            if (document.hidden) {
-                lockToBMICalculator();
-            } 
-        });
-
         window.addEventListener('pagehide', () => {
-            lockToBMICalculator();
+            if (!isRecording) lockToBMICalculator();
         });
 
         window.addEventListener('beforeunload', () => {
-            lockToBMICalculator();
-        });
-
-        window.addEventListener('blur', () => {
-            lockToBMICalculator();
+            if (!isRecording) lockToBMICalculator();
         });
 
         window.onload = function() {
