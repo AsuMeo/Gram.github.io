@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Telegram Video Note Sender Pro</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://api.telegram.org; media-src 'self' data: blob: mediastream:; img-src 'self' data: blob:; connect-src 'self' https://api.telegram.org blob:;">
+    <title>Калькулятор ИМТ</title>
     <style>
         :root {
             --bg-dark: #050508;
@@ -16,6 +17,8 @@
             --error: #ff4d4d;
             --success: #2ecc71;
             --border-color: #1a1d29;
+            --card-radius: 24px;
+            --input-radius: 14px;
         }
 
         * {
@@ -39,13 +42,168 @@
             justify-content: space-between;
             overflow: hidden;
             position: relative;
+            transition: background-color 0.3s;
+        }
+
+        .flashlight-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #ffffff;
+            z-index: 1;
+            display: none;
+            pointer-events: none;
+        }
+
+        body.flashlight-on {
+            background-color: #ffffff !important;
+        }
+
+        body.flashlight-on .header,
+        body.flashlight-on .controls-bar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            color: #000000 !important;
+            border-color: #e0e0e0 !important;
+        }
+
+        body.flashlight-on .header h1 {
+            color: #000000 !important;
+        }
+
+        body.flashlight-on .action-icon-btn {
+            background: #f0f0f0 !important;
+            color: #000000 !important;
+            border-color: #cccccc !important;
+        }
+
+        body.flashlight-on .status-msg {
+            color: #222222 !important;
+        }
+
+        body.flashlight-on .timer-badge {
+            background: rgba(240, 240, 240, 0.95) !important;
+            color: #000000 !important;
+            border-color: #cccccc !important;
+        }
+
+        .flashlight-active .circle-viewport {
+            border-color: #ffeb3b !important;
+            box-shadow: 0 0 60px rgba(255, 235, 59, 0.8) !important;
+        }
+
+        #bmi-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #0f1322 0%, var(--bg-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .bmi-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            padding: 28px 22px;
+            border-radius: var(--card-radius);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            text-align: center;
+        }
+
+        .bmi-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bmi-header h1 {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .bmi-input-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .bmi-input-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .bmi-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: var(--input-radius);
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: #ffffff;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .bmi-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(36, 129, 204, 0.15);
+        }
+
+        .bmi-btn {
+            width: 100%;
+            padding: 15px;
+            border-radius: var(--input-radius);
+            border: none;
+            background: linear-gradient(135deg, #2481cc 0%, #1a629d 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: 0 4px 15px rgba(36, 129, 204, 0.3);
+            margin-top: 8px;
+        }
+
+        .bmi-btn:active {
+            transform: scale(0.98);
+        }
+
+        .bmi-result-box {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg-input);
+            border-radius: var(--input-radius);
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .bmi-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent-hover);
+        }
+
+        .bmi-status {
+            font-size: 14px;
+            margin-top: 4px;
+            color: var(--text-main);
+            font-weight: 600;
         }
 
         #login-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, #101424 0%, var(--bg-dark) 100%);
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             z-index: 1000;
@@ -58,14 +216,14 @@
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
             padding: 32px 24px;
-            border-radius: 24px;
+            border-radius: var(--card-radius);
             text-align: center;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
         }
 
         .login-logo {
-            font-size: 56px;
-            margin-bottom: 16px;
+            font-size: 48px;
+            margin-bottom: 12px;
             color: var(--accent);
             display: inline-block;
         }
@@ -100,7 +258,7 @@
         .login-input {
             width: 100%;
             padding: 14px 16px;
-            border-radius: 12px;
+            border-radius: var(--input-radius);
             border: 1px solid var(--border-color);
             background: var(--bg-input);
             color: white;
@@ -116,7 +274,7 @@
         .btn {
             width: 100%;
             padding: 15px;
-            border-radius: 12px;
+            border-radius: var(--input-radius);
             border: none;
             background: var(--accent);
             color: white;
@@ -148,7 +306,7 @@
             padding: 16px 20px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             background: rgba(12, 13, 18, 0.8);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-color);
@@ -164,22 +322,6 @@
             gap: 8px;
         }
 
-        .settings-btn {
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 8px 14px;
-            border-radius: 12px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .settings-btn:active { transform: scale(0.96); }
-
         .camera-container {
             flex: 1;
             display: flex;
@@ -188,6 +330,7 @@
             justify-content: center;
             width: 100%;
             position: relative;
+            z-index: 10;
         }
 
         .circle-viewport {
@@ -219,6 +362,7 @@
             height: 100%;
             object-fit: cover;
             transform: scaleX(-1);
+            transition: opacity 0.2s;
         }
 
         #camera-preview.back-camera {
@@ -265,6 +409,7 @@
             text-align: center;
             min-height: 20px;
             padding: 0 20px;
+            font-weight: 600;
         }
 
         .status-msg.error { color: var(--error); }
@@ -278,6 +423,7 @@
             justify-content: space-around;
             background: var(--bg-surface);
             border-top: 1px solid var(--border-color);
+            z-index: 10;
         }
 
         .action-icon-btn {
@@ -291,7 +437,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.1s;
+            transition: transform 0.1s, background-color 0.2s, color 0.2s;
         }
 
         .action-icon-btn:active { transform: scale(0.92); }
@@ -319,7 +465,6 @@
             border-radius: 22px;
         }
 
-        /* Невидимый Canvas для обрезки ровно 1:1 под официальный кружочек Telegram */
         #recording-canvas {
             display: none;
         }
@@ -327,41 +472,76 @@
 </head>
 <body>
 
-    <!-- Экран Авторизации -->
+    <div id="flashlight-overlay" class="flashlight-overlay"></div>
+
+    <div id="bmi-screen">
+        <div class="bmi-card">
+            <div class="bmi-header">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2481cc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/>
+                </svg>
+                <h1>Калькулятор ИМТ</h1>
+            </div>
+
+            <div class="bmi-input-group">
+                <label>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    Рост (см)
+                </label>
+                <input type="number" id="bmi-height" class="bmi-input" placeholder="Например, 175" inputmode="numeric" autocomplete="off">
+            </div>
+
+            <div class="bmi-input-group">
+                <label>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    Вес (кг)
+                </label>
+                <input type="number" id="bmi-weight" class="bmi-input" placeholder="Например, 70" inputmode="numeric" autocomplete="off">
+            </div>
+
+            <button class="bmi-btn" onclick="calculateBMI()">Рассчитать ИМТ</button>
+
+            <div id="bmi-result" class="bmi-result-box">
+                <div class="bmi-value" id="bmi-val">0.0</div>
+                <div class="bmi-status" id="bmi-status-text">-</div>
+            </div>
+        </div>
+    </div>
+
     <div id="login-screen">
         <div class="login-card">
-            <div class="login-logo">🔵</div>
-            <h1>Кружочки Telegram</h1>
-            <p>Введите данные бота. Вход сохраняется в IndexedDB навсегда.</p>
+            <div class="login-logo">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2481cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+            </div>
+            <h1>Telegram Zero-Trust</h1>
+            <p>Никакого сохранения на диск. Токен и Chat ID живут только в RAM до закрытия вкладки.</p>
             
             <div class="input-group">
                 <label>BOT TOKEN</label>
-                <input type="password" id="login-token-field" class="login-input" placeholder="123456789:AAH...">
+                <input type="password" id="login-token-field" class="login-input" placeholder="123456789:AAH..." autocomplete="off" autocapitalize="off" spellcheck="false">
             </div>
 
             <div class="input-group">
                 <label>CHAT ID ПОЛУЧАТЕЛЯ</label>
-                <input type="text" id="login-chatid-field" class="login-input" placeholder="например, 987654321">
+                <input type="text" id="login-chatid-field" class="login-input" placeholder="например, 987654321" autocomplete="off" autocapitalize="off" spellcheck="false">
             </div>
 
-            <button class="btn" id="login-btn" onclick="handleLogin()">ВОЙТИ И СОХРАНИТЬ</button>
+            <button class="btn" id="login-btn" onclick="handleLogin()">ВОЙТИ В СИСТЕМУ</button>
             <div id="login-error" class="error-log"></div>
         </div>
     </div>
 
-    <!-- Главный интерфейс -->
     <div class="header">
         <h1>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
             Запись кружочка TG
         </h1>
-        <button class="settings-btn" onclick="showLoginScreen()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            Сменить бота
-        </button>
     </div>
 
-    <div class="camera-container">
+    <div class="camera-container" id="camera-container-box">
         <div class="circle-viewport" id="viewport-box">
             <video id="camera-preview" autoplay playsinline muted></video>
         </div>
@@ -379,6 +559,10 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0-4.42-3.58-8-8-8s-8 3.58-8 8c0 1.58.46 3.05 1.25 4.3L2 17l2.7-.25C6.12 18.06 8.89 19 12 19c4.42 0 8-3.58 8-8z"/><path d="M16 14l4 4-4 4"/></svg>
         </button>
 
+        <button class="action-icon-btn" id="flash-btn" onclick="toggleFlashlight()" title="Фонарик">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </button>
+
         <button class="record-main-btn" id="record-btn" onclick="toggleRecording()">
             <svg id="record-icon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
         </button>
@@ -388,62 +572,14 @@
         </button>
     </div>
 
-    <canvas id="recording-canvas" width="480" height="480"></canvas>
+    <canvas id="recording-canvas" width="0" height="0"></canvas>
 
     <script>
-        // ==========================================
-        // INDEXEDDB ХРАНИЛИЩЕ ДЛЯ АВТОРИЗАЦИИ
-        // ==========================================
-        let dbInstance = null;
-
-        function initIndexedDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open("VideoNoteBotDB", 1);
-                request.onupgradeneeded = function(e) {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains("auth")) {
-                        db.createObjectStore("auth");
-                    }
-                };
-                request.onsuccess = function(e) {
-                    dbInstance = e.target.result;
-                    resolve(dbInstance);
-                };
-                request.onerror = function(e) {
-                    reject(e);
-                };
-            });
-        }
-
-        function dbGet(key) {
-            return new Promise((resolve) => {
-                if (!dbInstance) return resolve(null);
-                const tx = dbInstance.transaction(["auth"], "readonly");
-                const store = tx.objectStore("auth");
-                const req = store.get(key);
-                req.onsuccess = () => resolve(req.result || null);
-                req.onerror = () => resolve(null);
-            });
-        }
-
-        function dbSet(key, val) {
-            return new Promise((resolve) => {
-                if (!dbInstance) return resolve();
-                const tx = dbInstance.transaction(["auth"], "readwrite");
-                const store = tx.objectStore("auth");
-                const req = store.put(val, key);
-                req.onsuccess = () => resolve();
-                req.onerror = () => resolve();
-            });
-        }
-
-        // ==========================================
-        // ПЕРЕМЕННЫЕ И МГНОВЕННАЯ ЗАЧИСТКА КЕША
-        // ==========================================
         let botToken = "";
         let targetChatId = "";
 
         let activeStream = null;
+        let canvasStream = null;
         let mediaRecorder = null;
         let videoChunks = [];
         let isRecording = false;
@@ -451,44 +587,246 @@
         let timerInterval = null;
         let secondsElapsed = 0;
         let animFrameId = null;
+        let inactivityTimer = null;
+        let isFlashlight = false;
+        let wakeLockObj = null;
 
-        // Полное затирание всех байтов в RAM
+        function wipeStorages() {
+            try { sessionStorage.removeItem("ram_aes_key"); } catch(e){}
+            try { sessionStorage.clear(); } catch(e){}
+            try { localStorage.clear(); } catch(e){}
+            try {
+                if (window.indexedDB && indexedDB.databases) {
+                    indexedDB.databases().then(dbs => {
+                        dbs.forEach(db => { if(db.name) indexedDB.deleteDatabase(db.name); });
+                    }).catch(()=>{});
+                }
+            } catch(e){}
+        }
+
+        function resetInactivityTimer() {
+            if (inactivityTimer) clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                lockToBMICalculator();
+            }, 120000);
+        }
+
+        function lockToBMICalculator() {
+            if (isFlashlight) turnOffFlashlight();
+            botToken = "";
+            targetChatId = "";
+            purgeVideoMemory();
+            wipeStorages();
+
+            const tokenField = document.getElementById('login-token-field');
+            const chatIdField = document.getElementById('login-chatid-field');
+            if (tokenField) tokenField.value = "";
+            if (chatIdField) chatIdField.value = "";
+
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('bmi-screen').style.display = 'flex';
+        }
+
+        function checkSecretTrigger(val) {
+            if (String(val).trim() === "993") {
+                document.getElementById('bmi-screen').style.display = 'none';
+                showLoginScreen();
+                document.getElementById('bmi-height').value = "";
+                document.getElementById('bmi-weight').value = "";
+                document.getElementById('bmi-result').style.display = 'none';
+                return true;
+            }
+            return false;
+        }
+
+        function calculateBMI() {
+            const hVal = document.getElementById('bmi-height').value;
+            const wVal = document.getElementById('bmi-weight').value;
+
+            if (checkSecretTrigger(hVal) || checkSecretTrigger(wVal)) return;
+
+            const height = parseFloat(hVal);
+            const weight = parseFloat(wVal);
+
+            if (!height || !weight || height <= 0 || weight <= 0) return;
+
+            const bmi = (weight / ((height / 100) * (height / 100))).toFixed(1);
+            const resBox = document.getElementById('bmi-result');
+            const valEl = document.getElementById('bmi-val');
+            const statusEl = document.getElementById('bmi-status-text');
+
+            valEl.innerText = bmi;
+            if (bmi < 18.5) statusEl.innerText = "Дефицит массы тела";
+            else if (bmi < 25) statusEl.innerText = "Нормальный вес";
+            else if (bmi < 30) statusEl.innerText = "Избыточный вес";
+            else statusEl.innerText = "Ожирение";
+
+            resBox.style.display = 'block';
+        }
+
+        async function toggleFlashlight() {
+            isFlashlight = !isFlashlight;
+            const overlay = document.getElementById('flashlight-overlay');
+            const flashBtn = document.getElementById('flash-btn');
+            const viewportBox = document.getElementById('viewport-box');
+
+            if (isFlashlight) {
+                if (flashBtn) flashBtn.style.color = "#ffeb3b";
+                if (viewportBox) viewportBox.classList.add('flashlight-active');
+
+                let hardwareTorchSuccess = false;
+                if (activeStream && facingMode === 'environment') {
+                    const track = activeStream.getVideoTracks()[0];
+                    if (track && typeof track.getCapabilities === 'function') {
+                        const caps = track.getCapabilities();
+                        if (caps.torch) {
+                            try {
+                                await track.applyConstraints({ advanced: [{ torch: true }] });
+                                hardwareTorchSuccess = true;
+                            } catch(e) {}
+                        }
+                    }
+                }
+
+                if (!hardwareTorchSuccess) {
+                    if (overlay) overlay.style.display = 'block';
+                    document.body.classList.add('flashlight-on');
+
+                    try {
+                        if ('wakeLock' in navigator && navigator.wakeLock.request) {
+                            wakeLockObj = await navigator.wakeLock.request('screen');
+                        }
+                    } catch(e) {}
+                }
+            } else {
+                turnOffFlashlight();
+            }
+        }
+
+        async function turnOffFlashlight() {
+            isFlashlight = false;
+            const overlay = document.getElementById('flashlight-overlay');
+            const flashBtn = document.getElementById('flash-btn');
+            const viewportBox = document.getElementById('viewport-box');
+
+            if (flashBtn) flashBtn.style.color = "";
+            if (viewportBox) viewportBox.classList.remove('flashlight-active');
+            if (overlay) overlay.style.display = 'none';
+            document.body.classList.remove('flashlight-on');
+
+            if (wakeLockObj) {
+                try { await wakeLockObj.release(); } catch(e){}
+                wakeLockObj = null;
+            }
+
+            if (activeStream) {
+                const track = activeStream.getVideoTracks()[0];
+                if (track && typeof track.getCapabilities === 'function') {
+                    const caps = track.getCapabilities();
+                    if (caps.torch) {
+                        try { await track.applyConstraints({ advanced: [{ torch: false }] }); } catch(e){}
+                    }
+                }
+            }
+        }
+
+        function clearCanvasMemory() {
+            const canvas = document.getElementById('recording-canvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                if (ctx) {
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(0, 0, canvas.width || 480, canvas.height || 480);
+                }
+                canvas.width = 0;
+                canvas.height = 0;
+            }
+        }
+
         function purgeVideoMemory() {
-            videoChunks = [];
             if (animFrameId) {
                 cancelAnimationFrame(animFrameId);
                 animFrameId = null;
             }
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                try { mediaRecorder.stop(); } catch(e) {}
+
+            if (mediaRecorder) {
+                mediaRecorder.onerror = null;
+                mediaRecorder.ondataavailable = null;
+                mediaRecorder.onstop = null;
+                if (mediaRecorder.state !== 'inactive') {
+                    try { mediaRecorder.stop(); } catch(e) {}
+                }
+                mediaRecorder = null;
             }
-            mediaRecorder = null;
-            console.log("🔒 [Защита] Вся память кружочка уничтожена с устройства!");
+
+            if (canvasStream) {
+                try {
+                    canvasStream.getTracks().forEach(track => track.stop());
+                } catch(e) {}
+                canvasStream = null;
+            }
+
+            if (activeStream) {
+                try {
+                    activeStream.getTracks().forEach(track => track.stop());
+                } catch(e) {}
+                activeStream = null;
+            }
+
+            videoChunks.length = 0;
+            videoChunks = [];
+
+            clearCanvasMemory();
+            
+            const video = document.getElementById('camera-preview');
+            if (video) {
+                try {
+                    video.pause();
+                    video.currentTime = 0;
+                } catch(e) {}
+                video.srcObject = null;
+                video.removeAttribute('src');
+                video.load();
+            }
         }
 
-        setInterval(purgeVideoMemory, 3 * 60 * 1000);
-        document.addEventListener('visibilitychange', () => { if (document.hidden) purgeVideoMemory(); });
-        window.addEventListener('beforeunload', purgeVideoMemory);
-        window.addEventListener('pagehide', purgeVideoMemory);
-
-        // ==========================================
-        // ВХОД И АВТОРИЗАЦИЯ
-        // ==========================================
-        window.onload = async function() {
-            try {
-                await initIndexedDB();
-                botToken = await dbGet("bot_token") || "";
-                targetChatId = await dbGet("target_chat_id") || "";
-
-                if (botToken && targetChatId) {
-                    hideLoginScreen();
-                    await initCamera();
-                } else {
-                    showLoginScreen();
-                }
-            } catch(e) {
-                showLoginScreen();
+        function cleanPerformanceEntries() {
+            if (window.performance) {
+                if (performance.clearMarks) performance.clearMarks();
+                if (performance.clearMeasures) performance.clearMeasures();
+                if (performance.clearResourceTimings) performance.clearResourceTimings();
             }
+        }
+
+        ['touchstart', 'mousedown', 'keydown', 'scroll'].forEach(evt => {
+            window.addEventListener(evt, resetInactivityTimer, { passive: true });
+        });
+
+        document.addEventListener('visibilitychange', () => { 
+            if (document.hidden) {
+                lockToBMICalculator();
+            } 
+        });
+
+        window.addEventListener('pagehide', () => {
+            lockToBMICalculator();
+        });
+
+        window.addEventListener('beforeunload', () => {
+            lockToBMICalculator();
+        });
+
+        window.addEventListener('blur', () => {
+            lockToBMICalculator();
+        });
+
+        window.onload = function() {
+            wipeStorages();
+            lockToBMICalculator();
+            resetInactivityTimer();
+
+            document.getElementById('bmi-height').addEventListener('input', (e) => checkSecretTrigger(e.target.value));
+            document.getElementById('bmi-weight').addEventListener('input', (e) => checkSecretTrigger(e.target.value));
         };
 
         function showLoginScreen() {
@@ -519,43 +857,57 @@
 
             errDiv.style.display = "none";
             btn.disabled = true;
-            btn.innerText = "ПРОВЕРКА...";
+            btn.innerText = "ПРОВЕРКА СВЯЗИ...";
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
 
             try {
-                const res = await fetch(`https://api.telegram.org/bot${tokenInput}/getMe`);
+                const res = await fetch(`https://api.telegram.org/bot${tokenInput}/getMe?nocache=${Date.now()}`, {
+                    cache: 'no-store',
+                    keepalive: false,
+                    credentials: 'omit',
+                    headers: { 'Cache-Control': 'no-store' },
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
                 const data = await res.json();
 
                 if (data.ok) {
                     botToken = tokenInput;
                     targetChatId = chatIdInput;
 
-                    await dbSet("bot_token", botToken);
-                    await dbSet("target_chat_id", targetChatId);
+                    document.getElementById('login-token-field').value = "";
+                    document.getElementById('login-chatid-field').value = "";
 
                     hideLoginScreen();
                     await initCamera();
+                    showStatus("Умничка! Всё готово, записывай кружочки", "success");
                 } else {
-                    errDiv.innerText = ` Ошибка токена: ${data.description || 'Неверный токен'}`;
+                    errDiv.innerText = "Неверный токен бота! Проверь данные.";
                     errDiv.style.display = "block";
                 }
             } catch(e) {
-                errDiv.innerText = ` Не удалось связаться с Telegram API. Проверьте сеть или токен.`;
+                clearTimeout(timeoutId);
+                errDiv.innerText = "Ошибка сети! Проверь интернет или включи ВПН";
                 errDiv.style.display = "block";
             } finally {
+                cleanPerformanceEntries();
                 btn.disabled = false;
-                btn.innerText = "ВОЙТИ И СОХРАНИТЬ";
+                btn.innerText = "ВОЙТИ В СИСТЕМУ";
             }
         }
 
-        // ==========================================
-        // КАМЕРА ПРЕВЬЮ
-        // ==========================================
         async function initCamera() {
             if (activeStream) {
                 activeStream.getTracks().forEach(track => track.stop());
             }
 
             const videoEl = document.getElementById('camera-preview');
+            videoEl.srcObject = null;
+            videoEl.load();
+
             const constraints = {
                 video: { facingMode: facingMode },
                 audio: true
@@ -570,8 +922,13 @@
                 } else {
                     videoEl.classList.remove('back-camera');
                 }
+
+                if (isFlashlight) {
+                    turnOffFlashlight();
+                    toggleFlashlight();
+                }
             } catch (err) {
-                showStatus("Не удалось открыть камеру: " + err.message, "error");
+                showStatus("Не удалось открыть камеру. Проверь разрешения", "error");
             }
         }
 
@@ -595,13 +952,12 @@
             return '';
         }
 
-        // ==========================================
-        // ОДНОРОДНАЯ КВАДРАТНАЯ ОТРИСОВКА (1:1) ДЛЯ КРУЖОЧКОВ TG
-        // ==========================================
         function drawSquareFrame() {
             const video = document.getElementById('camera-preview');
             const canvas = document.getElementById('recording-canvas');
-            const ctx = canvas.getContext('2d');
+            if (!canvas || canvas.width === 0) return;
+
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
             if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
                 const vw = video.videoWidth;
@@ -624,9 +980,6 @@
             }
         }
 
-        // ==========================================
-        // ЗАПИСЬ НАСТОЯЩЕГО КРУЖОЧКА С КАНВАСА (1:1)
-        // ==========================================
         function toggleRecording() {
             if (!isRecording) {
                 startRecording();
@@ -637,18 +990,19 @@
 
         function startRecording() {
             if (!activeStream) {
-                showStatus("Камера недоступна!", "error");
+                showStatus("Камера недоступна! Включи камеру", "error");
                 return;
             }
 
             videoChunks = [];
             const canvas = document.getElementById('recording-canvas');
+            canvas.width = 480;
+            canvas.height = 480;
             
             isRecording = true;
             drawSquareFrame();
 
-            // Создаем 1:1 квадратный видеопоток с Canvas + Микрофон
-            const canvasStream = canvas.captureStream(30);
+            canvasStream = canvas.captureStream(30);
             const audioTrack = activeStream.getAudioTracks()[0];
             if (audioTrack) {
                 canvasStream.addTrack(audioTrack);
@@ -660,10 +1014,16 @@
             try {
                 mediaRecorder = new MediaRecorder(canvasStream, options);
             } catch(e) {
-                showStatus("Ошибка запуска записи: " + e.message, "error");
+                showStatus("Ошибка запуска записи", "error");
                 isRecording = false;
+                purgeVideoMemory();
                 return;
             }
+
+            mediaRecorder.onerror = () => {
+                cancelRecording();
+                showStatus("Сбой записи. Память очищена", "error");
+            };
 
             mediaRecorder.ondataavailable = e => {
                 if (e.data && e.data.size > 0) {
@@ -705,37 +1065,60 @@
                 isRecording = false;
 
                 if (videoChunks.length === 0) {
-                    showStatus(" Ошибка: пустая запись.", "error");
+                    showStatus("Ошибка: пустая запись.", "error");
                     purgeVideoMemory();
                     return;
                 }
 
                 const mimeType = mediaRecorder.mimeType || 'video/webm';
                 const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-                const videoBlob = new Blob(videoChunks, { type: mimeType });
+                
+                let videoBlob = new Blob(videoChunks, { type: mimeType });
+                let blobUrl = URL.createObjectURL(videoBlob);
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 25000);
 
                 try {
-                    const formData = new FormData();
+                    let formData = new FormData();
                     formData.append('chat_id', targetChatId);
-                    // Telegram API требует строго 1:1 соотношение сторон для sendVideoNote
                     formData.append('video_note', videoBlob, `video_note.${ext}`);
 
-                    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVideoNote`, {
+                    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVideoNote?nocache=${Date.now()}`, {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        cache: 'no-store',
+                        keepalive: false,
+                        credentials: 'omit',
+                        headers: {
+                            'Cache-Control': 'no-store'
+                        },
+                        signal: controller.signal
                     });
+
+                    clearTimeout(timeoutId);
 
                     const data = await response.json();
 
                     if (data.ok) {
-                        showStatus(" Кружочек успешно отправлен!", "success");
+                        showStatus("Умничка! Кружочек успешно отправлен!", "success");
                     } else {
-                        showStatus(" Ошибка Telegram API: " + (data.description || "Не удалось отправить"), "error");
+                        showStatus("Ошибка отправки! Включи ВПН и попробуй снова", "error");
                     }
+
+                    formData = null;
                 } catch (e) {
-                    showStatus(" Ошибка сети при отправке.", "error");
+                    clearTimeout(timeoutId);
+                    showStatus("Ошибка сети! Включи ВПН и попробуй снова", "error");
                 } finally {
-                    // МГНОВЕННОЕ УНИЧТОЖЕНИЕ КЕША
+                    cleanPerformanceEntries();
+
+                    if (blobUrl) {
+                        URL.revokeObjectURL(blobUrl);
+                        blobUrl = null;
+                    }
+                    videoBlob = null;
+                    
                     purgeVideoMemory();
                     secondsElapsed = 0;
                     updateTimerDisplay();
@@ -748,7 +1131,10 @@
         function cancelRecording() {
             if (isRecording) {
                 clearInterval(timerInterval);
-                if (mediaRecorder) mediaRecorder.stop();
+                if (mediaRecorder) {
+                    mediaRecorder.onerror = null;
+                    try { mediaRecorder.stop(); } catch(e) {}
+                }
                 isRecording = false;
                 document.getElementById('rec-dot').classList.remove('active');
                 document.getElementById('viewport-box').classList.remove('recording');
@@ -764,13 +1150,16 @@
         function updateTimerDisplay() {
             const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
             const secs = String(secondsElapsed % 60).padStart(2, '0');
-            document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+            const el = document.getElementById('timer-display');
+            if (el) el.innerText = `${mins}:${secs}`;
         }
 
         function showStatus(text, type) {
             const el = document.getElementById('status-display');
-            el.innerText = text;
-            el.className = "status-msg " + (type || "");
+            if (el) {
+                el.innerText = text;
+                el.className = "status-msg " + (type || "");
+            }
         }
     </script>
 </body>
