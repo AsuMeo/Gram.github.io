@@ -1,1121 +1,216 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-<title>Калькулятор</title>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Calculator</title>
+<!--
+  Статический клиент для GitHub Pages / Android-браузеров.
+  Требуется HTTPS (GitHub Pages предоставляет HTTPS).
+
+  ВАЖНО: HTML не может настроить Firebase Rules. Обязательно ограничьте Realtime Database:
+  - users/$uid: запись только auth.uid === $uid;
+  - chats/$chatId: чтение/создание только участниками chatId;
+  - запрет изменения senderId/recipientId/payload/header/signature после создания;
+  - удаление только участниками.
+
+  Криптография v3:
+  ECDH P-256 + ECDSA P-256, HKDF-SHA-256, AES-256-GCM,
+  симметричный ratchet на каждом сообщении и DH-ratchet каждые 20 сообщений,
+  подпись конверта, AAD, TOFU-пиннинг отпечатка, защита от replay/подмены.
+  Это самостоятельная браузерная реализация, а не прошедшая аудит библиотека Signal.
+-->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{width:100%;height:100%;overflow:hidden;background:#0e0e0e;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
-#app{width:100%;height:100%;}
-
-#calc-screen{display:flex;flex-direction:column;height:100%;background:#0e0e0e;}
-#calc-display{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;padding:20px 16px;gap:8px;}
-#calc-history{color:#888;font-size:18px;min-height:24px;word-break:break-all;}
-#calc-input{color:#fff;font-size:52px;font-weight:300;word-break:break-all;text-align:right;}
-#calc-pad{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#1a1a1a;padding:1px;}
-.calc-btn{height:72px;border:none;background:#1c1c1c;color:#fff;font-size:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .1s;}
-.calc-btn:active{background:#333;}
-.calc-btn.op{background:#ff9500;color:#fff;font-size:32px;}
-.calc-btn.op:active{background:#d48000;}
-.calc-btn.ac{background:#a5a5a5;color:#000;}
-.calc-btn.zero{grid-column:span 2;justify-content:flex-start;padding-left:28px;}
-
-#msg-screen{display:none;flex-direction:column;height:100%;background:#0e0e0e;}
-#msg-header{height:56px;display:flex;align-items:center;gap:12px;padding:0 12px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;flex-shrink:0;}
-#msg-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:#333;}
-#msg-info{flex:1;min-width:0;}
-#msg-name{color:#fff;font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#msg-status{color:#8e8e93;font-size:12px;}
-#msg-status.online{color:#34c759;}
-#msg-status.typing{color:#34c759;}
-#msg-back-btn,#msg-menu-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;cursor:pointer;}
-
-#msg-body{flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:4px;background:#0e0e0e;}
-.msg-row{display:flex;flex-direction:column;max-width:80%;margin:2px 0;}
-.msg-row.out{align-self:flex-end;align-items:flex-end;}
-.msg-row.in{align-self:flex-start;align-items:flex-start;}
-.msg-bubble{padding:8px 12px;border-radius:18px;font-size:15px;line-height:1.4;word-break:break-word;position:relative;}
-.msg-row.out .msg-bubble{background:#2b5278;color:#fff;border-bottom-right-radius:4px;}
-.msg-row.in .msg-bubble{background:#2c2c2e;color:#fff;border-bottom-left-radius:4px;}
-.msg-bubble img{max-width:220px;border-radius:12px;display:block;margin:4px 0;}
-.msg-bubble video{max-width:220px;border-radius:12px;display:block;margin:4px 0;}
-.msg-bubble .msg-voice{display:flex;align-items:center;gap:8px;padding:4px 0;}
-.msg-bubble .msg-voice span{font-size:13px;opacity:.7;}
-.msg-meta{display:flex;align-items:center;gap:4px;margin-top:2px;padding:0 4px;}
-.msg-time{font-size:11px;color:#8e8e93;}
-.msg-checks{font-size:11px;color:#8e8e93;}
-.msg-checks.read{color:#4fc3f7;}
-.msg-deleted{font-style:italic;color:#666;font-size:13px;}
-
-#msg-input-area{flex-shrink:0;padding:8px 12px 16px;background:#1a1a1a;border-top:1px solid #2a2a2a;display:flex;align-items:flex-end;gap:8px;}
-#msg-attach-btn,#msg-voice-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#8e8e93;cursor:pointer;flex-shrink:0;}
-#msg-input{flex:1;background:#2c2c2e;border:none;border-radius:20px;padding:10px 16px;color:#fff;font-size:15px;outline:none;max-height:120px;resize:none;font-family:inherit;}
-#msg-input::placeholder{color:#666;}
-#msg-send-btn{width:36px;height:36px;border-radius:50%;background:#2b5278;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
-#msg-send-btn svg{width:20px;height:20px;fill:#fff;}
-
-#chats-screen{display:none;flex-direction:column;height:100%;background:#0e0e0e;}
-#chats-header{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;flex-shrink:0;}
-#chats-title{color:#fff;font-size:17px;font-weight:600;}
-#chats-menu-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;}
-#chats-list{flex:1;overflow-y:auto;}
-.chat-item{display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;border-bottom:1px solid #1a1a1a;}
-.chat-item:active{background:#1a1a1a;}
-.chat-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#333;flex-shrink:0;}
-.chat-info{flex:1;min-width:0;}
-.chat-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
-.chat-name{color:#fff;font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.chat-time{color:#8e8e93;font-size:12px;flex-shrink:0;}
-.chat-bottom{display:flex;justify-content:space-between;align-items:center;gap:8px;}
-.chat-preview{color:#8e8e93;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.chat-unread{min-width:20px;height:20px;border-radius:10px;background:#2b5278;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;padding:0 6px;flex-shrink:0;}
-.chat-status{color:#34c759;font-size:11px;flex-shrink:0;}
-.chat-typing{color:#34c759;font-size:12px;}
-
-#auth-screen{display:none;flex-direction:column;align-items:center;justify-content:center;height:100%;background:#0e0e0e;padding:24px;gap:16px;}
-#auth-screen h2{color:#fff;font-size:24px;font-weight:600;margin-bottom:8px;}
-.auth-input{width:100%;max-width:320px;background:#1c1c1c;border:1px solid #2a2a2a;border-radius:12px;padding:14px 16px;color:#fff;font-size:16px;outline:none;}
-.auth-input:focus{border-color:#2b5278;}
-.auth-btn{width:100%;max-width:320px;background:#2b5278;border:none;border-radius:12px;padding:14px;color:#fff;font-size:16px;font-weight:500;cursor:pointer;}
-.auth-btn:active{background:#1e3a5f;}
-.auth-link{color:#2b5278;font-size:14px;cursor:pointer;text-align:center;}
-
-#menu-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;}
-#menu-panel{position:fixed;right:0;top:0;bottom:0;width:260px;background:#1a1a1a;z-index:101;transform:translateX(100%);transition:transform .2s;}
-#menu-panel.open{transform:translateX(0);}
-.menu-header{padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #2a2a2a;}
-.menu-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#333;}
-.menu-name{color:#fff;font-size:16px;font-weight:500;}
-.menu-email{color:#8e8e93;font-size:13px;}
-.menu-item{padding:14px 16px;color:#fff;font-size:15px;display:flex;align-items:center;gap:12px;cursor:pointer;}
-.menu-item:active{background:#2a2a2a;}
-.menu-item svg{width:22px;height:22px;fill:#8e8e93;}
-
-#profile-screen{display:none;flex-direction:column;height:100%;background:#0e0e0e;}
-#profile-header{height:56px;display:flex;align-items:center;gap:12px;padding:0 12px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;flex-shrink:0;}
-#profile-back-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;cursor:pointer;}
-#profile-title{color:#fff;font-size:17px;font-weight:600;flex:1;}
-#profile-body{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;align-items:center;gap:16px;}
-#profile-avatar-preview{width:120px;height:120px;border-radius:50%;object-fit:cover;background:#333;cursor:pointer;border:2px solid #2a2a2a;}
-#profile-name-input{width:100%;max-width:300px;background:#1c1c1c;border:1px solid #2a2a2a;border-radius:12px;padding:12px 16px;color:#fff;font-size:16px;outline:none;text-align:center;}
-#profile-save-btn{width:100%;max-width:300px;background:#2b5278;border:none;border-radius:12px;padding:12px;color:#fff;font-size:16px;cursor:pointer;}
-
-#add-contact-screen{display:none;flex-direction:column;height:100%;background:#0e0e0e;}
-#add-contact-header{height:56px;display:flex;align-items:center;gap:12px;padding:0 12px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;flex-shrink:0;}
-#add-contact-back-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;cursor:pointer;}
-#add-contact-body{flex:1;padding:24px;display:flex;flex-direction:column;gap:16px;align-items:center;}
-#add-contact-input{width:100%;max-width:320px;background:#1c1c1c;border:1px solid #2a2a2a;border-radius:12px;padding:14px 16px;color:#fff;font-size:16px;outline:none;}
-#add-contact-btn{width:100%;max-width:320px;background:#2b5278;border:none;border-radius:12px;padding:14px;color:#fff;font-size:16px;cursor:pointer;}
-
-#delete-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;padding:24px;}
-#delete-modal-box{background:#1a1a1a;border-radius:16px;padding:20px;width:100%;max-width:320px;}
-#delete-modal-title{color:#fff;font-size:17px;font-weight:600;margin-bottom:16px;}
-.delete-option{display:flex;align-items:center;gap:12px;padding:12px 0;color:#fff;font-size:15px;cursor:pointer;border-bottom:1px solid #2a2a2a;}
-.delete-option:last-child{border:none;}
-.delete-option input{width:20px;height:20px;accent-color:#2b5278;}
-#delete-modal-btns{display:flex;gap:8px;margin-top:16px;}
-.delete-modal-btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:15px;cursor:pointer;}
-.delete-modal-btn.cancel{background:#2c2c2e;color:#fff;}
-.delete-modal-btn.confirm{background:#ff3b30;color:#fff;}
-
-#voice-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:24px;}
-#voice-circle{width:80px;height:80px;border-radius:50%;background:#ff3b30;display:flex;align-items:center;justify-content:center;animation:pulse 1s infinite;}
-#voice-timer{color:#fff;font-size:24px;font-weight:300;}
-#voice-hint{color:#8e8e93;font-size:14px;}
-@keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.1);}100%{transform:scale(1);}}
-
-#splash{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:#0e0e0e;position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;transition:opacity .3s;}
-#splash-logo{width:80px;height:80px;border-radius:20px;background:#2b5278;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
-#splash-logo svg{width:48px;height:48px;fill:#fff;}
-#splash-text{color:#fff;font-size:20px;font-weight:600;}
-
-.msg-bubble .msg-circle{width:200px;height:200px;border-radius:50%;object-fit:cover;display:block;}
-
-::-webkit-scrollbar{width:4px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:#333;border-radius:2px;}
+:root{--black:#000;--dark:#0e0e10;--surface:#18181b;--elev:#242429;--accent:#8774e1;--accent2:#725ed1;--text:#fff;--secondary:#99999f;--border:#29292e;--danger:#ff453a;--ok:#34c759;--out:#231c38;--in:#18181b;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;height:100dvh;background:#000;color:#fff;overflow:hidden}button,input,textarea{font:inherit}.screen{display:none;position:fixed;inset:0;background:#000}.screen.active{display:flex}.selectable,input,textarea,.fingerprint{user-select:text;-webkit-user-select:text}
+/* calculator */
+#calc-screen{flex-direction:column;justify-content:flex-end;padding:calc(20px + env(safe-area-inset-top)) 16px calc(22px + env(safe-area-inset-bottom))}.calc-display{flex:1;display:flex;align-items:flex-end;justify-content:flex-end;padding:20px 10px;font-size:min(17vw,72px);font-weight:300;word-break:break-all}.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:460px;width:100%;margin:auto auto 0}.calc-btn{aspect-ratio:1;border:0;border-radius:50%;font-size:28px;color:#fff;background:#333}.calc-btn:active{opacity:.6}.fn{background:#a5a5a5;color:#000}.op{background:#ff9f0a}.zero{grid-column:span 2;aspect-ratio:auto;border-radius:99px;text-align:left;padding-left:28px}
+/* auth */
+#auth-screen{align-items:center;justify-content:center;padding:24px}.card{width:100%;max-width:390px;background:var(--surface);border:1px solid var(--border);border-radius:17px;padding:24px}.title{font-size:21px;font-weight:700;text-align:center;margin-bottom:18px}.tabs{display:flex;background:var(--dark);padding:3px;border-radius:9px;margin-bottom:18px}.tab{flex:1;text-align:center;padding:9px;border-radius:7px;color:var(--secondary)}.tab.active{background:var(--elev);color:#fff}.field{width:100%;background:var(--dark);border:1px solid var(--border);color:#fff;border-radius:11px;padding:14px 15px;margin-bottom:12px;outline:0}.field:focus{border-color:var(--accent)}.primary{width:100%;border:0;border-radius:11px;background:var(--accent);color:#fff;padding:14px;font-weight:700}.primary:active{background:var(--accent2)}.error{display:none;color:var(--danger);font-size:13px;margin-top:12px;text-align:center;white-space:pre-wrap}.hint{color:var(--secondary);font-size:12px;line-height:1.45;margin-top:12px;text-align:center}
+/* app */
+#app-screen{flex-direction:row}.sidebar{width:100%;display:flex;flex-direction:column;background:var(--dark);border-right:1px solid var(--border)}.header{height:58px;min-height:58px;padding:0 13px;padding-top:env(safe-area-inset-top);display:flex;align-items:center;gap:8px;background:var(--surface);border-bottom:1px solid var(--border)}.header-title{font-size:18px;font-weight:700;flex:1}.actions{display:flex;gap:5px}.icon{width:39px;height:39px;border:0;border-radius:50%;background:none;color:var(--secondary);display:grid;place-items:center}.icon:active{background:var(--elev);color:#fff}.icon svg{width:22px;height:22px;fill:currentColor}.list{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}.chat-item{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.035)}.chat-item:active,.chat-item.active{background:var(--surface)}.avatar{width:49px;height:49px;border-radius:50%;margin-right:12px;object-fit:cover;background:var(--elev);display:grid;place-items:center;color:var(--accent);font-weight:700;font-size:18px;overflow:hidden}.avatar img{width:100%;height:100%;object-fit:cover}.avatar-wrap{position:relative}.dot{position:absolute;right:10px;bottom:1px;width:11px;height:11px;border:2px solid var(--dark);background:var(--ok);border-radius:50%}.chat-info{min-width:0;flex:1}.row{display:flex;justify-content:space-between;gap:8px}.name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.small{font-size:12px;color:var(--secondary)}.preview{font-size:14px;color:var(--secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}.typing{color:var(--accent)}
+/* chat */
+.chat-view{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;background:#000;transform:translateX(100%);transition:transform .22s ease}.chat-view.active{transform:translateX(0)}.chat-head-text{flex:1;min-width:0}.messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px;-webkit-overflow-scrolling:touch}.bubble{max-width:84%;padding:9px 12px;border-radius:16px;word-break:break-word;font-size:15px;line-height:1.42;white-space:pre-wrap}.out{align-self:flex-end;background:var(--out);border-bottom-right-radius:4px}.in{align-self:flex-start;background:var(--in);border-bottom-left-radius:4px}.bad{border:1px solid var(--danger);color:#ffaaa5}.meta{display:flex;justify-content:flex-end;gap:4px;color:var(--secondary);font-size:11px;margin-top:4px;white-space:nowrap}.media{display:block;max-width:min(68vw,260px);max-height:300px;border-radius:11px;background:var(--elev)}.circle{width:210px;height:210px;border-radius:50%;object-fit:cover}.audio{width:min(68vw,240px);height:42px}.inputbar{display:flex;align-items:center;gap:7px;padding:9px 10px calc(9px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--border)}.message-input{flex:1;min-height:42px;max-height:110px;resize:none;background:var(--dark);border:1px solid var(--border);border-radius:22px;color:#fff;padding:10px 15px;outline:0}.recording{display:none;flex:1;align-items:center;gap:9px;color:var(--danger)}.rec-dot{width:10px;height:10px;border-radius:50%;background:var(--danger);animation:pulse 1s infinite}@keyframes pulse{50%{opacity:.25}}
+/* modals */
+.modal{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.84);align-items:center;justify-content:center;padding:18px}.modal.active{display:flex}.modal-box{width:100%;max-width:370px;max-height:88dvh;overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:17px;padding:20px}.modal-title{font-size:19px;font-weight:700;margin-bottom:15px}.modal-btn{width:100%;border:0;border-radius:10px;background:var(--elev);color:#fff;padding:12px;margin-top:8px;text-align:left}.danger{color:var(--danger)}.security{font-size:13px;color:var(--secondary);line-height:1.5}.fingerprint{font-family:ui-monospace,monospace;color:#fff;background:var(--dark);padding:10px;border-radius:8px;word-break:break-all;margin:7px 0 13px}.hidden{display:none!important}
+@media(min-width:768px){.sidebar{width:360px;min-width:360px}.chat-view{position:relative;flex:1;transform:none!important}.back{display:none}}
 </style>
 </head>
 <body>
-<div id="app">
+<section id="calc-screen" class="screen active">
+ <div id="calc-display" class="calc-display">0</div>
+ <div class="calc-grid">
+  <button class="calc-btn fn" data-c="C">AC</button><button class="calc-btn fn" data-c="+/-">±</button><button class="calc-btn fn" data-c="%">%</button><button class="calc-btn op" data-c="/">÷</button>
+  <button class="calc-btn" data-c="7">7</button><button class="calc-btn" data-c="8">8</button><button class="calc-btn" data-c="9">9</button><button class="calc-btn op" data-c="*">×</button>
+  <button class="calc-btn" data-c="4">4</button><button class="calc-btn" data-c="5">5</button><button class="calc-btn" data-c="6">6</button><button class="calc-btn op" data-c="-">−</button>
+  <button class="calc-btn" data-c="1">1</button><button class="calc-btn" data-c="2">2</button><button class="calc-btn" data-c="3">3</button><button class="calc-btn op" data-c="+">+</button>
+  <button class="calc-btn zero" data-c="0">0</button><button class="calc-btn" data-c=".">,</button><button class="calc-btn op" data-c="=">=</button>
+ </div>
+</section>
 
-<div id="splash">
-<div id="splash-logo"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div>
-<div id="splash-text">Messenger</div>
-</div>
+<section id="auth-screen" class="screen">
+ <div class="card">
+  <div class="title">Вход в мессенджер</div>
+  <div class="tabs"><div id="tab-login" class="tab active">Вход</div><div id="tab-register" class="tab">Регистрация</div></div>
+  <input id="auth-name" class="field hidden" autocomplete="nickname" placeholder="Имя пользователя">
+  <input id="auth-email" class="field" type="email" autocomplete="email" placeholder="Email">
+  <input id="auth-password" class="field" type="password" autocomplete="current-password" placeholder="Пароль (минимум 6 символов)">
+  <button id="auth-submit" class="primary">Войти</button>
+  <div id="auth-error" class="error"></div>
+  <div class="hint">Ключи шифрования создаются на этом устройстве и не отправляются в Firebase. При очистке данных браузера потребуется новый ключ устройства.</div>
+ </div>
+</section>
 
-<div id="calc-screen">
-<div id="calc-display">
-<div id="calc-history"></div>
-<div id="calc-input">0</div>
-</div>
-<div id="calc-pad">
-<button class="calc-btn ac" onclick="calcClear()">AC</button>
-<button class="calc-btn" onclick="calcOp('+/-')">+/-</button>
-<button class="calc-btn" onclick="calcOp('%')">%</button>
-<button class="calc-btn op" onclick="calcOp('/')">&divide;</button>
-<button class="calc-btn" onclick="calcNum('7')">7</button>
-<button class="calc-btn" onclick="calcNum('8')">8</button>
-<button class="calc-btn" onclick="calcNum('9')">9</button>
-<button class="calc-btn op" onclick="calcOp('*')">&times;</button>
-<button class="calc-btn" onclick="calcNum('4')">4</button>
-<button class="calc-btn" onclick="calcNum('5')">5</button>
-<button class="calc-btn" onclick="calcNum('6')">6</button>
-<button class="calc-btn op" onclick="calcOp('-')">&minus;</button>
-<button class="calc-btn" onclick="calcNum('1')">1</button>
-<button class="calc-btn" onclick="calcNum('2')">2</button>
-<button class="calc-btn" onclick="calcNum('3')">3</button>
-<button class="calc-btn op" onclick="calcOp('+')">+</button>
-<button class="calc-btn zero" onclick="calcNum('0')">0</button>
-<button class="calc-btn" onclick="calcNum('.')">.</button>
-<button class="calc-btn op" onclick="calcEq()">=</button>
-</div>
-</div>
+<section id="app-screen" class="screen">
+ <aside class="sidebar">
+  <header class="header"><div class="header-title">Сообщения</div><div class="actions">
+   <button id="profile-btn" class="icon" aria-label="Профиль"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.42 0-8 2-8 4.5V21h16v-2.5C20 16 16.42 14 12 14z"/></svg></button>
+   <button id="lock-btn" class="icon" aria-label="Закрыть"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-6 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3-9H9V6a3 3 0 0 1 6 0v2z"/></svg></button>
+  </div></header>
+  <div id="chat-list" class="list"></div>
+ </aside>
+ <main id="chat-view" class="chat-view">
+  <header class="header">
+   <button id="back-btn" class="icon back"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.42-1.41L7.83 13H20z"/></svg></button>
+   <div id="peer-info-btn" class="chat-head-text"><div id="chat-title" class="name">Выберите чат</div><div id="chat-status" class="small">E2EE</div></div>
+   <button id="attach-btn" class="icon"><svg viewBox="0 0 24 24"><path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6z"/></svg></button>
+  </header>
+  <div id="messages" class="messages"></div>
+  <div class="inputbar">
+   <div id="recording" class="recording"><span class="rec-dot"></span><span id="rec-time">00:00</span><span>Нажмите отправить</span></div>
+   <textarea id="message-input" class="message-input" rows="1" placeholder="Сообщение..."></textarea>
+   <button id="send-btn" class="icon" style="color:var(--accent)"><svg viewBox="0 0 24 24"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+  </div>
+ </main>
+</section>
 
-<div id="auth-screen">
-<h2 id="auth-title">Вход</h2>
-<input type="email" id="auth-email" class="auth-input" placeholder="Email">
-<input type="password" id="auth-pass" class="auth-input" placeholder="Пароль">
-<button class="auth-btn" onclick="authSubmit()" id="auth-btn">Войти</button>
-<div class="auth-link" id="auth-toggle" onclick="toggleAuth()">Нет аккаунта? Зарегистрироваться</div>
-</div>
-
-<div id="chats-screen">
-<div id="chats-header">
-<div id="chats-title">Сообщения</div>
-<div id="chats-menu-btn" onclick="openMenu()">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-</div>
-</div>
-<div id="chats-list"></div>
-</div>
-
-<div id="msg-screen">
-<div id="msg-header">
-<div id="msg-back-btn" onclick="showChats()">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-</div>
-<img id="msg-avatar" src="" alt="">
-<div id="msg-info">
-<div id="msg-name"></div>
-<div id="msg-status"></div>
-</div>
-<div id="msg-menu-btn" onclick="openChatMenu()">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-</div>
-</div>
-<div id="msg-body"></div>
-<div id="msg-input-area">
-<div id="msg-attach-btn" onclick="pickFile()">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
-</div>
-<textarea id="msg-input" rows="1" placeholder="Сообщение..." oninput="onTyping()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendText();}"></textarea>
-<div id="msg-voice-btn" onpointerdown="startVoiceRecord()" onpointerup="stopVoiceRecord()">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
-</div>
-<div id="msg-send-btn" onclick="sendText()">
-<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-</div>
-</div>
-</div>
-
-<div id="menu-overlay" onclick="closeMenu()"></div>
-<div id="menu-panel">
-<div class="menu-header">
-<img class="menu-avatar" id="menu-avatar" src="" alt="">
-<div>
-<div class="menu-name" id="menu-name"></div>
-<div class="menu-email" id="menu-email"></div>
-</div>
-</div>
-<div class="menu-item" onclick="showProfile()">
-<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-Профиль
-</div>
-<div class="menu-item" onclick="showAddContact()">
-<svg viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-Добавить контакт
-</div>
-<div class="menu-item" onclick="logout()">
-<svg viewBox="0 0 24 24"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-Выйти
-</div>
-</div>
-
-<div id="profile-screen">
-<div id="profile-header">
-<div id="profile-back-btn" onclick="showChats()">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-</div>
-<div id="profile-title">Профиль</div>
-</div>
-<div id="profile-body">
-<img id="profile-avatar-preview" src="" alt="" onclick="pickAvatar()">
-<input type="text" id="profile-name-input" placeholder="Ваше имя">
-<button id="profile-save-btn" onclick="saveProfile()">Сохранить</button>
-</div>
-</div>
-
-<div id="add-contact-screen">
-<div id="add-contact-header">
-<div id="add-contact-back-btn" onclick="showChats()">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-</div>
-<div id="profile-title">Новый диалог</div>
-</div>
-<div id="add-contact-body">
-<input type="email" id="add-contact-input" placeholder="Email собеседника">
-<button id="add-contact-btn" onclick="addContact()">Начать диалог</button>
-</div>
-</div>
-
-<div id="delete-modal" onclick="if(event.target===this)closeDeleteModal()">
-<div id="delete-modal-box">
-<div id="delete-modal-title">Удалить сообщение?</div>
-<div class="delete-option" onclick="document.getElementById('del-both').checked=!document.getElementById('del-both').checked">
-<input type="checkbox" id="del-both">
-<span>Удалить у всех</span>
-</div>
-<div id="delete-modal-btns">
-<button class="delete-modal-btn cancel" onclick="closeDeleteModal()">Отмена</button>
-<button class="delete-modal-btn confirm" onclick="confirmDelete()">Удалить</button>
-</div>
-</div>
-</div>
-
-<div id="voice-overlay">
-<div id="voice-circle">
-<svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/></svg>
-</div>
-<div id="voice-timer">0:00</div>
-<div id="voice-hint">Отпустите для отправки</div>
-</div>
-
-<input type="file" id="file-input" accept="image/*,video/*" style="display:none" onchange="onFileSelected(event)">
-<input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="onAvatarSelected(event)">
-
-</div>
+<div id="attach-modal" class="modal"><div class="modal-box"><div class="modal-title">Отправить медиа</div>
+ <button class="modal-btn" data-file="image/*">🖼️ Фотография</button><button class="modal-btn" data-file="video/*">🎬 Видео</button><button id="audio-btn" class="modal-btn">🎤 Голосовое сообщение</button><button id="circle-btn" class="modal-btn">⭕ Видеосообщение</button><button class="modal-btn" data-close>Отмена</button>
+</div></div>
+<div id="profile-modal" class="modal"><div class="modal-box"><div class="modal-title">Мой профиль</div>
+ <input id="profile-name" class="field" placeholder="Имя пользователя"><button id="avatar-btn" class="modal-btn">Изменить фото</button><button id="profile-save" class="primary" style="margin-top:12px">Сохранить</button>
+ <div class="security" style="margin-top:18px">Мой отпечаток ключа подписи:</div><div id="my-fp" class="fingerprint">—</div><button id="logout-btn" class="modal-btn danger">Выйти</button><button class="modal-btn" data-close>Закрыть</button>
+</div></div>
+<div id="security-modal" class="modal"><div class="modal-box"><div class="modal-title">Безопасность чата</div>
+ <div class="security">Сравните отпечаток с собеседником другим доверенным способом. Первый ключ закрепляется по TOFU. Изменение закреплённого ключа блокирует расшифровку и отправку.</div><div id="peer-fp" class="fingerprint">—</div>
+ <button id="reset-session" class="modal-btn danger">Сбросить доверие и сессию</button><button class="modal-btn" data-close>Закрыть</button>
+</div></div>
+<div id="delete-modal" class="modal"><div class="modal-box"><div class="modal-title">Удалить сообщение?</div><button id="delete-confirm" class="modal-btn danger">Удалить у обоих</button><button class="modal-btn" data-close>Отмена</button></div></div>
+<input id="file-input" type="file" hidden><input id="avatar-input" type="file" accept="image/*" hidden>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBm0mIvHVznIeF2PoFk6dtdaiT5r877wyA",
-  authDomain: "meow-874ce.firebaseapp.com",
-  databaseURL: "https://meow-874ce-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meow-874ce",
-  storageBucket: "meow-874ce.firebasestorage.app",
-  messagingSenderId: "471541334599",
-  appId: "1:471541334599:web:567af3e7dbe70a37572762"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
+'use strict';
+/* Firebase */
+const firebaseConfig={apiKey:"AIzaSyBm0mIvHVznIeF2PoFk6dtdaiT5r877wyA",authDomain:"meow-874ce.firebaseapp.com",databaseURL:"https://meow-874ce-default-rtdb.europe-west1.firebasedatabase.app",projectId:"meow-874ce",storageBucket:"meow-874ce.firebasestorage.app",messagingSenderId:"471541334599",appId:"1:471541334599:web:567af3e7dbe70a37572762"};
+firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.database();
 
-let currentUser = null;
-let currentChatId = null;
-let currentChatPartner = null;
-let currentScreen = 'calc';
-let typingTimer = null;
-let isTyping = false;
-let deleteMsgId = null;
-let voiceRecorder = null;
-let voiceChunks = [];
-let voiceTimer = null;
-let voiceSeconds = 0;
-let typingListeners = {};
-let onlineListeners = {};
-let msgListeners = {};
-let chatsListener = null;
-let lastActivity = Date.now();
-let activityTimer = null;
-let chatProfiles = {};
+/* State */
+let me=null,peerUid=null,peerData=null,authMode='login',calcBuffer='',localKeys=null,currentChatRef=null,peerRef=null,typingTimer=null,inactivityTimer=null,recorder=null,recStream=null,recTimer=null,recStarted=0,deleteId=null;
+const plainCache=new Map(),peerCryptoCache=new Map();
+const ROTATE_EVERY=20,MAX_SKIP=100,PROTOCOL=3,TEN_MIN=600000,MAX_FILE=3*1024*1024;
+const $=id=>document.getElementById(id);
+function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active')}
+function modal(id,on=true){$(id).classList.toggle('active',on)}
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function time(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
+function chatId(a,b){return a<b?`${a}_${b}`:`${b}_${a}`}
 
-const CRYPTO = {
-  async genKeyPair() {
-    return await window.crypto.subtle.generateKey(
-      { name: 'ECDH', namedCurve: 'P-384' },
-      true, ['deriveKey']
-    );
-  },
-  async exportPub(key) {
-    const buf = await window.crypto.subtle.exportKey('spki', key);
-    return btoa(String.fromCharCode(...new Uint8Array(buf)));
-  },
-  async importPub(b64) {
-    const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    return await window.crypto.subtle.importKey('spki', buf, { name: 'ECDH', namedCurve: 'P-384' }, false, []);
-  },
-  async deriveShared(priv, pub) {
-    return await window.crypto.subtle.deriveKey(
-      { name: 'ECDH', public: pub },
-      priv,
-      { name: 'AES-GCM', length: 256 },
-      false, ['encrypt', 'decrypt']
-    );
-  },
-  async encrypt(data, key) {
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-    const enc = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
-    const combined = new Uint8Array(iv.length + enc.byteLength);
-    combined.set(iv);
-    combined.set(new Uint8Array(enc), iv.length);
-    return btoa(String.fromCharCode(...combined));
-  },
-  async decrypt(b64, key) {
-    const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    const iv = buf.slice(0, 12);
-    const data = buf.slice(12);
-    return await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
-  },
-  async genRatchetKey() {
-    return await window.crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
-  },
-  async exportKey(key) {
-    const buf = await window.crypto.subtle.exportKey('raw', key);
-    return btoa(String.fromCharCode(...new Uint8Array(buf)));
-  },
-  async importKey(b64) {
-    const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    return await window.crypto.subtle.importKey('raw', buf, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
-  },
-  async hash(data) {
-    const buf = new TextEncoder().encode(data);
-    const hash = await window.crypto.subtle.digest('SHA-256', buf);
-    return btoa(String.fromCharCode(...new Uint8Array(hash)));
-  }
-};
+/* IndexedDB: device keys, ratchet state, short-lived plaintext cache */
+let idbPromise;
+function openIDB(){if(idbPromise)return idbPromise;idbPromise=new Promise((resolve,reject)=>{const r=indexedDB.open('StealthRatchetV3',1);r.onupgradeneeded=()=>{const d=r.result;['keys','sessions','temp'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});return idbPromise}
+async function idbGet(store,id){const d=await openIDB();return new Promise((res,rej)=>{const r=d.transaction(store).objectStore(store).get(id);r.onsuccess=()=>res(r.result||null);r.onerror=()=>rej(r.error)})}
+async function idbPut(store,value){const d=await openIDB();return new Promise((res,rej)=>{const r=d.transaction(store,'readwrite').objectStore(store).put(value);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
+async function idbDel(store,id){const d=await openIDB();return new Promise((res,rej)=>{const r=d.transaction(store,'readwrite').objectStore(store).delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
+async function cachePlain(id,value){plainCache.set(id,value);await idbPut('temp',{id,value,ts:Date.now()})}
+async function getPlain(id){if(plainCache.has(id))return plainCache.get(id);const x=await idbGet('temp',id);if(x&&Date.now()-x.ts<TEN_MIN){plainCache.set(id,x.value);return x.value}return null}
+async function cleanTemp(){try{const d=await openIDB(),tx=d.transaction('temp','readwrite'),s=tx.objectStore('temp'),r=s.openCursor(),now=Date.now();r.onsuccess=()=>{const c=r.result;if(c){if(now-c.value.ts>TEN_MIN)c.delete();c.continue()}}}catch(e){}}
+setInterval(cleanTemp,60000);cleanTemp();
 
-const KEYS = {
-  async initKeys() {
-    const pair = await CRYPTO.genKeyPair();
-    const pub = await CRYPTO.exportPub(pair.publicKey);
-    localStorage.setItem('ec_pub', pub);
-    localStorage.setItem('ec_created', Date.now().toString());
-    await this.storePriv(pair.privateKey);
-    return pub;
-  },
-  async storePriv(key) {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open('msgKeys', 1);
-      req.onupgradeneeded = e => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains('keys')) db.createObjectStore('keys');
-      };
-      req.onsuccess = e => {
-        const idb = e.target.result;
-        const tx = idb.transaction('keys', 'readwrite');
-        const store = tx.objectStore('keys');
-        store.put(key, 'ec_private');
-        tx.oncomplete = resolve;
-      };
-      req.onerror = reject;
-    });
-  },
-  async getPriv() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open('msgKeys', 1);
-      req.onsuccess = e => {
-        const idb = e.target.result;
-        const tx = idb.transaction('keys', 'readonly');
-        const store = tx.objectStore('keys');
-        const getReq = store.get('ec_private');
-        getReq.onsuccess = () => resolve(getReq.result);
-        getReq.onerror = reject;
-      };
-      req.onerror = reject;
-    });
-  },
-  async getPub() {
-    return localStorage.getItem('ec_pub');
-  },
-  async getChatKey(chatId) {
-    const raw = localStorage.getItem('chat_key_' + chatId);
-    if (!raw) return null;
-    return await CRYPTO.importKey(raw);
-  },
-  async setChatKey(chatId, key) {
-    const exported = await CRYPTO.exportKey(key);
-    localStorage.setItem('chat_key_' + chatId, exported);
-    localStorage.setItem('chat_key_time_' + chatId, Date.now().toString());
-  },
-  async rotateChatKey(chatId) {
-    const newKey = await CRYPTO.genRatchetKey();
-    await this.setChatKey(chatId, newKey);
-    return newKey;
-  },
-  async getProfileKey() {
-    const raw = localStorage.getItem('profile_key');
-    if (!raw) {
-      const key = await CRYPTO.genRatchetKey();
-      const exported = await CRYPTO.exportKey(key);
-      localStorage.setItem('profile_key', exported);
-      localStorage.setItem('profile_key_time', Date.now().toString());
-      return key;
-    }
-    return await CRYPTO.importKey(raw);
-  },
-  async checkExpiry() {
-    const created = parseInt(localStorage.getItem('ec_created') || '0');
-    if (Date.now() - created > 24 * 3600 * 1000) return false;
-    const pkTime = parseInt(localStorage.getItem('profile_key_time') || '0');
-    if (Date.now() - pkTime > 7 * 24 * 3600 * 1000) {
-      localStorage.removeItem('profile_key');
-      localStorage.removeItem('profile_key_time');
-    }
-    return true;
-  },
-  async deriveChatKey(chatId, partnerPubB64) {
-    const myPriv = await this.getPriv();
-    if (!myPriv) return null;
-    const partnerPub = await CRYPTO.importPub(partnerPubB64);
-    const shared = await CRYPTO.deriveShared(myPriv, partnerPub);
-    const hash = await CRYPTO.hash(chatId + await CRYPTO.exportKey(shared));
-    const seed = Uint8Array.from(atob(hash), c => c.charCodeAt(0)).slice(0, 32);
-    const chatKey = await window.crypto.subtle.importKey('raw', seed, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
-    await this.setChatKey(chatId, chatKey);
-    return chatKey;
-  }
-};
+/* Binary / canonical helpers */
+const te=new TextEncoder(),td=new TextDecoder();
+function b64(data){const u=data instanceof Uint8Array?data:new Uint8Array(data);let out='';for(let i=0;i<u.length;i+=0x8000)out+=String.fromCharCode(...u.subarray(i,i+0x8000));return btoa(out)}
+function unb64(s){const x=atob(s),u=new Uint8Array(x.length);for(let i=0;i<x.length;i++)u[i]=x.charCodeAt(i);return u}
+function concat(...arr){let n=arr.reduce((a,x)=>a+x.length,0),o=new Uint8Array(n),p=0;for(const x of arr){o.set(x,p);p+=x.length}return o}
+function stable(v){if(v===null||typeof v!=='object')return JSON.stringify(v);if(Array.isArray(v))return'['+v.map(stable).join(',')+']';return'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}'}
+async function sha(data){return new Uint8Array(await crypto.subtle.digest('SHA-256',typeof data==='string'?te.encode(data):data))}
+async function hmac(key,data){const k=await crypto.subtle.importKey('raw',key,{name:'HMAC',hash:'SHA-256'},false,['sign']);return new Uint8Array(await crypto.subtle.sign('HMAC',k,typeof data==='string'?te.encode(data):data))}
+async function hkdf(ikm,salt,info,len=32){const k=await crypto.subtle.importKey('raw',ikm,'HKDF',false,['deriveBits']);return new Uint8Array(await crypto.subtle.deriveBits({name:'HKDF',hash:'SHA-256',salt,info:te.encode(info)},k,len*8))}
+async function chainStep(ck){return{mk:await hmac(ck,'MESSAGE_KEY_V3'),next:await hmac(ck,'NEXT_CHAIN_V3')}}
+function fpFormat(x){return (x.match(/.{1,4}/g)||[]).join(' ')}
+async function fingerprint(jwk){return fpFormat(b64(await sha(stable(jwk))).replace(/[=+/]/g,'').toUpperCase().slice(0,48))}
 
-let calcExpr = '';
-let calcResult = '';
-function calcNum(n) {
-  if (calcResult) { calcExpr = calcResult === '0' ? '' : calcResult; calcResult = ''; }
-  if (n === '.' && calcExpr.includes('.')) return;
-  calcExpr += n;
-  updateCalc();
-  checkSecret();
-}
-function calcOp(op) {
-  if (calcResult) { calcExpr = calcResult; calcResult = ''; }
-  if (op === '+/-') {
-    if (calcExpr) {
-      if (calcExpr.startsWith('-')) calcExpr = calcExpr.slice(1);
-      else calcExpr = '-' + calcExpr;
-    }
-    updateCalc();
-    return;
-  }
-  if (op === '%') {
-    try { calcExpr = String(parseFloat(calcExpr || '0') / 100); } catch(e){}
-    updateCalc();
-    return;
-  }
-  if (!calcExpr) return;
-  const last = calcExpr.trim().slice(-1);
-  if ('+-*/'.includes(last)) calcExpr = calcExpr.slice(0, -1);
-  calcExpr += ' ' + op + ' ';
-  updateCalc();
-}
-function calcEq() {
-  if (!calcExpr) return;
-  try {
-    const clean = calcExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
-    calcResult = String(eval(clean) || '0');
-    document.getElementById('calc-history').textContent = calcExpr + ' =';
-    calcExpr = calcResult;
-    updateCalc();
-  } catch(e) {
-    calcResult = 'Error';
-    updateCalc();
-    setTimeout(() => { calcResult = ''; calcExpr = ''; updateCalc(); }, 1000);
-  }
-}
-function calcClear() {
-  calcExpr = ''; calcResult = '';
-  document.getElementById('calc-history').textContent = '';
-  updateCalc();
-}
-function updateCalc() {
-  const display = calcResult || calcExpr || '0';
-  document.getElementById('calc-input').textContent = display;
-}
-function checkSecret() {
-  if (calcExpr === '993') {
-    calcExpr = ''; calcResult = '';
-    document.getElementById('calc-history').textContent = '';
-    updateCalc();
-    showAuth();
-  }
-}
+/* Identity keys and signed static DH bundle */
+async function generateLocalKeys(uid){const sign=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);const dh=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);const signPriv=await crypto.subtle.exportKey('jwk',sign.privateKey),signPub=await crypto.subtle.exportKey('jwk',sign.publicKey),dhPriv=await crypto.subtle.exportKey('jwk',dh.privateKey),dhPub=await crypto.subtle.exportKey('jwk',dh.publicKey);const sig=b64(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},sign.privateKey,te.encode(stable(dhPub))));const obj={id:uid,signPriv,signPub,dhPriv,dhPub,dhSig:sig,createdAt:Date.now()};await idbPut('keys',obj);return obj}
+async function ensureLocalKeys(){let x=await idbGet('keys',me.uid);if(!x)x=await generateLocalKeys(me.uid);localKeys=x;await db.ref(`users/${me.uid}/crypto`).set({v:PROTOCOL,signPub:x.signPub,dhPub:x.dhPub,dhSig:x.dhSig,updatedAt:x.createdAt});$('my-fp').textContent=await fingerprint(x.signPub);return x}
+async function importSignPrivate(){return crypto.subtle.importKey('jwk',localKeys.signPriv,{name:'ECDSA',namedCurve:'P-256'},false,['sign'])}
+async function importDhPrivate(jwk=localKeys.dhPriv){return crypto.subtle.importKey('jwk',jwk,{name:'ECDH',namedCurve:'P-256'},false,['deriveBits'])}
+async function importDhPublic(jwk){return crypto.subtle.importKey('jwk',jwk,{name:'ECDH',namedCurve:'P-256'},false,[])}
+async function verifyPeerBundle(uid,force=false){if(!force&&peerCryptoCache.has(uid))return peerCryptoCache.get(uid);const snap=await db.ref(`users/${uid}/crypto`).once('value'),c=snap.val();if(!c||c.v!==PROTOCOL||!c.signPub||!c.dhPub||!c.dhSig)throw new Error('У собеседника нет совместимого ключа E2EE');const pub=await crypto.subtle.importKey('jwk',c.signPub,{name:'ECDSA',namedCurve:'P-256'},false,['verify']);const ok=await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},pub,unb64(c.dhSig),te.encode(stable(c.dhPub)));if(!ok)throw new Error('Подпись ключа собеседника недействительна');c.fingerprint=await fingerprint(c.signPub);peerCryptoCache.set(uid,c);return c}
+async function deriveDH(privJwk,pubJwk){const priv=await importDhPrivate(privJwk),pub=await importDhPublic(pubJwk);return new Uint8Array(await crypto.subtle.deriveBits({name:'ECDH',public:pub},priv,256))}
 
-function showScreen(id) {
-  ['calc-screen','auth-screen','chats-screen','msg-screen','profile-screen','add-contact-screen'].forEach(s => {
-    document.getElementById(s).style.display = s === id ? 'flex' : 'none';
-  });
-  currentScreen = id;
-}
-function showAuth() {
-  showScreen('auth-screen');
-  document.getElementById('auth-title').textContent = 'Вход';
-  document.getElementById('auth-btn').textContent = 'Войти';
-  document.getElementById('auth-toggle').textContent = 'Нет аккаунта? Зарегистрироваться';
-}
-function showChats() {
-  showScreen('chats-screen');
-  loadChats();
-}
-function showChat(chatId, partnerUid) {
-  currentChatId = chatId;
-  currentChatPartner = partnerUid;
-  showScreen('msg-screen');
-  loadChatInfo();
-  loadMessages();
-  markRead();
-}
-function showProfile() {
-  closeMenu();
-  showScreen('profile-screen');
-  loadProfileData();
-}
-function showAddContact() {
-  closeMenu();
-  showScreen('add-contact-screen');
-}
+/* Ratchet session. Each direction has an independent DH+KDF ratchet. */
+function sessionId(uid){return `${me.uid}:${uid}`}
+async function createSession(uid,pc){const shared=await deriveDH(localKeys.dhPriv,pc.dhPub),salt=await sha('StealthRatchetV3|'+chatId(me.uid,uid)),material=await hkdf(shared,salt,'INITIAL_ROOTS_AND_CHAINS',128);const low=me.uid<uid;const a={root:b64(material.slice(0,32)),ck:b64(material.slice(32,64))},z={root:b64(material.slice(64,96)),ck:b64(material.slice(96,128))};const s={id:sessionId(uid),peer:uid,peerFp:pc.fingerprint,send:low?a:z,recv:low?z:a,sendEpoch:0,recvEpoch:0,sendN:0,recvN:0,skipped:{},oldRecv:[],seen:{},createdAt:Date.now()};await idbPut('sessions',s);return s}
+async function getSession(uid){const pc=await verifyPeerBundle(uid,true);let s=await idbGet('sessions',sessionId(uid));if(s&&s.peerFp!==pc.fingerprint)throw new Error('КЛЮЧ СОБЕСЕДНИКА ИЗМЕНИЛСЯ. Сравните отпечаток и вручную сбросьте сессию.');if(!s)s=await createSession(uid,pc);return{s,pc}}
+async function rotateSend(s,pc){const eph=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']);const pub=await crypto.subtle.exportKey('jwk',eph.publicKey),remote=await importDhPublic(pc.dhPub),secret=new Uint8Array(await crypto.subtle.deriveBits({name:'ECDH',public:remote},eph.privateKey,256)),root=await hkdf(secret,unb64(s.send.root),'SEND_DH_RATCHET_V3',32),ck=await hkdf(root,new Uint8Array(32),'SEND_CHAIN_V3',32);s.send={root:b64(root),ck:b64(ck)};s.sendEpoch++;s.sendN=0;return pub}
+async function applyRecvRotation(s,header){if(header.epoch!==s.recvEpoch+1||!header.ratchetPub)throw new Error('Нарушена последовательность DH-ratchet');s.oldRecv.push({epoch:s.recvEpoch,root:s.recv.root,ck:s.recv.ck,n:s.recvN,skipped:s.skipped});if(s.oldRecv.length>2)s.oldRecv.shift();const secret=await deriveDH(localKeys.dhPriv,header.ratchetPub),root=await hkdf(secret,unb64(s.recv.root),'SEND_DH_RATCHET_V3',32),ck=await hkdf(root,new Uint8Array(32),'SEND_CHAIN_V3',32);s.recv={root:b64(root),ck:b64(ck)};s.recvEpoch=header.epoch;s.recvN=0;s.skipped={}}
+async function takeMessageKey(state,n,skipped){const k=String(n);if(skipped[k]){const mk=unb64(skipped[k]);delete skipped[k];return mk}if(n<state.n)throw new Error('Повтор сообщения или ключ уже удалён');if(n-state.n>MAX_SKIP)throw new Error('Слишком большой пропуск сообщений');let ck=unb64(state.ck);while(state.n<n){const q=await chainStep(ck);skipped[String(state.n)]=b64(q.mk);ck=q.next;state.n++}const q=await chainStep(ck);state.ck=b64(q.next);state.n++;return q.mk}
 
-let authMode = 'login';
-function toggleAuth() {
-  authMode = authMode === 'login' ? 'register' : 'login';
-  document.getElementById('auth-title').textContent = authMode === 'login' ? 'Вход' : 'Регистрация';
-  document.getElementById('auth-btn').textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться';
-  document.getElementById('auth-toggle').textContent = authMode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти';
-}
-async function authSubmit() {
-  const email = document.getElementById('auth-email').value.trim();
-  const pass = document.getElementById('auth-pass').value;
-  if (!email || !pass) return alert('Введите email и пароль');
-  try {
-    if (authMode === 'login') {
-      await auth.signInWithEmailAndPassword(email, pass);
-    } else {
-      await auth.createUserWithEmailAndPassword(email, pass);
-    }
-  } catch(e) {
-    alert(e.message);
-  }
-}
-function logout() {
-  closeMenu();
-  auth.signOut();
-  calcClear();
-  showScreen('calc-screen');
-}
+async function encryptEnvelope(type,text,uid,msgId,ts){const {s,pc}=await getSession(uid);let ratchetPub=null;if(s.sendN>=ROTATE_EVERY)ratchetPub=await rotateSend(s,pc);const n=s.sendN,step=await chainStep(unb64(s.send.ck));s.send.ck=b64(step.next);s.sendN++;const header={v:PROTOCOL,chatId:chatId(me.uid,uid),msgId,senderId:me.uid,recipientId:uid,type,timestamp:ts,epoch:s.sendEpoch,n,pn:0,ratchetPub};const iv=crypto.getRandomValues(new Uint8Array(12)),key=await crypto.subtle.importKey('raw',step.mk,'AES-GCM',false,['encrypt']),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:te.encode(stable(header)),tagLength:128},key,te.encode(text)),payload={iv:b64(iv),ct:b64(ct)},sigInput=te.encode(stable(header)+'|'+payload.iv+'|'+payload.ct),priv=await importSignPrivate(),signature=b64(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},priv,sigInput));await idbPut('sessions',s);return{header,payload,signature,read:false,createdAt:firebase.database.ServerValue.TIMESTAMP}}
+async function decryptEnvelope(id,msg,uid){const cached=await getPlain(id);if(cached!==null)return cached;if(!msg||!msg.header||!msg.payload||!msg.signature)throw new Error('Повреждённый или старый формат');const h=msg.header;if(h.v!==PROTOCOL||h.msgId!==id||h.chatId!==chatId(me.uid,uid)||h.senderId!==uid||h.recipientId!==me.uid)throw new Error('Подмена заголовка сообщения');const {s,pc}=await getSession(uid),pub=await crypto.subtle.importKey('jwk',pc.signPub,{name:'ECDSA',namedCurve:'P-256'},false,['verify']),sigInput=te.encode(stable(h)+'|'+msg.payload.iv+'|'+msg.payload.ct),valid=await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},pub,unb64(msg.signature),sigInput);if(!valid)throw new Error('Подпись сообщения недействительна');if(s.seen[id])throw new Error('Повторная доставка заблокирована');if(h.epoch>s.recvEpoch)await applyRecvRotation(s,h);let holder;if(h.epoch===s.recvEpoch)holder={obj:s.recv,get n(){return s.recvN},set n(v){s.recvN=v},skipped:s.skipped};else{const old=s.oldRecv.find(x=>x.epoch===h.epoch);if(!old)throw new Error('Ключ старой эпохи удалён');holder={obj:old,get n(){return old.n},set n(v){old.n=v},skipped:old.skipped}};const state={ck:holder.obj.ck,n:holder.n},mk=await takeMessageKey(state,h.n,holder.skipped);holder.obj.ck=state.ck;holder.n=state.n;const key=await crypto.subtle.importKey('raw',mk,'AES-GCM',false,['decrypt']),plain=td.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(msg.payload.iv),additionalData:te.encode(stable(h)),tagLength:128},key,unb64(msg.payload.ct)));s.seen[id]=Date.now();const ids=Object.keys(s.seen);if(ids.length>250)ids.sort((a,b)=>s.seen[a]-s.seen[b]).slice(0,50).forEach(x=>delete s.seen[x]);await idbPut('sessions',s);await cachePlain(id,plain);return plain}
 
-auth.onAuthStateChanged(async user => {
-  if (user) {
-    currentUser = user;
-    lastActivity = Date.now();
-    startActivityTimer();
-    const keysOk = await KEYS.checkExpiry();
-    if (!keysOk || !await KEYS.getPub()) {
-      const pub = await KEYS.initKeys();
-      await db.ref('users/' + user.uid + '/publicKey').set(pub);
-    } else {
-      const pub = await KEYS.getPub();
-      await db.ref('users/' + user.uid + '/publicKey').set(pub);
-    }
-    const conRef = db.ref('.info/connected');
-    conRef.on('value', snap => {
-      if (snap.val()) {
-        db.ref('users/' + user.uid + '/online').onDisconnect().set(false);
-        db.ref('users/' + user.uid + '/lastSeen').onDisconnect().set(Date.now());
-        db.ref('users/' + user.uid + '/online').set(true);
-        db.ref('users/' + user.uid + '/lastSeen').set(Date.now());
-      }
-    });
-    setInterval(() => {
-      if (currentUser) {
-        db.ref('users/' + currentUser.uid + '/lastSeen').set(Date.now());
-      }
-    }, 30000);
-    showChats();
-    setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display = 'none', 300); }, 800);
-  } else {
-    currentUser = null;
-    stopActivityTimer();
-    showScreen('calc-screen');
-  }
-});
+/* Calculator / lock */
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>calc(b.dataset.c));
+function calc(v){resetIdle();const d=$('calc-display');if(v==='C'){calcBuffer='';d.textContent='0';return}if(v==='='){if(calcBuffer==='993'){calcBuffer='';d.textContent='0';show(auth.currentUser?'app-screen':'auth-screen');return}try{if(!/^[0-9+\-*/.% ()]+$/.test(calcBuffer))throw 0;const result=Function('"use strict";return ('+calcBuffer+')')();d.textContent=Number.isFinite(result)?String(result):'Error';calcBuffer=d.textContent==='Error'?'':d.textContent}catch(e){d.textContent='Error';calcBuffer=''}return}if(v==='+/-'){if(calcBuffer)calcBuffer=calcBuffer.startsWith('-')?calcBuffer.slice(1):'-'+calcBuffer}else if(v==='%'){if(calcBuffer)calcBuffer=String(Number(calcBuffer)/100)}else calcBuffer+=(v==='. ' ? '.':v);d.textContent=calcBuffer||'0'}
+function lock(){show('calc-screen');$('calc-display').textContent='0';calcBuffer=''}
+function resetIdle(){clearTimeout(inactivityTimer);inactivityTimer=setTimeout(lock,120000)}
+['pointerdown','keydown','touchstart'].forEach(e=>addEventListener(e,resetIdle,{passive:true}));$('lock-btn').onclick=lock;
 
-function startActivityTimer() {
-  if (activityTimer) clearInterval(activityTimer);
-  activityTimer = setInterval(() => {
-    if (Date.now() - lastActivity > 2 * 60 * 1000) {
-      if (currentScreen !== 'calc-screen') {
-        auth.signOut();
-      }
-    }
-  }, 10000);
-}
-function stopActivityTimer() {
-  if (activityTimer) { clearInterval(activityTimer); activityTimer = null; }
-}
-function updateActivity() {
-  lastActivity = Date.now();
-  if (currentUser) {
-    db.ref('users/' + currentUser.uid + '/lastSeen').set(Date.now());
-    db.ref('users/' + currentUser.uid + '/online').set(true);
-  }
-}
-document.addEventListener('touchstart', updateActivity);
-document.addEventListener('click', updateActivity);
-document.addEventListener('input', updateActivity);
+/* Auth */
+function setAuthMode(m){authMode=m;$('tab-login').classList.toggle('active',m==='login');$('tab-register').classList.toggle('active',m==='register');$('auth-name').classList.toggle('hidden',m!=='register');$('auth-submit').textContent=m==='login'?'Войти':'Зарегистрироваться';$('auth-password').autocomplete=m==='login'?'current-password':'new-password';$('auth-error').style.display='none'}
+$('tab-login').onclick=()=>setAuthMode('login');$('tab-register').onclick=()=>setAuthMode('register');
+$('auth-submit').onclick=async()=>{const email=$('auth-email').value.trim(),pass=$('auth-password').value,name=$('auth-name').value.trim(),err=$('auth-error');err.style.display='none';try{if(authMode==='register'){if(name.length<2)throw new Error('Введите имя пользователя');const r=await auth.createUserWithEmailAndPassword(email,pass);await db.ref(`users/${r.user.uid}`).update({username:name,email,avatar:'',status:'online',lastSeen:Date.now()})}else await auth.signInWithEmailAndPassword(email,pass)}catch(e){err.textContent=e.message;err.style.display='block'}};
+auth.onAuthStateChanged(async user=>{if(!user){me=null;show('auth-screen');return}me=user;try{await ensureLocalKeys();presence();show('app-screen');loadUsers()}catch(e){alert('Ошибка инициализации шифрования: '+e.message);show('auth-screen')}});
+function presence(){const st=db.ref(`users/${me.uid}/status`),ls=db.ref(`users/${me.uid}/lastSeen`);db.ref('.info/connected').on('value',s=>{if(!s.val())return;st.onDisconnect().set('offline');ls.onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);st.set('online');ls.set(Date.now())})}
 
-async function loadProfileData() {
-  if (!currentUser) return;
-  const snap = await db.ref('users/' + currentUser.uid).once('value');
-  const data = snap.val() || {};
-  document.getElementById('profile-name-input').value = data.name || '';
-  document.getElementById('profile-avatar-preview').src = data.avatar || '';
-}
-function pickAvatar() {
-  document.getElementById('avatar-input').click();
-}
-async function onAvatarSelected(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async ev => {
-    const b64 = ev.target.result;
-    document.getElementById('profile-avatar-preview').src = b64;
-  };
-  reader.readAsDataURL(file);
-}
-async function saveProfile() {
-  if (!currentUser) return;
-  const name = document.getElementById('profile-name-input').value.trim();
-  const avatar = document.getElementById('profile-avatar-preview').src;
-  if (!name) return alert('Введите имя');
-  await db.ref('users/' + currentUser.uid).update({
-    name: name,
-    avatar: avatar,
-    email: currentUser.email
-  });
-  showChats();
-}
+/* Users and chat */
+function loadUsers(){db.ref('users').on('value',snap=>{const list=$('chat-list');list.innerHTML='';const users=snap.val()||{};Object.entries(users).forEach(([uid,u])=>{if(uid===me.uid)return;const el=document.createElement('div');el.className='chat-item'+(uid===peerUid?' active':'');const av=u.avatar?`<div class="avatar"><img src="${esc(u.avatar)}" alt=""></div>`:`<div class="avatar">${esc((u.username||'U')[0].toUpperCase())}</div>`;el.innerHTML=`<div class="avatar-wrap">${av}${u.status==='online'?'<i class="dot"></i>':''}</div><div class="chat-info"><div class="row"><div class="name">${esc(u.username||'Пользователь')}</div><div class="small">${time(u.lastSeen)}</div></div><div class="preview">${u.typingTo===me.uid?'<span class="typing">печатает…</span>':'🔒 Сквозное шифрование'}</div></div>`;el.onclick=()=>openChat(uid,u);list.appendChild(el)})})}
+async function openChat(uid,u){peerUid=uid;peerData=u;$('chat-title').textContent=u.username||'Пользователь';$('chat-view').classList.add('active');if(peerRef)peerRef.off();peerRef=db.ref(`users/${uid}`);peerRef.on('value',s=>{const x=s.val();if(!x)return;peerData=x;$('chat-title').textContent=x.username||'Пользователь';$('chat-status').textContent=x.typingTo===me.uid?'печатает…':x.status==='online'?'в сети':`был(а) ${time(x.lastSeen)}`;$('chat-status').style.color=x.typingTo===me.uid?'var(--accent)':x.status==='online'?'var(--ok)':'var(--secondary)'});try{const c=await verifyPeerBundle(uid,true);$('peer-fp').textContent=c.fingerprint}catch(e){$('peer-fp').textContent=e.message}listenMessages()}
+function closeChat(){if(currentChatRef)currentChatRef.off();if(peerRef)peerRef.off();peerUid=null;peerData=null;$('chat-view').classList.remove('active');$('messages').innerHTML=''}
+$('back-btn').onclick=closeChat;
+function listenMessages(){if(currentChatRef)currentChatRef.off();const uid=peerUid,cid=chatId(me.uid,uid),box=$('messages');box.innerHTML='';currentChatRef=db.ref(`chats/${cid}`);currentChatRef.on('value',async snap=>{if(uid!==peerUid)return;box.innerHTML='';const all=snap.val()||{},entries=Object.entries(all).sort((a,b)=>(a[1].header?.timestamp||0)-(b[1].header?.timestamp||0));for(const [id,msg] of entries){await renderMessage(id,msg,uid);if(msg.header?.recipientId===me.uid&&!msg.read)db.ref(`chats/${cid}/${id}`).update({read:true,readAt:firebase.database.ServerValue.TIMESTAMP}).catch(()=>{});if(msg.readAt&&Date.now()-msg.readAt>TEN_MIN)db.ref(`chats/${cid}/${id}`).remove().catch(()=>{})}box.scrollTop=box.scrollHeight})}
+async function renderMessage(id,msg,uid){const h=msg.header||{},out=h.senderId===me.uid,b=document.createElement('div');b.className='bubble '+(out?'out':'in');let text;try{if(out){text=await getPlain(id);if(text===null)throw new Error('Локальный ключ сообщения уже удалён')}else text=await decryptEnvelope(id,msg,uid);appendContent(b,h.type,text)}catch(e){b.classList.add('bad');b.textContent='⚠ '+e.message}const meta=document.createElement('div');meta.className='meta';meta.textContent=time(h.timestamp)+(out?' '+(msg.read?'✓✓':'✓'):'');b.appendChild(meta);b.oncontextmenu=e=>{e.preventDefault();deleteId=id;modal('delete-modal')};let hold;b.addEventListener('touchstart',()=>hold=setTimeout(()=>{deleteId=id;modal('delete-modal')},650),{passive:true});['touchend','touchmove'].forEach(x=>b.addEventListener(x,()=>clearTimeout(hold),{passive:true}));$('messages').appendChild(b)}
+function appendContent(b,type,text){if(type==='text'){const s=document.createElement('span');s.textContent=text;b.appendChild(s);return}if(type==='image'){const x=new Image();x.className='media';x.src=text;b.appendChild(x);return}if(type==='video'||type==='circle'){const x=document.createElement('video');x.className='media'+(type==='circle'?' circle':'');x.src=text;x.controls=type!=='circle';x.loop=type==='circle';x.playsInline=true;b.appendChild(x);return}if(type==='audio'){const x=document.createElement('audio');x.className='audio';x.src=text;x.controls=true;b.appendChild(x);return}throw new Error('Неизвестный тип сообщения')}
+async function send(type,text){if(!peerUid)return;const uid=peerUid,ref=db.ref(`chats/${chatId(me.uid,uid)}`).push(),id=ref.key,ts=Date.now();try{await cachePlain(id,text);const env=await encryptEnvelope(type,text,uid,id,ts);await ref.set(env)}catch(e){await idbDel('temp',id);plainCache.delete(id);alert('Не отправлено: '+e.message)}}
+$('send-btn').onclick=async()=>{if(recorder&&recorder.state==='recording'){recorder.stop();stopRecUI();return}const i=$('message-input'),t=i.value.trim();if(!t)return;i.value='';await send('text',t)};
+$('message-input').oninput=()=>{if(!peerUid)return;db.ref(`users/${me.uid}/typingTo`).set(peerUid);clearTimeout(typingTimer);typingTimer=setTimeout(()=>db.ref(`users/${me.uid}/typingTo`).remove(),1400)};
 
-function openMenu() {
-  if (!currentUser) return;
-  db.ref('users/' + currentUser.uid).once('value').then(snap => {
-    const data = snap.val() || {};
-    document.getElementById('menu-name').textContent = data.name || 'Пользователь';
-    document.getElementById('menu-email').textContent = currentUser.email;
-    document.getElementById('menu-avatar').src = data.avatar || '';
-  });
-  document.getElementById('menu-overlay').style.display = 'block';
-  setTimeout(() => document.getElementById('menu-panel').classList.add('open'), 10);
-}
-function closeMenu() {
-  document.getElementById('menu-panel').classList.remove('open');
-  setTimeout(() => document.getElementById('menu-overlay').style.display = 'none', 200);
-}
-function openChatMenu() {}
+/* Attachments and recording */
+$('attach-btn').onclick=()=>peerUid&&modal('attach-modal');document.querySelectorAll('[data-file]').forEach(b=>b.onclick=()=>{modal('attach-modal',false);$('file-input').accept=b.dataset.file;$('file-input').click()});
+$('file-input').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>MAX_FILE){alert('Файл слишком большой. Лимит 3 МБ из-за ограничения Firebase Realtime Database.');return}const data=await fileData(f),type=f.type.startsWith('image/')?'image':'video';await send(type,data)};
+function fileData(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(f)})}
+function supportedMime(video){const list=video?['video/webm;codecs=vp8,opus','video/webm','video/mp4']:['audio/webm;codecs=opus','audio/webm','audio/mp4'];return list.find(x=>window.MediaRecorder&&MediaRecorder.isTypeSupported(x))||''}
+async function startRecord(video){modal('attach-modal',false);try{recStream=await navigator.mediaDevices.getUserMedia(video?{video:{facingMode:'user',width:{ideal:480}},audio:true}:{audio:true});const mime=supportedMime(video),parts=[];recorder=new MediaRecorder(recStream,mime?{mimeType:mime}:undefined);recorder.ondataavailable=e=>{if(e.data.size)parts.push(e.data)};recorder.onstop=async()=>{const blob=new Blob(parts,{type:recorder.mimeType||mime});recStream.getTracks().forEach(t=>t.stop());recStream=null;recorder=null;if(blob.size>MAX_FILE){alert('Запись больше 3 МБ и не отправлена. Записывайте короче.');return}await send(video?'circle':'audio',await fileData(blob))};recorder.start(500);showRecUI()}catch(e){alert('Нет доступа к '+(video?'камере/микрофону':'микрофону')+'. Откройте сайт по HTTPS и разрешите доступ.')}}
+$('audio-btn').onclick=()=>startRecord(false);$('circle-btn').onclick=()=>startRecord(true);
+function showRecUI(){$('message-input').style.display='none';$('recording').style.display='flex';recStarted=Date.now();recTimer=setInterval(()=>{const n=Math.floor((Date.now()-recStarted)/1000);$('rec-time').textContent=String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');if(n>=45&&recorder?.state==='recording'){$('send-btn').click()}},500)}
+function stopRecUI(){clearInterval(recTimer);$('recording').style.display='none';$('message-input').style.display='block'}
 
-async function addContact() {
-  const email = document.getElementById('add-contact-input').value.trim().toLowerCase();
-  if (!email) return;
-  const snap = await db.ref('users').orderByChild('email').equalTo(email).once('value');
-  const users = snap.val();
-  if (!users) return alert('Пользователь не найден');
-  const partnerUid = Object.keys(users)[0];
-  if (partnerUid === currentUser.uid) return alert('Нельзя писать самому себе');
-  const chatId = [currentUser.uid, partnerUid].sort().join('_');
-  await db.ref('chats/' + currentUser.uid + '/' + chatId).set({ partner: partnerUid, created: Date.now() });
-  await db.ref('chats/' + partnerUid + '/' + chatId).set({ partner: currentUser.uid, created: Date.now() });
-  const myPub = await KEYS.getPub();
-  await db.ref('chat_keys/' + chatId + '/' + currentUser.uid).set(myPub);
-  document.getElementById('add-contact-input').value = '';
-  showChat(chatId, partnerUid);
-}
+/* Profile/security/delete */
+$('profile-btn').onclick=async()=>{const s=await db.ref(`users/${me.uid}`).once('value'),u=s.val()||{};$('profile-name').value=u.username||'';$('my-fp').textContent=await fingerprint(localKeys.signPub);modal('profile-modal')};
+$('profile-save').onclick=async()=>{const n=$('profile-name').value.trim();if(n)await db.ref(`users/${me.uid}/username`).set(n);modal('profile-modal',false)};
+$('avatar-btn').onclick=()=>$('avatar-input').click();$('avatar-input').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>400000){alert('Аватар должен быть меньше 400 КБ');return}await db.ref(`users/${me.uid}/avatar`).set(await fileData(f))};
+$('logout-btn').onclick=async()=>{modal('profile-modal',false);await auth.signOut()};
+$('peer-info-btn').onclick=()=>peerUid&&modal('security-modal');
+$('reset-session').onclick=async()=>{if(!peerUid)return;if(!confirm('Сбросить закреплённый ключ и историю ratchet? Делайте это только после проверки нового отпечатка.'))return;await idbDel('sessions',sessionId(peerUid));peerCryptoCache.delete(peerUid);plainCache.clear();modal('security-modal',false);alert('Сессия сброшена. Новая будет создана при следующем сообщении.')};
+$('delete-confirm').onclick=async()=>{if(deleteId&&peerUid)await db.ref(`chats/${chatId(me.uid,peerUid)}/${deleteId}`).remove();modal('delete-modal',false);deleteId=null};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>modal(b.closest('.modal').id,false));document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)modal(m.id,false)}));
 
-function loadChats() {
-  if (chatsListener) chatsListener.off();
-  if (!currentUser) return;
-  const list = document.getElementById('chats-list');
-  list.innerHTML = '';
-  chatsListener = db.ref('chats/' + currentUser.uid);
-  chatsListener.on('value', async snap => {
-    list.innerHTML = '';
-    const chats = snap.val() || {};
-    const chatIds = Object.keys(chats).sort((a, b) => (chats[b].lastMsgTime || 0) - (chats[a].lastMsgTime || 0));
-    for (const chatId of chatIds) {
-      const chatData = chats[chatId];
-      const partnerUid = chatData.partner;
-      let profile = chatProfiles[partnerUid];
-      if (!profile) {
-        const pSnap = await db.ref('users/' + partnerUid).once('value');
-        profile = pSnap.val() || { name: 'Пользователь', avatar: '' };
-        chatProfiles[partnerUid] = profile;
-      }
-      const msgSnap = await db.ref('messages/' + chatId).orderByKey().limitToLast(1).once('value');
-      const msgs = msgSnap.val() || {};
-      const lastMsg = Object.values(msgs)[0];
-      const unreadSnap = await db.ref('messages/' + chatId).orderByChild('read').equalTo(false).once('value');
-      const allMsgs = unreadSnap.val() || {};
-      let unreadCount = 0;
-      Object.values(allMsgs).forEach(m => { if (m.sender !== currentUser.uid && !m.read) unreadCount++; });
-      const onlineSnap = await db.ref('users/' + partnerUid + '/online').once('value');
-      const isOnline = onlineSnap.val();
-      const typingSnap = await db.ref('typing/' + chatId + '/' + partnerUid).once('value');
-      const isTypingNow = typingSnap.val();
-      let preview = '';
-      if (lastMsg) {
-        if (lastMsg.deleted) preview = 'Сообщение удалено';
-        else if (lastMsg.type === 'text') {
-          try {
-            const key = await KEYS.getChatKey(chatId);
-            if (key) {
-              const dec = await CRYPTO.decrypt(lastMsg.text, key);
-              preview = new TextDecoder().decode(dec);
-            } else preview = '...';
-          } catch(e) { preview = '...'; }
-        } else if (lastMsg.type === 'image') preview = 'Фото';
-        else if (lastMsg.type === 'video') preview = 'Видео';
-        else if (lastMsg.type === 'voice') preview = 'Голосовое';
-        else if (lastMsg.type === 'circle') preview = 'Кружочек';
-      }
-      const time = lastMsg ? formatTime(lastMsg.timestamp) : '';
-      const item = document.createElement('div');
-      item.className = 'chat-item';
-      item.onclick = () => showChat(chatId, partnerUid);
-      let statusHtml = '';
-      if (isTypingNow) statusHtml = '<div class="chat-typing">печатает...</div>';
-      else if (isOnline) statusHtml = '<div class="chat-status">в сети</div>';
-      item.innerHTML = '<img class="chat-avatar" src="' + (profile.avatar || '') + '" alt="" onerror="this.style.display=\'none\'">' +
-        '<div class="chat-info"><div class="chat-top"><div class="chat-name">' + escapeHtml(profile.name || 'Пользователь') + '</div>' +
-        '<div class="chat-time">' + time + '</div></div><div class="chat-bottom"><div class="chat-preview">' +
-        (lastMsg && lastMsg.sender === currentUser.uid ? 'Вы: ' : '') + escapeHtml(preview) + '</div>' +
-        (unreadCount > 0 ? '<div class="chat-unread">' + unreadCount + '</div>' : '') + statusHtml + '</div></div>';
-      list.appendChild(item);
-    }
-  });
-}
-
-async function loadChatInfo() {
-  if (!currentChatPartner) return;
-  const snap = await db.ref('users/' + currentChatPartner).once('value');
-  const data = snap.val() || {};
-  document.getElementById('msg-name').textContent = data.name || 'Пользователь';
-  document.getElementById('msg-avatar').src = data.avatar || '';
-  if (onlineListeners[currentChatId]) onlineListeners[currentChatId].off();
-  onlineListeners[currentChatId] = db.ref('users/' + currentChatPartner);
-  onlineListeners[currentChatId].on('value', snap => {
-    const d = snap.val() || {};
-    const statusEl = document.getElementById('msg-status');
-    if (d.online) {
-      statusEl.textContent = 'в сети';
-      statusEl.className = 'online';
-    } else {
-      const time = d.lastSeen ? formatTime(d.lastSeen) : '';
-      statusEl.textContent = time ? 'был(а) ' + time : 'не в сети';
-      statusEl.className = '';
-    }
-  });
-  if (typingListeners[currentChatId]) typingListeners[currentChatId].off();
-  typingListeners[currentChatId] = db.ref('typing/' + currentChatId + '/' + currentChatPartner);
-  typingListeners[currentChatId].on('value', snap => {
-    const statusEl = document.getElementById('msg-status');
-    if (snap.val()) {
-      statusEl.textContent = 'печатает...';
-      statusEl.className = 'typing';
-    }
-  });
-}
-
-async function loadMessages() {
-  if (!currentChatId) return;
-  const body = document.getElementById('msg-body');
-  body.innerHTML = '';
-  if (msgListeners[currentChatId]) msgListeners[currentChatId].off();
-  msgListeners[currentChatId] = db.ref('messages/' + currentChatId);
-  msgListeners[currentChatId].on('child_added', async snap => {
-    const msg = snap.val();
-    const msgId = snap.key;
-    await renderMessage(msgId, msg);
-    scrollToBottom();
-  });
-  msgListeners[currentChatId].on('child_changed', async snap => {
-    const msg = snap.val();
-    const msgId = snap.key;
-    const existing = document.querySelector('[data-msgid="' + msgId + '"]');
-    if (existing) {
-      existing.remove();
-      await renderMessage(msgId, msg);
-    }
-  });
-  msgListeners[currentChatId].on('child_removed', snap => {
-    const msgId = snap.key;
-    const existing = document.querySelector('[data-msgid="' + msgId + '"]');
-    if (existing) existing.remove();
-  });
-}
-
-async function renderMessage(msgId, msg) {
-  const body = document.getElementById('msg-body');
-  const isOut = msg.sender === currentUser.uid;
-  const row = document.createElement('div');
-  row.className = 'msg-row ' + (isOut ? 'out' : 'in');
-  row.setAttribute('data-msgid', msgId);
-  row.oncontextmenu = (e) => { e.preventDefault(); openDeleteModal(msgId); };
-  row.ontouchstart = (e) => {
-    let timer = setTimeout(() => { openDeleteModal(msgId); }, 600);
-    const clear = () => { clearTimeout(timer); document.removeEventListener('touchend', clear); };
-    document.addEventListener('touchend', clear);
-  };
-  let content = '';
-  if (msg.deleted) {
-    content = '<div class="msg-deleted">Сообщение удалено</div>';
-  } else {
-    const key = await KEYS.getChatKey(currentChatId);
-    if (msg.type === 'text') {
-      try {
-        if (key) {
-          const dec = await CRYPTO.decrypt(msg.text, key);
-          const text = new TextDecoder().decode(dec);
-          content = escapeHtml(text);
-        } else content = '[зашифровано]';
-      } catch(e) { content = '[ошибка расшифровки]'; }
-    } else if (msg.type === 'image') {
-      try {
-        if (key) {
-          const dec = await CRYPTO.decrypt(msg.text, key);
-          const b64 = new TextDecoder().decode(dec);
-          content = '<img src="' + b64 + '" alt="" onclick="this.requestFullscreen&&this.requestFullscreen()">';
-        } else content = '[зашифровано]';
-      } catch(e) { content = '[ошибка]'; }
-    } else if (msg.type === 'video') {
-      try {
-        if (key) {
-          const dec = await CRYPTO.decrypt(msg.text, key);
-          const b64 = new TextDecoder().decode(dec);
-          content = '<video src="' + b64 + '" controls preload="metadata" style="max-width:220px;border-radius:12px;"></video>';
-        } else content = '[зашифровано]';
-      } catch(e) { content = '[ошибка]'; }
-    } else if (msg.type === 'voice') {
-      try {
-        if (key) {
-          const dec = await CRYPTO.decrypt(msg.text, key);
-          const b64 = new TextDecoder().decode(dec);
-          const dur = msg.duration || 0;
-          const min = Math.floor(dur / 60);
-          const sec = String(dur % 60).padStart(2, '0');
-          content = '<div class="msg-voice"><audio src="' + b64 + '" controls style="max-width:180px;"></audio><span>' + min + ':' + sec + '</span></div>';
-        } else content = '[зашифровано]';
-      } catch(e) { content = '[ошибка]'; }
-    } else if (msg.type === 'circle') {
-      try {
-        if (key) {
-          const dec = await CRYPTO.decrypt(msg.text, key);
-          const b64 = new TextDecoder().decode(dec);
-          content = '<video src="' + b64 + '" controls preload="metadata" class="msg-circle"></video>';
-        } else content = '[зашифровано]';
-      } catch(e) { content = '[ошибка]'; }
-    }
-  }
-  const time = formatTime(msg.timestamp);
-  let checks = '';
-  if (isOut) {
-    checks = msg.read ? '<span class="msg-checks read">&#10003;&#10003;</span>' : '<span class="msg-checks">&#10003;</span>';
-  }
-  row.innerHTML = '<div class="msg-bubble">' + content + '</div><div class="msg-meta"><span class="msg-time">' + time + '</span>' + checks + '</div>';
-  body.appendChild(row);
-}
-
-function scrollToBottom() {
-  const body = document.getElementById('msg-body');
-  body.scrollTop = body.scrollHeight;
-}
-
-async function ensureChatKey() {
-  let key = await KEYS.getChatKey(currentChatId);
-  if (!key) {
-    const snap = await db.ref('chat_keys/' + currentChatId + '/' + currentChatPartner).once('value');
-    const partnerPub = snap.val();
-    if (partnerPub) {
-      key = await KEYS.deriveChatKey(currentChatId, partnerPub);
-    }
-  }
-  if (!key) {
-    key = await CRYPTO.genRatchetKey();
-    await KEYS.setChatKey(currentChatId, key);
-  }
-  return key;
-}
-
-async function sendText() {
-  const input = document.getElementById('msg-input');
-  const text = input.value.trim();
-  if (!text || !currentChatId || !currentUser) return;
-  input.value = '';
-  input.style.height = 'auto';
-  const key = await ensureChatKey();
-  const enc = await CRYPTO.encrypt(new TextEncoder().encode(text), key);
-  const newKey = await KEYS.rotateChatKey(currentChatId);
-  const msgRef = db.ref('messages/' + currentChatId).push();
-  await msgRef.set({
-    sender: currentUser.uid,
-    text: enc,
-    type: 'text',
-    timestamp: Date.now(),
-    read: false
-  });
-  await db.ref('chats/' + currentUser.uid + '/' + currentChatId).update({ lastMsgTime: Date.now() });
-  await db.ref('chats/' + currentChatPartner + '/' + currentChatId).update({ lastMsgTime: Date.now() });
-  startAutoDelete(msgRef.key);
-}
-
-async function sendMedia(type, b64, extra) {
-  if (!currentChatId || !currentUser) return;
-  const key = await ensureChatKey();
-  const enc = await CRYPTO.encrypt(new TextEncoder().encode(b64), key);
-  const newKey = await KEYS.rotateChatKey(currentChatId);
-  const data = {
-    sender: currentUser.uid,
-    text: enc,
-    type: type,
-    timestamp: Date.now(),
-    read: false
-  };
-  if (extra) Object.assign(data, extra);
-  const msgRef = db.ref('messages/' + currentChatId).push();
-  await msgRef.set(data);
-  await db.ref('chats/' + currentUser.uid + '/' + currentChatId).update({ lastMsgTime: Date.now() });
-  await db.ref('chats/' + currentChatPartner + '/' + currentChatId).update({ lastMsgTime: Date.now() });
-  startAutoDelete(msgRef.key);
-}
-
-function pickFile() {
-  document.getElementById('file-input').click();
-}
-async function onFileSelected(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async ev => {
-    const b64 = ev.target.result;
-    const type = file.type.startsWith('video') ? 'video' : 'image';
-    await sendMedia(type, b64);
-  };
-  reader.readAsDataURL(file);
-  e.target.value = '';
-}
-
-function onTyping() {
-  if (!currentChatId || !currentUser) return;
-  if (!isTyping) {
-    isTyping = true;
-    db.ref('typing/' + currentChatId + '/' + currentUser.uid).set(true);
-  }
-  clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => {
-    isTyping = false;
-    db.ref('typing/' + currentChatId + '/' + currentUser.uid).set(false);
-  }, 1500);
-}
-
-async function markRead() {
-  if (!currentChatId || !currentUser) return;
-  const snap = await db.ref('messages/' + currentChatId).orderByChild('read').equalTo(false).once('value');
-  const msgs = snap.val() || {};
-  for (const [id, msg] of Object.entries(msgs)) {
-    if (msg.sender !== currentUser.uid) {
-      await db.ref('messages/' + currentChatId + '/' + id + '/read').set(true);
-      if (!msg.senderDeleted) {
-        startAutoDelete(id);
-      }
-    }
-  }
-}
-
-function startAutoDelete(msgId) {
-  setTimeout(async () => {
-    const snap = await db.ref('messages/' + currentChatId + '/' + msgId).once('value');
-    const msg = snap.val();
-    if (msg && msg.read && !msg.deleted) {
-      await db.ref('messages/' + currentChatId + '/' + msgId).remove();
-    }
-  }, 10 * 60 * 1000);
-}
-
-function openDeleteModal(msgId) {
-  deleteMsgId = msgId;
-  document.getElementById('del-both').checked = false;
-  document.getElementById('delete-modal').style.display = 'flex';
-}
-function closeDeleteModal() {
-  document.getElementById('delete-modal').style.display = 'none';
-  deleteMsgId = null;
-}
-async function confirmDelete() {
-  if (!deleteMsgId || !currentChatId) { closeDeleteModal(); return; }
-  const both = document.getElementById('del-both').checked;
-  if (both) {
-    await db.ref('messages/' + currentChatId + '/' + deleteMsgId).remove();
-  } else {
-    await db.ref('messages/' + currentChatId + '/' + deleteMsgId + '/senderDeleted').set(true);
-    const existing = document.querySelector('[data-msgid="' + deleteMsgId + '"]');
-    if (existing) existing.remove();
-  }
-  closeDeleteModal();
-}
-
-async function startVoiceRecord() {
-  if (!navigator.mediaDevices) return;
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    voiceRecorder = new MediaRecorder(stream);
-    voiceChunks = [];
-    voiceRecorder.ondataavailable = e => { if (e.data.size > 0) voiceChunks.push(e.data); };
-    voiceRecorder.onstop = async () => {
-      const blob = new Blob(voiceChunks, { type: 'audio/webm' });
-      const reader = new FileReader();
-      reader.onload = async ev => {
-        await sendMedia('voice', ev.target.result, { duration: voiceSeconds });
-      };
-      reader.readAsDataURL(blob);
-      stream.getTracks().forEach(t => t.stop());
-    };
-    voiceRecorder.start();
-    voiceSeconds = 0;
-    document.getElementById('voice-overlay').style.display = 'flex';
-    voiceTimer = setInterval(() => {
-      voiceSeconds++;
-      const min = Math.floor(voiceSeconds / 60);
-      const sec = String(voiceSeconds % 60).padStart(2, '0');
-      document.getElementById('voice-timer').textContent = min + ':' + sec;
-    }, 1000);
-  } catch(e) { console.error(e); }
-}
-function stopVoiceRecord() {
-  if (voiceRecorder && voiceRecorder.state !== 'inactive') {
-    voiceRecorder.stop();
-  }
-  clearInterval(voiceTimer);
-  document.getElementById('voice-overlay').style.display = 'none';
-}
-
-function formatTime(ts) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  const h = String(d.getHours()).padStart(2, '0');
-  const m = String(d.getMinutes()).padStart(2, '0');
-  return h + ':' + m;
-}
-function escapeHtml(t) {
-  const d = document.createElement('div');
-  d.textContent = t;
-  return d.innerHTML;
-}
-
-window.onload = () => {
-  setTimeout(() => {
-    document.getElementById('splash').style.opacity = '0';
-    setTimeout(() => document.getElementById('splash').style.display = 'none', 300);
-  }, 1200);
-};
+/* Compatibility checks */
+if(!window.isSecureContext||!window.crypto?.subtle){alert('Для шифрования нужен современный браузер и HTTPS. Используйте GitHub Pages по адресу https://...')}
 </script>
 </body>
-</html>
+</htmбраузераузер
