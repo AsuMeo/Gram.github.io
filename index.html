@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://api.telegram.org; media-src 'self' data: blob: mediastream:; img-src 'self' data: blob:; connect-src 'self' https://api.telegram.org blob:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://api.telegram.org https://*.telegram.org; media-src 'self' data: blob: mediastream:; img-src 'self' data: blob:; connect-src 'self' https://api.telegram.org https://*.telegram.org blob: data:;">
     <title>Калькулятор ИМТ</title>
     <style>
         :root {
@@ -859,19 +859,8 @@
             btn.disabled = true;
             btn.innerText = "ПРОВЕРКА СВЯЗИ...";
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000);
-
             try {
-                const res = await fetch(`https://api.telegram.org/bot${tokenInput}/getMe?nocache=${Date.now()}`, {
-                    cache: 'no-store',
-                    keepalive: false,
-                    credentials: 'omit',
-                    headers: { 'Cache-Control': 'no-store' },
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-
+                const res = await fetch(`https://api.telegram.org/bot${tokenInput}/getMe?nocache=${Date.now()}`);
                 const data = await res.json();
 
                 if (data.ok) {
@@ -885,11 +874,10 @@
                     await initCamera();
                     showStatus("Умничка! Всё готово, записывай кружочки", "success");
                 } else {
-                    errDiv.innerText = "Неверный токен бота! Проверь данные.";
+                    errDiv.innerText = "Ошибка токена: " + (data.description || "Неверный токен бота");
                     errDiv.style.display = "block";
                 }
             } catch(e) {
-                clearTimeout(timeoutId);
                 errDiv.innerText = "Ошибка сети! Проверь интернет или включи ВПН";
                 errDiv.style.display = "block";
             } finally {
@@ -1076,40 +1064,27 @@
                 let videoBlob = new Blob(videoChunks, { type: mimeType });
                 let blobUrl = URL.createObjectURL(videoBlob);
 
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 25000);
-
                 try {
                     let formData = new FormData();
                     formData.append('chat_id', targetChatId);
                     formData.append('video_note', videoBlob, `video_note.${ext}`);
 
-                    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVideoNote?nocache=${Date.now()}`, {
+                    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVideoNote`, {
                         method: 'POST',
-                        body: formData,
-                        cache: 'no-store',
-                        keepalive: false,
-                        credentials: 'omit',
-                        headers: {
-                            'Cache-Control': 'no-store'
-                        },
-                        signal: controller.signal
+                        body: formData
                     });
-
-                    clearTimeout(timeoutId);
 
                     const data = await response.json();
 
                     if (data.ok) {
                         showStatus("Умничка! Кружочек успешно отправлен!", "success");
                     } else {
-                        showStatus("Ошибка отправки! Включи ВПН и попробуй снова", "error");
+                        showStatus(" Ошибка Telegram: " + (data.description || "Проверьте Chat ID или бот не запущен"), "error");
                     }
 
                     formData = null;
                 } catch (e) {
-                    clearTimeout(timeoutId);
-                    showStatus("Ошибка сети! Включи ВПН и попробуй снова", "error");
+                    showStatus(" Ошибка сети при отправке. Проверь ВПН/интернет", "error");
                 } finally {
                     cleanPerformanceEntries();
 
