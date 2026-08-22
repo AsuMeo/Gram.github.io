@@ -1,2573 +1,948 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#000000">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Tsuyu Messenger</title>
-  
-  <style>
-    :root {
-      --bg-dark: #000000;
-      --bg-surface: #0a0c10;
-      --bg-card: #12161f;
-      --bg-bubble-in: #161b26;
-      --bg-bubble-out: #1e2638;
-      --accent-green: #00e676;
-      --accent-pink: #ff2a6d;
-      --text-main: #f0f3f8;
-      --text-muted: #8a94a6;
-      --border-color: #1f2633;
-      --app-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      --app-font-size: 15px;
-      --app-font-style: normal;
-      --app-font-weight: 400;
-      --safe-area-top: env(safe-area-inset-top, 0px);
-      --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-
-    body, html {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: var(--bg-dark);
-      color: var(--text-main);
-      font-family: var(--app-font-family);
-      font-size: var(--app-font-size);
-      font-style: var(--app-font-style);
-      font-weight: var(--app-font-weight);
-    }
-
-    input, textarea, button, select {
-      font-family: inherit;
-      font-size: inherit;
-      color: inherit;
-      outline: none;
-      border: none;
-    }
-
-    /* SVG Base Styling */
-    .icon {
-      width: 22px;
-      height: 22px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      flex-shrink: 0;
-    }
-
-    /* Screen Management */
-    .screen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg-dark);
-      z-index: 1;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .screen.active {
-      opacity: 1;
-      pointer-events: auto;
-      z-index: 10;
-    }
-
-    /* Auth Screen */
-    #auth-screen {
-      padding: calc(20px + var(--safe-area-top)) 24px calc(20px + var(--safe-area-bottom));
-      justify-content: center;
-      align-items: center;
-      background: #000000;
-      overflow-y: auto;
-    }
-
-    .auth-brand {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .auth-logo {
-      width: 72px;
-      height: 72px;
-      background: #12161f;
-      border: 1px solid #1f2633;
-      border-radius: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.8);
-    }
-
-    .auth-logo svg {
-      width: 38px;
-      height: 38px;
-      stroke: var(--accent-green);
-    }
-
-    .auth-title {
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
-    .auth-subtitle {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    .auth-form {
-      width: 100%;
-      max-width: 340px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .avatar-picker-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    .avatar-preview {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: var(--bg-card);
-      border: 2px dashed var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .avatar-preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .input-group {
-      position: relative;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .input-group input, .input-group textarea {
-      width: 100%;
-      background: transparent;
-      color: var(--text-main);
-    }
-
-    .btn-primary {
-      background: var(--accent-green);
-      color: #000000;
-      font-weight: 700;
-      padding: 14px;
-      border-radius: 14px;
-      text-align: center;
-      cursor: pointer;
-      margin-top: 6px;
-      transition: transform 0.1s;
-    }
-
-    .btn-primary:active {
-      transform: scale(0.98);
-    }
-
-    .btn-secondary {
-      background: var(--bg-surface);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-      font-weight: 600;
-      padding: 12px;
-      border-radius: 14px;
-      text-align: center;
-      cursor: pointer;
-    }
-
-    .auth-toggle {
-      text-align: center;
-      font-size: 13px;
-      color: var(--accent-green);
-      margin-top: 12px;
-      cursor: pointer;
-    }
-
-    /* App Header */
-    .app-header {
-      padding-top: var(--safe-area-top);
-      height: calc(56px + var(--safe-area-top));
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-left: 14px;
-      padding-right: 14px;
-      z-index: 20;
-    }
-
-    .header-title {
-      font-size: 19px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .icon-btn {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: transparent;
-      cursor: pointer;
-    }
-
-    .icon-btn:active {
-      background: rgba(255,255,255,0.06);
-    }
-
-    /* Main Screen Search Bar */
-    .search-bar {
-      margin: 10px 14px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 8px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: border-color 0.2s;
-    }
-
-    .search-bar:focus-within {
-      border-color: var(--accent-green);
-    }
-
-    .search-bar input {
-      width: 100%;
-      background: transparent;
-    }
-
-    /* Dialogs List */
-    .dialogs-container {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .dialog-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 14px;
-      gap: 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.02);
-      cursor: pointer;
-      position: relative;
-      animation: fadeIn 0.2s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .dialog-item:active {
-      background: rgba(255,255,255,0.03);
-    }
-
-    .dialog-avatar-wrap {
-      position: relative;
-      width: 50px;
-      height: 50px;
-      flex-shrink: 0;
-    }
-
-    .avatar-img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-      background: var(--bg-card);
-    }
-
-    .online-badge {
-      position: absolute;
-      bottom: 1px;
-      right: 1px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--accent-green);
-      border: 2px solid var(--bg-dark);
-    }
-
-    .online-badge.offline {
-      background: #555d6d;
-    }
-
-    .dialog-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .dialog-top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 4px;
-    }
-
-    .dialog-name {
-      font-weight: 600;
-      font-size: 15px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .dialog-time {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .dialog-bottom-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .dialog-preview {
-      font-size: 13px;
-      color: var(--text-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .dialog-preview.typing {
-      color: var(--accent-green);
-      font-style: italic;
-    }
-
-    /* Media Semi-Blur Previews in Dialog List */
-    .media-preview-thumb {
-      width: 18px;
-      height: 18px;
-      border-radius: 4px;
-      object-fit: cover;
-      filter: blur(1px);
-      margin-right: 4px;
-    }
-
-    /* Chat Screen */
-    #chat-screen {
-      background: var(--bg-dark);
-    }
-
-    .chat-header {
-      padding-top: var(--safe-area-top);
-      height: calc(58px + var(--safe-area-top));
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      padding-left: 6px;
-      padding-right: 8px;
-      gap: 4px;
-      z-index: 20;
-    }
-
-    .chat-user-btn {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-      padding: 4px 6px;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-
-    .chat-user-btn:active {
-      background: rgba(255,255,255,0.04);
-    }
-
-    .chat-user-meta {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .chat-user-name {
-      font-weight: 600;
-      font-size: 15px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .chat-user-status {
-      font-size: 11px;
-      color: var(--text-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* Reply Banner Top of Input */
-    .reply-banner {
-      background: var(--bg-surface);
-      border-left: 3px solid var(--accent-green);
-      padding: 6px 12px;
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      border-top: 1px solid var(--border-color);
-    }
-
-    .reply-banner.active {
-      display: flex;
-    }
-
-    /* Message Bubbles */
-    .msg-wrapper {
-      display: flex;
-      flex-direction: column;
-      max-width: 82%;
-      position: relative;
-      animation: fadeIn 0.15s ease;
-    }
-
-    .msg-wrapper.out {
-      align-self: flex-end;
-    }
-
-    .msg-wrapper.in {
-      align-self: flex-start;
-    }
-
-    .msg-bubble {
-      padding: 8px 12px;
-      border-radius: 16px;
-      position: relative;
-      word-wrap: break-word;
-      word-break: break-word;
-      background: var(--bg-bubble-in);
-      border: 1px solid rgba(255,255,255,0.03);
-    }
-
-    .msg-wrapper.out .msg-bubble {
-      background: var(--bg-bubble-out);
-      border-top-right-radius: 4px;
-    }
-
-    .msg-wrapper.in .msg-bubble {
-      border-top-left-radius: 4px;
-    }
-
-    .msg-reply-box {
-      background: rgba(0,0,0,0.3);
-      border-left: 3px solid var(--accent-green);
-      padding: 4px 8px;
-      border-radius: 4px;
-      margin-bottom: 6px;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .msg-time-stamp {
-      float: right;
-      font-size: 10px;
-      color: var(--text-muted);
-      margin-left: 10px;
-      margin-top: 4px;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-
-    /* Photos & Collages TG Style */
-    .msg-media-img {
-      max-width: 100%;
-      border-radius: 10px;
-      display: block;
-      cursor: pointer;
-    }
-
-    .media-wrap-relative {
-      position: relative;
-      display: inline-block;
-      overflow: hidden;
-      border-radius: 12px;
-    }
-
-    .media-time-overlay {
-      position: absolute;
-      bottom: 6px;
-      right: 8px;
-      background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(4px);
-      padding: 2px 6px;
-      border-radius: 10px;
-      font-size: 10px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 3px;
-    }
-
-    .collage-grid {
-      display: grid;
-      gap: 2px;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .collage-grid.cols-2 { grid-template-columns: 1fr 1fr; }
-    .collage-grid.cols-3 { grid-template-columns: 1fr 1fr; }
-
-    .collage-grid img {
-      width: 100%;
-      height: 110px;
-      object-fit: cover;
-    }
-
-    /* Video Note (Кружочки TG Style) */
-    .video-note-bubble {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      overflow: hidden;
-      border: 2px solid var(--accent-green);
-      position: relative;
-      background: #000;
-    }
-
-    .video-note-bubble video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    /* Dynamic Waveform Voice Player */
-    .voice-player-bubble {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 210px;
-      padding: 2px 0;
-    }
-
-    .voice-play-btn {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--accent-green);
-      color: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .waveform-bars-wrap {
-      flex: 1;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .wave-bar {
-      width: 3px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 2px;
-      transition: height 0.15s, background-color 0.15s;
-    }
-
-    .wave-bar.active {
-      background: var(--accent-green);
-    }
-
-    /* Flat Audio/Music Player */
-    .audio-flat-bubble {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 210px;
-    }
-
-    .audio-flat-line {
-      flex: 1;
-      height: 4px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 2px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .audio-flat-progress {
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      width: 0%;
-      background: var(--accent-green);
-    }
-
-    /* Message Reactions Badge */
-    .reactions-badge {
-      position: absolute;
-      bottom: -10px;
-      right: 8px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 2px 6px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.8);
-      z-index: 5;
-    }
-
-    .reaction-avatars {
-      display: flex;
-      align-items: center;
-    }
-
-    .reaction-avatar {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: 1px solid var(--bg-dark);
-      margin-left: -5px;
-      object-fit: cover;
-    }
-
-    /* Input Bar */
-    .chat-input-bar {
-      padding: 8px 10px calc(8px + var(--safe-area-bottom));
-      background: var(--bg-surface);
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-      z-index: 20;
-    }
-
-    .input-wrapper {
-      flex: 1;
-      background: var(--bg-dark);
-      border: 1px solid var(--border-color);
-      border-radius: 20px;
-      padding: 8px 14px;
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-      max-height: 120px;
-    }
-
-    .input-wrapper textarea {
-      flex: 1;
-      background: transparent;
-      resize: none;
-      max-height: 100px;
-      line-height: 20px;
-    }
-
-    .attach-btn, .mic-circle-btn {
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .send-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--accent-green);
-      color: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: transform 0.1s;
-    }
-
-    .send-btn:active {
-      transform: scale(0.92);
-    }
-
-    /* Context / Popover Menus */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100dvh;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(4px);
-      z-index: 100;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .action-sheet {
-      width: 100%;
-      max-width: 450px;
-      background: var(--bg-surface);
-      border-top-left-radius: 20px;
-      border-top-right-radius: 20px;
-      padding: 16px 16px calc(16px + var(--safe-area-bottom));
-      border: 1px solid var(--border-color);
-      transform: translateY(100%);
-      transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .modal-overlay.active .action-sheet {
-      transform: translateY(0);
-    }
-
-    .sheet-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: var(--bg-card);
-      cursor: pointer;
-      font-weight: 500;
-    }
-
-    .sheet-item.danger {
-      color: #ff4d4d;
-    }
-
-    .reactions-bar-row {
-      display: flex;
-      gap: 12px;
-      padding: 10px;
-      background: var(--bg-card);
-      border-radius: 16px;
-      justify-content: space-around;
-      margin-bottom: 8px;
-    }
-
-    .reaction-chip {
-      font-size: 26px;
-      cursor: pointer;
-      transition: transform 0.15s;
-    }
-
-    .reaction-chip:active {
-      transform: scale(1.4);
-    }
-
-    /* Video Note Recorder Modal Overlay */
-    .video-recorder-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100dvh;
-      background: rgba(0,0,0,0.92);
-      z-index: 200;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-    }
-
-    .video-recorder-modal.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .circle-preview-wrap {
-      width: 260px;
-      height: 260px;
-      border-radius: 50%;
-      overflow: hidden;
-      border: 3px solid var(--accent-green);
-      position: relative;
-    }
-
-    .circle-preview-wrap video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .rec-controls {
-      margin-top: 30px;
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-
-    .rec-btn-stop {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: var(--accent-pink);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    /* Media Fullscreen Viewer Modal */
-    .media-viewer-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100dvh;
-      background: #000;
-      z-index: 300;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-    }
-
-    .media-viewer-modal.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .viewer-content-wrap {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      touch-action: none;
-      overflow: hidden;
-    }
-
-    .viewer-img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      transition: transform 0.1s ease-out;
-      transform-origin: center center;
-    }
-
-    .viewer-close-btn {
-      position: absolute;
-      top: calc(16px + var(--safe-area-top));
-      right: 16px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      cursor: pointer;
-    }
-
-    /* Custom Video Player Container */
-    .custom-video-player {
-      position: relative;
-      width: 100%;
-      max-width: 100%;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #000;
-    }
-
-    .custom-video-player video {
-      width: 100%;
-      display: block;
-    }
-
-    .video-overlay-play {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      cursor: pointer;
-    }
-
-    /* Settings Screen & Customization */
-    .settings-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .settings-section {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .section-title {
-      font-size: 13px;
-      color: var(--accent-green);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .setting-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .setting-label {
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .select-input {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 6px 10px;
-      color: var(--text-main);
-    }
-
-    .checkbox-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 6px 0;
-    }
-
-    .checkbox-row input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--accent-green);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Sakura World RTX - 3D Open World</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+            touch-action: none;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #05020a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #fff;
+        }
+        #webgl-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        /* UI Overlay */
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        /* Header Stats & Buttons */
+        .header-bar {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+            pointer-events: auto;
+        }
+        .title-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .title-box h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 10px rgba(255,105,180,0.6);
+            background: linear-gradient(45deg, #fff, #ffb6c1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .badge {
+            background: rgba(255, 105, 180, 0.25);
+            border: 1px solid rgba(255, 182, 193, 0.6);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            color: #ffd1dc;
+            font-weight: bold;
+            backdrop-filter: blur(5px);
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        .icon-btn {
+            background: rgba(20, 15, 30, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .icon-btn:active {
+            transform: scale(0.92);
+            background: rgba(255, 105, 180, 0.4);
+        }
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Mobile Touch Controls Genshin Style */
+        #touch-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: auto;
+        }
+        /* Left Virtual Joystick Zone */
+        #joystick-zone {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 150px;
+            height: 150px;
+            touch-action: none;
+        }
+        #joystick-base {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,182,193,0.15) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.2), inset 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+        #joystick-thumb {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffffff 0%, #ffb6c1 100%);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(255, 182, 193, 0.8), 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.04s ease-out;
+            border: 2px solid #fff;
+        }
+
+        /* Action Buttons Right Side */
+        #action-buttons {
+            position: absolute;
+            bottom: 35px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-end;
+            pointer-events: auto;
+        }
+        .action-btn {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,182,193,0.3) 0%, rgba(40,20,50,0.7) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: #fff;
+            font-weight: bold;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4), 0 0 12px rgba(255,105,180,0.3);
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .action-btn:active {
+            transform: scale(0.92);
+            background: rgba(255, 105, 180, 0.6);
+        }
+        .action-btn span {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        /* Start Screen Modal */
+        #start-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(25, 10, 35, 0.85) 0%, rgba(5, 2, 10, 0.96) 100%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 30px;
+            backdrop-filter: blur(12px);
+            transition: opacity 0.5s ease;
+        }
+        #start-modal h2 {
+            font-size: 32px;
+            margin-bottom: 12px;
+            background: linear-gradient(45deg, #ffffff, #ffb6c1, #ff69b4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            filter: drop-shadow(0 0 15px rgba(255,105,180,0.5));
+        }
+        #start-modal p {
+            max-width: 450px;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #d1c4e9;
+            margin-bottom: 25px;
+        }
+        .start-btn {
+            background: linear-gradient(135deg, #ff69b4 0%, #da70d6 100%);
+            color: #fff;
+            border: none;
+            padding: 16px 48px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(255, 105, 180, 0.6), 0 5px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            pointer-events: auto;
+        }
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 35px rgba(255, 105, 180, 0.9);
+        }
+        .start-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Controls hint box */
+        .controls-hint {
+            margin-top: 25px;
+            background: rgba(255,255,255,0.06);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        /* Crosshair for FPS immersion */
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 0 8px rgba(255, 182, 193, 0.8);
+        }
+
+        /* FPS Indicator */
+        #fps-display {
+            font-family: monospace;
+            font-size: 11px;
+            color: #88ff88;
+            background: rgba(0,0,0,0.4);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
 </head>
 <body>
 
-  <!-- AUTH SCREEN -->
-  <div id="auth-screen" class="screen active">
-    <div class="auth-brand">
-      <div class="auth-logo">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-      </div>
-      <div class="auth-title">Tsuyu</div>
-      <div class="auth-subtitle">Сквозной мессенджер нового поколения 2026</div>
-    </div>
+    <!-- WebGL Canvas Container -->
+    <div id="webgl-container"></div>
 
-    <form class="auth-form" id="auth-form" onsubmit="event.preventDefault();">
-      <div class="avatar-picker-wrap" id="avatar-field-group">
-        <label class="avatar-preview" for="auth-avatar-input">
-          <img id="auth-avatar-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%238a94a6' viewBox='0 0 24 24'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>" alt="Avatar">
-        </label>
-        <input type="file" id="auth-avatar-input" accept="image/*" style="display:none">
-        <span style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Нажмите чтобы выбрать фото</span>
-      </div>
-
-      <div class="input-group" id="username-field-group">
-        <svg class="icon" viewBox="0 0 24 24"><circle cx='12' cy='12' r='4'/><path d='M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94'/></svg>
-        <input type="text" id="auth-username" placeholder="Юзернейм (@username)" autocomplete="off">
-      </div>
-
-      <div class="input-group" id="name-field-group">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <input type="text" id="auth-name" placeholder="Имя / Никнейм" autocomplete="off">
-      </div>
-
-      <div class="input-group">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        <input type="email" id="auth-email" placeholder="Почта" autocomplete="email">
-      </div>
-
-      <div class="input-group">
-        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <input type="password" id="auth-password" placeholder="Пароль" autocomplete="current-password">
-      </div>
-
-      <button class="btn-primary" id="auth-submit-btn" type="button">Зарегистрироваться</button>
-      <div class="auth-toggle" id="auth-toggle-btn">Уже есть аккаунт? Войти</div>
-    </form>
-  </div>
-
-  <!-- MAIN DIALOGS SCREEN -->
-  <div id="main-screen" class="screen">
-    <div class="app-header">
-      <div class="header-title">
-        <svg class="icon" style="stroke: var(--accent-green)" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        <span>Tsuyu</span>
-      </div>
-      <div class="header-actions">
-        <button class="icon-btn" id="open-settings-btn">
-          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <div class="search-bar">
-      <svg class="icon" style="color: var(--text-muted)" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="search-input" placeholder="Поиск по юзернейму @...">
-    </div>
-
-    <div class="dialogs-container" id="dialogs-list">
-      <!-- Realtime Dialogs & Search Results injected here -->
-    </div>
-  </div>
-
-  <!-- CHAT SCREEN -->
-  <div id="chat-screen" class="screen">
-    <div class="chat-header">
-      <button class="icon-btn" id="chat-back-btn">
-        <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      </button>
-
-      <div class="chat-user-btn" id="chat-user-profile-trigger">
-        <div class="dialog-avatar-wrap" style="width: 38px; height: 38px;">
-          <img class="avatar-img" id="chat-header-avatar" src="" alt="Avatar">
-        </div>
-        <div class="chat-user-meta">
-          <div class="chat-user-name" id="chat-header-name">Собеседник</div>
-          <div class="chat-user-status" id="chat-header-status">был(а) недавно</div>
-        </div>
-      </div>
-
-      <button class="icon-btn" id="chat-menu-btn">
-        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-      </button>
-    </div>
-
-    <div class="chat-messages" id="chat-messages-container">
-      <!-- Messages rendered here dynamically -->
-    </div>
-
-    <div class="reply-banner" id="reply-banner">
-      <div style="display:flex; flex-direction:column; gap:2px;">
-        <span style="color:var(--accent-green); font-weight:600;">Ответ на сообщение</span>
-        <span id="reply-banner-text" style="color:var(--text-muted);">...</span>
-      </div>
-      <button class="icon-btn" id="cancel-reply-btn" style="width:28px; height:28px;">
-        <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-
-    <div class="chat-input-bar">
-      <div class="attach-btn" id="attach-btn">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-      </div>
-
-      <div class="input-wrapper">
-        <textarea id="chat-text-input" rows="1" placeholder="Жмякай..."></textarea>
-      </div>
-
-      <div class="mic-circle-btn" id="mic-circle-btn">
-        <svg class="icon" viewBox="0 0 24 24" id="mic-circle-icon"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-      </div>
-
-      <div class="send-btn" id="chat-send-btn">
-        <svg class="icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- PROFILE VIEW MODAL -->
-  <div id="profile-modal" class="modal-overlay">
-    <div class="action-sheet" style="padding-top: 24px;">
-      <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;">
-        <img id="profile-modal-avatar" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-green);" src="" alt="">
-        <h3 id="profile-modal-name" style="font-size: 20px; font-weight: 700;"></h3>
-        <div id="profile-modal-username" style="color: var(--accent-green); font-size: 14px;"></div>
-        <p id="profile-modal-bio" style="color: var(--text-muted); font-size: 13px; margin-top: 6px;"></p>
-      </div>
-      <button class="btn-secondary" style="margin-top: 16px;" onclick="closeModal('profile-modal')">Закрыть</button>
-    </div>
-  </div>
-
-  <!-- SETTINGS SCREEN -->
-  <div id="settings-screen" class="screen">
-    <div class="app-header">
-      <button class="icon-btn" id="settings-back-btn">
-        <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      </button>
-      <div class="header-title">Настройки Tsuyu</div>
-      <div style="width:38px;"></div>
-    </div>
-
-    <div class="settings-container">
-      <div class="settings-section">
-        <div class="section-title">Мой Профиль</div>
-        <div class="avatar-picker-wrap" style="margin: 0;">
-          <img id="settings-avatar-img" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color);" src="" alt="">
-          <input type="file" id="settings-avatar-input" accept="image/*" style="display:none">
-          <button class="btn-secondary" style="font-size:12px; margin-top:8px; padding:6px 12px;" onclick="document.getElementById('settings-avatar-input').click()">Изменить фото</button>
+    <!-- UI Overlay Layer -->
+    <div id="ui-overlay">
+        <!-- Top Bar -->
+        <div class="header-bar">
+            <div class="title-box">
+                <h1>SAKURA RTX</h1>
+                <span class="badge">ULTRA 60FPS</span>
+            </div>
+            <div class="btn-group">
+                <div id="fps-display">60 FPS</div>
+                <button class="icon-btn" id="audio-toggle-btn" title="Звук природы">
+                    <svg id="audio-icon-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                </button>
+                <button class="icon-btn" id="fullscreen-btn" title="Полный экран">
+                    <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                </button>
+            </div>
         </div>
 
-        <div class="input-group">
-          <input type="text" id="settings-name-input" placeholder="Имя">
-        </div>
-        <div class="input-group">
-          <textarea id="settings-bio-input" placeholder="О себе / Описание" rows="2"></textarea>
-        </div>
-        <button class="btn-primary" id="save-profile-btn" style="padding:10px;">Сохранить профиль</button>
-      </div>
-
-      <div class="settings-section">
-        <div class="section-title">Кастомизация</div>
-        <div class="setting-row">
-          <span class="setting-label">Выбрать шрифт</span>
-          <button class="btn-secondary" style="padding:6px 10px; font-size:12px;" onclick="document.getElementById('font-file-input').click()">Из проводника</button>
-          <input type="file" id="font-file-input" accept=".ttf,.otf,.woff,.woff2" style="display:none">
-        </div>
-        <div class="setting-row">
-          <span class="setting-label">Размер текста</span>
-          <select id="cust-font-size" class="select-input">
-            <option value="13px">13px</option>
-            <option value="15px" selected>15px</option>
-            <option value="17px">17px</option>
-            <option value="19px">19px</option>
-          </select>
-        </div>
-        <div class="setting-row">
-          <span class="setting-label">Стиль текста</span>
-          <select id="cust-font-style" class="select-input">
-            <option value="normal">Обычный</option>
-            <option value="italic">Курсив</option>
-            <option value="bold">Жирный</option>
-          </select>
-        </div>
-
-        <div class="input-group" style="margin-top:4px;">
-          <input type="text" id="cust-phrase-typing" placeholder="Печатает (например: мяукает)">
-        </div>
-        <div class="input-group">
-          <input type="text" id="cust-phrase-online" placeholder="В сети (например: мяукает сейчас)">
-        </div>
-        <div class="input-group">
-          <input type="text" id="cust-phrase-placeholder" placeholder="Сообщение (например: жмякай)">
-        </div>
-        <button class="btn-primary" id="save-cust-btn" style="padding:10px;">Применить кастомизацию</button>
-      </div>
-
-      <div class="settings-section">
-        <div class="section-title">Конфиденциальность</div>
-        <div class="setting-row">
-          <span class="setting-label">Кто может писать</span>
-          <select id="priv-messaging" class="select-input">
-            <option value="everyone">Все</option>
-            <option value="nobody">Никто</option>
-          </select>
-        </div>
-        <div class="setting-row">
-          <span class="setting-label">Кто видит статус захода</span>
-          <select id="priv-lastseen" class="select-input">
-            <option value="everyone">Все</option>
-            <option value="nobody">Никто</option>
-          </select>
-        </div>
-        <div class="setting-row">
-          <span class="setting-label">Кто видит фото профиля</span>
-          <select id="priv-avatar" class="select-input">
-            <option value="everyone">Все</option>
-            <option value="nobody">Никто</option>
-          </select>
-        </div>
-        <button class="btn-primary" id="save-privacy-btn" style="padding:10px;">Сохранить приватность</button>
-      </div>
-
-      <div class="settings-section">
-        <div class="section-title">E2EE Ключи и Безопасность</div>
-        <button class="btn-secondary" id="regen-keys-btn">Сменить приватный ключ</button>
-        <button class="btn-secondary" id="backup-keys-btn">Скачать бэкап ключей (.json)</button>
-        <button class="btn-secondary" id="logout-btn" style="color:#ff4d4d;">Выйти из аккаунта</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- CHAT MENU SHEET (3 DOTS) -->
-  <div id="chat-menu-sheet" class="modal-overlay">
-    <div class="action-sheet">
-      <div class="sheet-item" id="menu-export-chat">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span>Скачать переписку (E2EE расшифрованную)</span>
-      </div>
-      <div class="sheet-item danger" id="menu-clear-chat">
-        <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        <span>Очистить чат для обоих</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- EXPORT CHAT OPTIONS MODAL -->
-  <div id="export-modal" class="modal-overlay">
-    <div class="action-sheet">
-      <h3 style="font-size:16px; margin-bottom:8px;">Параметры экспорта чата</h3>
-      <div class="checkbox-row"><input type="checkbox" id="exp-opt-text" checked> <label for="exp-opt-text">Текстовые сообщения</label></div>
-      <div class="checkbox-row"><input type="checkbox" id="exp-opt-photo" checked> <label for="exp-opt-photo">Фотографии и коллажи</label></div>
-      <div class="checkbox-row"><input type="checkbox" id="exp-opt-video" checked> <label for="exp-opt-video">Видео и кружочки</label></div>
-      <div class="checkbox-row"><input type="checkbox" id="exp-opt-voice" checked> <label for="exp-opt-voice">Голосовые и аудио</label></div>
-      <button class="btn-primary" id="confirm-export-btn">Скачать файл экспорта</button>
-      <button class="btn-secondary" onclick="closeModal('export-modal')">Отмена</button>
-    </div>
-  </div>
-
-  <!-- ATTACHMENT MENU -->
-  <div id="attach-sheet" class="modal-overlay">
-    <div class="action-sheet">
-      <div class="sheet-item" onclick="document.getElementById('attach-file-photo').click()">
-        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        <span>Фотографии (Коллаж)</span>
-      </div>
-      <div class="sheet-item" onclick="document.getElementById('attach-file-video').click()">
-        <svg class="icon" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-        <span>Видеозапись</span>
-      </div>
-      <div class="sheet-item" onclick="document.getElementById('attach-file-audio').click()">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        <span>Аудио / Музыка</span>
-      </div>
-      <input type="file" id="attach-file-photo" accept="image/*" multiple style="display:none">
-      <input type="file" id="attach-file-video" accept="video/*" style="display:none">
-      <input type="file" id="attach-file-audio" accept="audio/*" style="display:none">
-    </div>
-  </div>
-
-  <!-- MESSAGE CONTEXT MENU MODAL -->
-  <div id="msg-context-modal" class="modal-overlay">
-    <div class="action-sheet">
-      <div class="reactions-bar-row">
-        <span class="reaction-chip" onclick="applyHeartReaction()">❤️</span>
-      </div>
-      <div class="sheet-item" id="msg-action-reply">
-        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
-        <span>Ответить</span>
-      </div>
-      <div class="sheet-item" id="msg-action-edit">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        <span>Редактировать</span>
-      </div>
-      <div class="sheet-item danger" id="msg-action-delete">
-        <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        <span>Удалить для обоих</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- VIDEO CIRCLE RECORDING OVERLAY -->
-  <div id="video-rec-modal" class="video-recorder-modal">
-    <div class="circle-preview-wrap">
-      <video id="video-rec-element" autoplay playsinline muted></video>
-    </div>
-    <div style="margin-top: 16px; color: var(--accent-pink); font-weight: 600;" id="rec-timer">00:00</div>
-    <div class="rec-controls">
-      <div class="rec-btn-stop" id="video-rec-stop-btn">
-        <svg class="icon" style="width:32px; height:32px; stroke:#fff; fill:#fff;" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-      </div>
-    </div>
-  </div>
-
-  <!-- MEDIA FULLSCREEN VIEWER MODAL -->
-  <div id="media-viewer" class="media-viewer-modal">
-    <div class="viewer-close-btn" onclick="closeModal('media-viewer')">
-      <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </div>
-    <div class="viewer-content-wrap" id="viewer-container">
-      <img id="viewer-img" class="viewer-img" src="" alt="" style="display:none;">
-      <video id="viewer-video" controls playsinline style="max-width:100%; max-height:100%; display:none;"></video>
-    </div>
-  </div>
-
-  <!-- FIREBASE & CRYPTO ENGINE SCRIPT -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { 
-      getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged 
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { 
-      getDatabase, ref, set, get, child, onValue, push, remove, update, onDisconnect, serverTimestamp 
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-    // Standard Firebase Config Initialization (Provided by User)
-    const firebaseConfig = {
-      apiKey: "AIzaSyBm0mIvHVznIeF2PoFk6dtdaiT5r877wyA",
-      authDomain: "meow-874ce.firebaseapp.com",
-      databaseURL: "https://meow-874ce-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "meow-874ce",
-      storageBucket: "meow-874ce.firebasestorage.app",
-      messagingSenderId: "471541334599",
-      appId: "1:471541334599:web:567af3e7dbe70a37572762"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
-    // PROFILE CRYPTO MASTER SALT (App Shared Profile Key so server sees cipher, but any client can view profiles instantly)
-    const PROFILE_CRYPTO_SALT = "TsuyuApp2026MasterProfileSaltKey";
-
-    // INDEXEDDB KEY STORAGE ENGINE
-    class LocalStore {
-      static async open() {
-        return new Promise((resolve, reject) => {
-          const req = indexedDB.open('TsuyuLocalDB', 1);
-          req.onupgradeneeded = (e) => {
-            const d = e.target.result;
-            if (!d.objectStoreNames.contains('keys')) d.createObjectStore('keys');
-          };
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => reject(req.error);
-        });
-      }
-
-      static async set(store, key, val) {
-        const idb = await this.open();
-        return new Promise((res, rej) => {
-          const tx = idb.transaction(store, 'readwrite');
-          tx.objectStore(store).put(val, key);
-          tx.oncomplete = () => res();
-          tx.onerror = () => rej(tx.error);
-        });
-      }
-
-      static async get(store, key) {
-        const idb = await this.open();
-        return new Promise((res, rej) => {
-          const tx = idb.transaction(store, 'readonly');
-          const req = tx.objectStore(store).get(key);
-          req.onsuccess = () => res(req.result);
-          req.onerror = () => rej(req.error);
-        });
-      }
-    }
-
-    // 2026 CRYPTO ENGINE (ECDH P-256 + AES-256-GCM)
-    class E2EECrypto {
-      static async generateKeyPair() {
-        return await window.crypto.subtle.generateKey(
-          { name: "ECDH", namedCurve: "P-256" },
-          true,
-          ["deriveKey", "deriveBits"]
-        );
-      }
-
-      static async exportPublicKey(key) {
-        const exported = await window.crypto.subtle.exportKey("spki", key);
-        return btoa(String.fromCharCode(...new Uint8Array(exported)));
-      }
-
-      static async importPublicKey(base64Str) {
-        const binaryDer = Uint8Array.from(atob(base64Str), c => c.charCodeAt(0));
-        return await window.crypto.subtle.importKey(
-          "spki",
-          binaryDer.buffer,
-          { name: "ECDH", namedCurve: "P-256" },
-          true,
-          []
-        );
-      }
-
-      static async exportPrivateKey(key) {
-        const exported = await window.crypto.subtle.exportKey("pkcs8", key);
-        return btoa(String.fromCharCode(...new Uint8Array(exported)));
-      }
-
-      static async importPrivateKey(base64Str) {
-        const binaryDer = Uint8Array.from(atob(base64Str), c => c.charCodeAt(0));
-        return await window.crypto.subtle.importKey(
-          "pkcs8",
-          binaryDer.buffer,
-          { name: "ECDH", namedCurve: "P-256" },
-          true,
-          ["deriveKey", "deriveBits"]
-        );
-      }
-
-      static async deriveAESKey(privateKey, publicPubKey) {
-        return await window.crypto.subtle.deriveKey(
-          { name: "ECDH", public: publicPubKey },
-          privateKey,
-          { name: "AES-GCM", length: 256 },
-          false,
-          ["encrypt", "decrypt"]
-        );
-      }
-
-      static async deriveProfileAESKey() {
-        const enc = new TextEncoder();
-        const rawKey = enc.encode(PROFILE_CRYPTO_SALT);
-        const hash = await window.crypto.subtle.digest("SHA-256", rawKey);
-        return await window.crypto.subtle.importKey(
-          "raw",
-          hash,
-          { name: "AES-GCM" },
-          false,
-          ["encrypt", "decrypt"]
-        );
-      }
-
-      static async encrypt(aesKey, textData) {
-        const enc = new TextEncoder();
-        const iv = window.crypto.getRandomValues(new Uint8Array(12));
-        const ciphertext = await window.crypto.subtle.encrypt(
-          { name: "AES-GCM", iv: iv },
-          aesKey,
-          enc.encode(textData)
-        );
-        return {
-          iv: btoa(String.fromCharCode(...iv)),
-          ciphertext: btoa(String.fromCharCode(...new Uint8Array(ciphertext)))
-        };
-      }
-
-      static async decrypt(aesKey, ivBase64, ciphertextBase64) {
-        try {
-          const iv = Uint8Array.from(atob(ivBase64), c => c.charCodeAt(0));
-          const ciphertext = Uint8Array.from(atob(ciphertextBase64), c => c.charCodeAt(0));
-          const decrypted = await window.crypto.subtle.decrypt(
-            { name: "AES-GCM", iv: iv },
-            aesKey,
-            ciphertext
-          );
-          return new TextDecoder().decode(decrypted);
-        } catch (e) {
-          return "[Расшифровка не удалась]";
-        }
-      }
-    }
-
-    // STATE MANAGEMENT
-    let currentUser = null;
-    let currentUserProfile = null;
-    let userKeyPair = null;
-    let activeChatRecipient = null;
-    let activeChatMessagesRef = null;
-    let isRegisterMode = true;
-    let typingTimer = null;
-    let activeSelectedMsgId = null;
-    let activeSelectedMsgData = null;
-    let replyToMsgId = null;
-    let editingMsgId = null;
-
-    // Customization Settings
-    let appCustomization = {
-      fontSize: "15px",
-      fontStyle: "normal",
-      phraseTyping: "печатает...",
-      phraseOnline: "в сети",
-      phrasePlaceholder: "Жмякай..."
-    };
-
-    let appPrivacy = {
-      messaging: "everyone",
-      lastseen: "everyone",
-      avatar: "everyone"
-    };
-
-    // DOM ELEMENTS
-    const authScreen = document.getElementById('auth-screen');
-    const mainScreen = document.getElementById('main-screen');
-    const chatScreen = document.getElementById('chat-screen');
-    const settingsScreen = document.getElementById('settings-screen');
-
-    // INITIALIZATION
-    window.addEventListener('DOMContentLoaded', async () => {
-      setupAuthToggle();
-      setupEventListeners();
-      setupPWAAndCustomization();
-    });
-
-    // AUTH MANAGEMENT
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        await initializeUserKeysAndProfile();
-        setupPresence();
-        switchScreen(mainScreen);
-        loadDialogsList();
-      } else {
-        currentUser = null;
-        switchScreen(authScreen);
-      }
-    });
-
-    function setupAuthToggle() {
-      const toggleBtn = document.getElementById('auth-toggle-btn');
-      const submitBtn = document.getElementById('auth-submit-btn');
-      const usernameGroup = document.getElementById('username-field-group');
-      const nameGroup = document.getElementById('name-field-group');
-      const avatarGroup = document.getElementById('avatar-field-group');
-
-      toggleBtn.addEventListener('click', () => {
-        isRegisterMode = !isRegisterMode;
-        if (isRegisterMode) {
-          usernameGroup.style.display = 'flex';
-          nameGroup.style.display = 'flex';
-          avatarGroup.style.display = 'flex';
-          submitBtn.innerText = 'Зарегистрироваться';
-          toggleBtn.innerText = 'Уже есть аккаунт? Войти';
-        } else {
-          usernameGroup.style.display = 'none';
-          nameGroup.style.display = 'none';
-          avatarGroup.style.display = 'none';
-          submitBtn.innerText = 'Войти';
-          toggleBtn.innerText = 'Нет аккаунта? Зарегистрироваться';
-        }
-      });
-
-      document.getElementById('auth-avatar-input').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            document.getElementById('auth-avatar-img').src = ev.target.result;
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-
-      submitBtn.addEventListener('click', handleAuthSubmit);
-    }
-
-    async function handleAuthSubmit() {
-      const email = document.getElementById('auth-email').value.trim();
-      const password = document.getElementById('auth-password').value.trim();
-
-      if (!email || !password) return alert('Введите почту и пароль');
-
-      if (isRegisterMode) {
-        const username = document.getElementById('auth-username').value.trim().replace('@','').toLowerCase();
-        const name = document.getElementById('auth-name').value.trim();
-        const avatarSrc = document.getElementById('auth-avatar-img').src;
-
-        if (!username || !name) return alert('Заполните юзернейм и имя');
-
-        // Unique username check in RTDB
-        const unameSnap = await get(ref(db, `usernames/${username}`));
-        if (unameSnap.exists()) {
-          return alert('Этот юзернейм уже занят!');
-        }
-
-        try {
-          const cred = await createUserWithEmailAndPassword(auth, email, password);
-          // Keypair Generation
-          const kp = await E2EECrypto.generateKeyPair();
-          const pubKeyStr = await E2EECrypto.exportPublicKey(kp.publicKey);
-          const privKeyStr = await E2EECrypto.exportPrivateKey(kp.privateKey);
-
-          await LocalStore.set('keys', cred.user.uid, privKeyStr);
-
-          // Save username reservation
-          await set(ref(db, `usernames/${username}`), cred.user.uid);
-
-          // Encrypt Profile Data (Server cannot read bio or display name)
-          const profKey = await E2EECrypto.deriveProfileAESKey();
-          const encBio = await E2EECrypto.encrypt(profKey, "В Tsuyu!");
-          const encName = await E2EECrypto.encrypt(profKey, name);
-          const encAvatar = await E2EECrypto.encrypt(profKey, avatarSrc.startsWith('data:') ? avatarSrc : '');
-
-          const profData = {
-            uid: cred.user.uid,
-            username: username,
-            encDisplayName: encName,
-            encBio: encBio,
-            encAvatar: encAvatar,
-            publicKey: pubKeyStr,
-            privacy: appPrivacy,
-            customization: appCustomization
-          };
-
-          await set(ref(db, `users/${cred.user.uid}/profile`), profData);
-        } catch (e) {
-          alert('Ошибка регистрации: ' + e.message);
-        }
-      } else {
-        try {
-          await signInWithEmailAndPassword(auth, email, password);
-        } catch (e) {
-          alert('Ошибка входа: ' + e.message);
-        }
-      }
-    }
-
-    async function decryptUserProfile(rawProf) {
-      if (!rawProf) return null;
-      try {
-        const profKey = await E2EECrypto.deriveProfileAESKey();
-        const name = rawProf.encDisplayName ? await E2EECrypto.decrypt(profKey, rawProf.encDisplayName.iv, rawProf.encDisplayName.ciphertext) : rawProf.displayName;
-        const bio = rawProf.encBio ? await E2EECrypto.decrypt(profKey, rawProf.encBio.iv, rawProf.encBio.ciphertext) : rawProf.bio;
-        const avatar = rawProf.encAvatar ? await E2EECrypto.decrypt(profKey, rawProf.encAvatar.iv, rawProf.encAvatar.ciphertext) : rawProf.avatar;
-
-        return {
-          uid: rawProf.uid,
-          username: rawProf.username,
-          displayName: name || 'Пользователь',
-          bio: bio || '',
-          avatar: avatar || '',
-          publicKey: rawProf.publicKey,
-          privacy: rawProf.privacy || appPrivacy,
-          customization: rawProf.customization || appCustomization
-        };
-      } catch (e) {
-        return rawProf;
-      }
-    }
-
-    async function initializeUserKeysAndProfile() {
-      let privStr = await LocalStore.get('keys', currentUser.uid);
-      const profSnap = await get(ref(db, `users/${currentUser.uid}/profile`));
-      
-      if (profSnap.exists()) {
-        currentUserProfile = await decryptUserProfile(profSnap.val());
-      }
-
-      if (!privStr) {
-        const kp = await E2EECrypto.generateKeyPair();
-        privStr = await E2EECrypto.exportPrivateKey(kp.privateKey);
-        const pubStr = await E2EECrypto.exportPublicKey(kp.publicKey);
-        await LocalStore.set('keys', currentUser.uid, privStr);
-        await update(ref(db, `users/${currentUser.uid}/profile`), { publicKey: pubStr });
-        userKeyPair = kp;
-      } else {
-        const privKey = await E2EECrypto.importPrivateKey(privStr);
-        const pubKey = await E2EECrypto.importPublicKey(currentUserProfile.publicKey);
-        userKeyPair = { privateKey: privKey, publicKey: pubKey };
-      }
-    }
-
-    // REALTIME PRESENCE & TYPING SYSTEM
-    function setupPresence() {
-      const myStatusRef = ref(db, `status/${currentUser.uid}`);
-      const connectedRef = ref(db, '.info/connected');
-
-      onValue(connectedRef, (snap) => {
-        if (snap.val() === true) {
-          const con = onDisconnect(myStatusRef);
-          con.set({ online: false, last_seen: serverTimestamp() });
-          set(myStatusRef, { online: true, last_seen: serverTimestamp(), typing_to: false });
-        }
-      });
-    }
-
-    function setTypingStatus(targetUid) {
-      if (!currentUser) return;
-      const myStatusRef = ref(db, `status/${currentUser.uid}/typing_to`);
-      set(myStatusRef, targetUid);
-
-      clearTimeout(typingTimer);
-      typingTimer = setTimeout(() => {
-        set(myStatusRef, false);
-      }, 1000);
-    }
-
-    // SCREEN NAVIGATION
-    function switchScreen(target) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      target.classList.add('active');
-    }
-
-    window.closeModal = function(id) {
-      document.getElementById(id).classList.remove('active');
-    };
-
-    function openModal(id) {
-      document.getElementById(id).classList.add('active');
-    }
-
-    // SEARCH & DIALOGS LIST
-    function loadDialogsList() {
-      const listContainer = document.getElementById('dialogs-list');
-      const searchInput = document.getElementById('search-input');
-
-      searchInput.addEventListener('input', async (e) => {
-        const q = e.target.value.trim().replace('@','').toLowerCase();
-        if (q.length < 1) {
-          renderUserDialogs();
-          return;
-        }
-
-        const snap = await get(ref(db, 'usernames'));
-        listContainer.innerHTML = '';
-        if (snap.exists()) {
-          const uMap = snap.val();
-          for (let uname in uMap) {
-            if (uname.includes(q)) {
-              const targetUid = uMap[uname];
-              if (targetUid === currentUser.uid) continue;
-              const targetRawProf = (await get(ref(db, `users/${targetUid}/profile`))).val();
-              if (targetRawProf) {
-                const targetProf = await decryptUserProfile(targetRawProf);
-                renderSearchItem(listContainer, targetProf);
-              }
-            }
-          }
-        }
-      });
-
-      renderUserDialogs();
-    }
-
-    async function renderUserDialogs() {
-      const listContainer = document.getElementById('dialogs-list');
-      listContainer.innerHTML = '';
-
-      // Realtime listener on user_chats
-      onValue(ref(db, `user_chats/${currentUser.uid}`), async (chatsSnap) => {
-        if (!chatsSnap.exists()) return;
-
-        const chatList = chatsSnap.val();
-        listContainer.innerHTML = '';
-
-        for (let peerUid in chatList) {
-          // Realtime profile listener so partner avatar/name updates instantly
-          onValue(ref(db, `users/${peerUid}/profile`), async (peerProfSnap) => {
-            if (!peerProfSnap.exists()) return;
-            const peerProf = await decryptUserProfile(peerProfSnap.val());
-
-            let item = document.getElementById(`dialog-item-${peerUid}`);
-            if (!item) {
-              item = document.createElement('div');
-              item.id = `dialog-item-${peerUid}`;
-              item.className = 'dialog-item';
-              listContainer.appendChild(item);
-            }
-
-            const avatarUrl = peerProf.avatar || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' fill='%2312161f'/></svg>";
-
-            item.innerHTML = `
-              <div class="dialog-avatar-wrap">
-                <img class="avatar-img" src="${avatarUrl}" alt="">
-                <div class="online-badge offline" id="badge-${peerUid}"></div>
-              </div>
-              <div class="dialog-info">
-                <div class="dialog-top-row">
-                  <div class="dialog-name">${peerProf.displayName}</div>
-                  <div class="dialog-time" id="time-${peerUid}"></div>
+        <!-- Center Crosshair -->
+        <div id="crosshair"></div>
+
+        <!-- Mobile Touch Controls -->
+        <div id="touch-controls">
+            <!-- Left Virtual Joystick -->
+            <div id="joystick-zone">
+                <div id="joystick-base"></div>
+                <div id="joystick-thumb"></div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div id="action-buttons">
+                <div class="action-btn" id="btn-sprint">
+                    ⚡
+                    <span>БЕГ</span>
                 </div>
-                <div class="dialog-bottom-row">
-                  <div class="dialog-preview" id="preview-${peerUid}">🔒 Сквозное шифрование</div>
+                <div class="action-btn" id="btn-jump">
+                    ▲
+                    <span>ПРЫЖОК</span>
                 </div>
-              </div>
-            `;
-
-            item.onclick = () => openChatWithUser(peerProf);
-
-            // Fetch last message preview
-            const chatId = [currentUser.uid, peerUid].sort().join('_');
-            const lastMsgRef = ref(db, `chats/${chatId}/messages`);
-
-            onValue(lastMsgRef, async (msgsSnap) => {
-              if (msgsSnap.exists()) {
-                const msgs = msgsSnap.val();
-                const msgKeys = Object.keys(msgs);
-                const lastMsg = msgs[msgKeys[msgKeys.length - 1]];
-
-                const prevElem = document.getElementById(`preview-${peerUid}`);
-                const timeElem = document.getElementById(`time-${peerUid}`);
-
-                if (timeElem) timeElem.innerText = new Date(lastMsg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                if (prevElem) {
-                  let peerPubKey = await E2EECrypto.importPublicKey(peerProf.publicKey);
-                  let sharedKey = await E2EECrypto.deriveAESKey(userKeyPair.privateKey, peerPubKey);
-                  let decryptedText = await E2EECrypto.decrypt(sharedKey, lastMsg.iv, lastMsg.ciphertext);
-
-                  if (lastMsg.type === 'photo') {
-                    prevElem.innerHTML = `📷 Фотография`;
-                  } else if (lastMsg.type === 'collage') {
-                    prevElem.innerHTML = `🖼️ Коллаж`;
-                  } else if (lastMsg.type === 'videonote') {
-                    prevElem.innerHTML = `🎥 Видеосообщение`;
-                  } else if (lastMsg.type === 'video') {
-                    prevElem.innerHTML = `📹 Видеозапись`;
-                  } else if (lastMsg.type === 'audio') {
-                    prevElem.innerHTML = `🎵 Аудиофайл`;
-                  } else {
-                    prevElem.innerText = decryptedText;
-                  }
-                }
-              }
-            });
-
-            // Track Status Realtime
-            onValue(ref(db, `status/${peerUid}`), (snap) => {
-              const st = snap.val();
-              const badge = document.getElementById(`badge-${peerUid}`);
-              const prev = document.getElementById(`preview-${peerUid}`);
-              if (st && badge) {
-                if (st.online) {
-                  badge.classList.remove('offline');
-                } else {
-                  badge.classList.add('offline');
-                }
-
-                if (st.typing_to === currentUser.uid && prev) {
-                  prev.innerText = appCustomization.phraseTyping || "печатает...";
-                  prev.classList.add('typing');
-                } else if (prev) {
-                  prev.classList.remove('typing');
-                }
-              }
-            });
-          });
-        }
-      });
-    }
-
-    function renderSearchItem(container, targetProf) {
-      const item = document.createElement('div');
-      item.className = 'dialog-item';
-      item.innerHTML = `
-        <div class="dialog-avatar-wrap">
-          <img class="avatar-img" src="${targetProf.avatar || ''}" alt="">
+            </div>
         </div>
-        <div class="dialog-info">
-          <div class="dialog-top-row">
-            <div class="dialog-name">${targetProf.displayName}</div>
-          </div>
-          <div class="dialog-bottom-row">
-            <div class="dialog-preview">@${targetProf.username}</div>
-          </div>
+    </div>
+
+    <!-- Start / Welcome Overlay -->
+    <div id="start-modal">
+        <h2>SAKURA RTX WORLD</h2>
+        <p>Добро пожаловать в бесшовный реалистичный 3D мир от первого лица! Лепестки сакуры, мягкий RTX-свет, атмосфера релакса без лагов и без врагов.</p>
+        <button class="start-btn" id="start-btn">ИССЛЕДОВАТЬ МИР</button>
+        <div class="controls-hint">
+            📱 <b>Смартфон:</b> Левый джойстик — движение | Правая часть экрана — обзор камеры<br>
+            💻 <b>Компьютер:</b> Клавиши W, A, S, D — движение | Мышь — обзор (Клик по экрану)
         </div>
-      `;
-      item.onclick = () => openChatWithUser(targetProf);
-      container.appendChild(item);
-    }
+    </div>
 
-    // CHAT SYSTEM
-    async function openChatWithUser(recipientProfile) {
-      activeChatRecipient = recipientProfile;
+    <!-- Libraries: Three.js + Postprocessing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
 
-      document.getElementById('chat-header-name').innerText = recipientProfile.displayName;
-      document.getElementById('chat-header-avatar').src = recipientProfile.avatar || '';
+    <script>
+        /* =========================================================================
+           1. GAME ENGINE & SCENE SETUP
+           ========================================================================= */
+        const container = document.getElementById('webgl-container');
+        
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffd1dc);
+        scene.fog = new THREE.FogExp2(0xffc2d4, 0.007);
 
-      switchScreen(chatScreen);
-
-      const chatId = [currentUser.uid, recipientProfile.uid].sort().join('_');
-      activeChatMessagesRef = ref(db, `chats/${chatId}/messages`);
-
-      // Mark user chat reference
-      set(ref(db, `user_chats/${currentUser.uid}/${recipientProfile.uid}`), true);
-      set(ref(db, `user_chats/${recipientProfile.uid}/${currentUser.uid}`), true);
-
-      // Realtime Partner Profile Updates in Chat Header
-      onValue(ref(db, `users/${recipientProfile.uid}/profile`), async (snap) => {
-        if (snap.exists()) {
-          const updatedProf = await decryptUserProfile(snap.val());
-          activeChatRecipient = updatedProf;
-          document.getElementById('chat-header-name').innerText = updatedProf.displayName;
-          document.getElementById('chat-header-avatar').src = updatedProf.avatar || '';
-        }
-      });
-
-      // Recipient Realtime Status
-      onValue(ref(db, `status/${recipientProfile.uid}`), (snap) => {
-        const st = snap.val();
-        const stElem = document.getElementById('chat-header-status');
-        if (st) {
-          if (st.typing_to === currentUser.uid) {
-            stElem.innerText = appCustomization.phraseTyping || "печатает...";
-            stElem.style.color = "var(--accent-green)";
-          } else if (st.online) {
-            stElem.innerText = appCustomization.phraseOnline || "в сети";
-            stElem.style.color = "var(--accent-green)";
-          } else {
-            stElem.innerText = "была в сети недавно";
-            stElem.style.color = "var(--text-muted)";
-          }
-        }
-      });
-
-      // Load Messages Realtime
-      onValue(activeChatMessagesRef, async (snapshot) => {
-        const msgContainer = document.getElementById('chat-messages-container');
-        msgContainer.innerHTML = '';
-        if (!snapshot.exists()) return;
-
-        const msgs = snapshot.val();
-        const recipientPubKey = await E2EECrypto.importPublicKey(activeChatRecipient.publicKey);
-
-        for (let id in msgs) {
-          const m = msgs[id];
-          // Determine key for decryption (supports sender's pubkey per message for seamless E2EE exchange)
-          let senderPubKeyToUse = recipientPubKey;
-          if (m.senderPubKey) {
-            senderPubKeyToUse = await E2EECrypto.importPublicKey(m.senderPubKey);
-          }
-          const sharedKey = await E2EECrypto.deriveAESKey(userKeyPair.privateKey, senderPubKeyToUse);
-
-          const decryptedText = await E2EECrypto.decrypt(sharedKey, m.iv, m.ciphertext);
-          renderMessageItem(msgContainer, id, m, decryptedText);
-        }
-
-        msgContainer.scrollTop = msgContainer.scrollHeight;
-      });
-    }
-
-    function renderMessageItem(container, id, msg, decryptedText) {
-      const isOut = msg.sender === currentUser.uid;
-      const wrap = document.createElement('div');
-      wrap.className = `msg-wrapper ${isOut ? 'out' : 'in'}`;
-
-      let contentHTML = '';
-
-      if (msg.type === 'text') {
-        contentHTML = `<div>${decryptedText}</div>`;
-      } else if (msg.type === 'photo') {
-        contentHTML = `
-          <div class="media-wrap-relative">
-            <img src="${decryptedText}" class="msg-media-img" onclick="openMediaViewer('${decryptedText}', 'image')">
-          </div>
-        `;
-      } else if (msg.type === 'collage') {
-        const photos = JSON.parse(decryptedText);
-        contentHTML = `
-          <div class="collage-grid cols-2">
-            ${photos.map(p => `<img src="${p}" onclick="openMediaViewer('${p}', 'image')">`).join('')}
-          </div>
-        `;
-      } else if (msg.type === 'video') {
-        contentHTML = `
-          <div class="custom-video-player">
-            <video src="${decryptedText}" playsinline preload="metadata"></video>
-            <div class="video-overlay-play" onclick="openMediaViewer('${decryptedText}', 'video')">
-              <svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            </div>
-          </div>
-        `;
-      } else if (msg.type === 'videonote') {
-        contentHTML = `
-          <div class="video-note-bubble">
-            <video src="${decryptedText}" autoplay loop muted playsinline onclick="openMediaViewer('${decryptedText}', 'video')"></video>
-          </div>
-        `;
-      } else if (msg.type === 'audio') {
-        contentHTML = `
-          <div class="voice-player-bubble">
-            <div class="voice-play-btn" onclick="playAudio('${id}', '${decryptedText}')">
-              <svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            </div>
-            <div class="waveform-bars-wrap">
-              <div class="wave-bar" style="height:12px;"></div>
-              <div class="wave-bar" style="height:20px;"></div>
-              <div class="wave-bar" style="height:16px;"></div>
-              <div class="wave-bar" style="height:24px;"></div>
-              <div class="wave-bar" style="height:10px;"></div>
-              <div class="wave-bar" style="height:18px;"></div>
-              <div class="wave-bar" style="height:14px;"></div>
-            </div>
-          </div>
-        `;
-      }
-
-      const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      wrap.innerHTML = `
-        <div class="msg-bubble">
-          ${msg.replyToText ? `<div class="msg-reply-box">${msg.replyToText}</div>` : ''}
-          ${contentHTML}
-          <div class="msg-time-stamp">
-            <span>${timeStr}</span>
-            ${msg.edited ? '<span>(ред.)</span>' : ''}
-            ${isOut ? '<span style="color:var(--accent-green)">✓✓</span>' : ''}
-          </div>
-        </div>
-        ${msg.reactions ? `
-          <div class="reactions-badge">
-            <div class="reaction-avatars">
-              <img class="reaction-avatar" src="${currentUserProfile.avatar || ''}">
-            </div>
-            <span>${msg.reactions}</span>
-          </div>
-        ` : ''}
-      `;
-
-      // Touch events: Context Menu & Heart Double Tap
-      let lastTap = 0;
-      wrap.addEventListener('touchstart', (e) => {
-        const now = new Date().getTime();
-        const timesince = now - lastTap;
-        if (timesince < 280 && timesince > 0) {
-          applyHeartReactionToMsg(id);
-        }
-        lastTap = now;
-      });
-
-      wrap.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        activeSelectedMsgId = id;
-        activeSelectedMsgData = { ...msg, text: decryptedText };
-        openModal('msg-context-modal');
-      });
-
-      container.appendChild(wrap);
-    }
-
-    async function sendMessage(payload, type = 'text') {
-      if (!activeChatRecipient) return;
-
-      const recipientPubKey = await E2EECrypto.importPublicKey(activeChatRecipient.publicKey);
-      const sharedKey = await E2EECrypto.deriveAESKey(userKeyPair.privateKey, recipientPubKey);
-      const myPubKeyStr = await E2EECrypto.exportPublicKey(userKeyPair.publicKey);
-
-      if (editingMsgId) {
-        // Edit existing message
-        const enc = await E2EECrypto.encrypt(sharedKey, payload);
-        const chatId = [currentUser.uid, activeChatRecipient.uid].sort().join('_');
-        await update(ref(db, `chats/${chatId}/messages/${editingMsgId}`), {
-          ciphertext: enc.ciphertext,
-          iv: enc.iv,
-          edited: true
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: true, 
+            powerPreference: "high-performance",
+            alpha: false
         });
-        editingMsgId = null;
-        document.getElementById('reply-banner').classList.remove('active');
-        return;
-      }
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Dynamic capping for 60fps
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.15;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
 
-      const enc = await E2EECrypto.encrypt(sharedKey, payload);
+        /* =========================================================================
+           2. POST-PROCESSING (RTX BLOOM & GLOW EFFECT)
+           ========================================================================= */
+        const composer = new THREE.EffectComposer(renderer);
+        const renderPass = new THREE.RenderPass(scene, camera);
+        composer.addPass(renderPass);
 
-      const newMsg = {
-        sender: currentUser.uid,
-        senderPubKey: myPubKeyStr,
-        ciphertext: enc.ciphertext,
-        iv: enc.iv,
-        type: type,
-        timestamp: Date.now()
-      };
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.55,  // strength
+            0.4,   // radius
+            0.82   // threshold
+        );
+        composer.addPass(bloomPass);
 
-      if (replyToMsgId) {
-        newMsg.replyToText = activeSelectedMsgData ? activeSelectedMsgData.text.substring(0,30) : "Сообщение";
-        replyToMsgId = null;
-        document.getElementById('reply-banner').classList.remove('active');
-      }
+        /* =========================================================================
+           3. LIGHTING (PHOTOREALISTIC SUN & ATMOSPHERE)
+           ========================================================================= */
+        const ambientLight = new THREE.AmbientLight(0xffdbec, 0.75);
+        scene.add(ambientLight);
 
-      await push(activeChatMessagesRef, newMsg);
-    }
+        const sunLight = new THREE.DirectionalLight(0xfff0e6, 2.2);
+        sunLight.position.set(120, 150, -100);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 350;
+        const d = 120;
+        sunLight.shadow.camera.left = -d;
+        sunLight.shadow.camera.right = d;
+        sunLight.shadow.camera.top = d;
+        sunLight.shadow.camera.bottom = -d;
+        sunLight.shadow.bias = -0.0003;
+        scene.add(sunLight);
 
-    window.applyHeartReaction = function() {
-      if (activeSelectedMsgId) {
-        applyHeartReactionToMsg(activeSelectedMsgId);
-        closeModal('msg-context-modal');
-      }
-    };
+        // Sun Visual Sphere
+        const sunGeo = new THREE.SphereGeometry(12, 32, 32);
+        const sunMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+        sunMesh.position.copy(sunLight.position);
+        scene.add(sunMesh);
 
-    async function applyHeartReactionToMsg(msgId) {
-      const chatId = [currentUser.uid, activeChatRecipient.uid].sort().join('_');
-      await update(ref(db, `chats/${chatId}/messages/${msgId}`), { reactions: '❤️' });
-    }
-
-    // SETUP EVENT LISTENERS
-    function setupEventListeners() {
-      const textInput = document.getElementById('chat-text-input');
-      textInput.addEventListener('input', () => {
-        if (activeChatRecipient) {
-          setTypingStatus(activeChatRecipient.uid);
-        }
-      });
-
-      document.getElementById('chat-send-btn').addEventListener('click', () => {
-        const txt = textInput.value.trim();
-        if (txt) {
-          sendMessage(txt, 'text');
-          textInput.value = '';
-        }
-      });
-
-      document.getElementById('chat-back-btn').addEventListener('click', () => {
-        switchScreen(mainScreen);
-      });
-
-      document.getElementById('open-settings-btn').addEventListener('click', () => {
-        loadSettingsValues();
-        switchScreen(settingsScreen);
-      });
-
-      document.getElementById('settings-back-btn').addEventListener('click', () => {
-        switchScreen(mainScreen);
-      });
-
-      document.getElementById('chat-user-profile-trigger').addEventListener('click', () => {
-        if (!activeChatRecipient) return;
-        document.getElementById('profile-modal-avatar').src = activeChatRecipient.avatar || '';
-        document.getElementById('profile-modal-name').innerText = activeChatRecipient.displayName;
-        document.getElementById('profile-modal-username').innerText = `@${activeChatRecipient.username}`;
-        document.getElementById('profile-modal-bio').innerText = activeChatRecipient.bio || '—';
-        openModal('profile-modal');
-      });
-
-      document.getElementById('chat-menu-btn').addEventListener('click', () => {
-        openModal('chat-menu-sheet');
-      });
-
-      document.getElementById('attach-btn').addEventListener('click', () => {
-        openModal('attach-sheet');
-      });
-
-      document.getElementById('attach-file-photo').addEventListener('change', handlePhotoAttachment);
-      document.getElementById('attach-file-video').addEventListener('change', handleVideoAttachment);
-      document.getElementById('attach-file-audio').addEventListener('change', handleAudioAttachment);
-
-      setupMediaRecorders();
-
-      // Reply Action
-      document.getElementById('msg-action-reply').addEventListener('click', () => {
-        replyToMsgId = activeSelectedMsgId;
-        document.getElementById('reply-banner-text').innerText = activeSelectedMsgData ? activeSelectedMsgData.text : 'Сообщение';
-        document.getElementById('reply-banner').classList.add('active');
-        closeModal('msg-context-modal');
-      });
-
-      // Edit Action
-      document.getElementById('msg-action-edit').addEventListener('click', () => {
-        if (activeSelectedMsgData && activeSelectedMsgData.sender === currentUser.uid) {
-          editingMsgId = activeSelectedMsgId;
-          textInput.value = activeSelectedMsgData.text;
-          document.getElementById('reply-banner-text').innerText = "Редактирование: " + activeSelectedMsgData.text;
-          document.getElementById('reply-banner').classList.add('active');
-        } else {
-          alert('Вы можете редактировать только свои сообщения');
-        }
-        closeModal('msg-context-modal');
-      });
-
-      document.getElementById('cancel-reply-btn').addEventListener('click', () => {
-        replyToMsgId = null;
-        editingMsgId = null;
-        document.getElementById('reply-banner').classList.remove('active');
-      });
-
-      // Delete Action
-      document.getElementById('msg-action-delete').addEventListener('click', async () => {
-        if (activeSelectedMsgId && activeChatRecipient) {
-          const chatId = [currentUser.uid, activeChatRecipient.uid].sort().join('_');
-          await remove(ref(db, `chats/${chatId}/messages/${activeSelectedMsgId}`));
-          closeModal('msg-context-modal');
-        }
-      });
-
-      // Save Profile Button
-      document.getElementById('save-profile-btn').addEventListener('click', async () => {
-        const newName = document.getElementById('settings-name-input').value.trim();
-        const newBio = document.getElementById('settings-bio-input').value.trim();
-
-        if (newName) {
-          const profKey = await E2EECrypto.deriveProfileAESKey();
-          const encBio = await E2EECrypto.encrypt(profKey, newBio);
-          const encName = await E2EECrypto.encrypt(profKey, newName);
-
-          await update(ref(db, `users/${currentUser.uid}/profile`), {
-            encDisplayName: encName,
-            encBio: encBio
-          });
-          alert('Профиль мгновенно обновлен!');
-        }
-      });
-
-      // Settings Avatar
-      document.getElementById('settings-avatar-input').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = async (ev) => {
-            const base64 = ev.target.result;
-            document.getElementById('settings-avatar-img').src = base64;
-            const profKey = await E2EECrypto.deriveProfileAESKey();
-            const encAvatar = await E2EECrypto.encrypt(profKey, base64);
-            await update(ref(db, `users/${currentUser.uid}/profile`), { encAvatar: encAvatar });
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-
-      // Save Customization
-      document.getElementById('save-cust-btn').addEventListener('click', async () => {
-        appCustomization.fontSize = document.getElementById('cust-font-size').value;
-        appCustomization.fontStyle = document.getElementById('cust-font-style').value;
-        appCustomization.phraseTyping = document.getElementById('cust-phrase-typing').value.trim() || 'печатает...';
-        appCustomization.phraseOnline = document.getElementById('cust-phrase-online').value.trim() || 'в сети';
-        appCustomization.phrasePlaceholder = document.getElementById('cust-phrase-placeholder').value.trim() || 'Жмякай...';
-
-        applyCustomizationStyles();
-        alert('Кастомизация успешно применена!');
-      });
-
-      // Save Privacy Settings
-      document.getElementById('save-privacy-btn').addEventListener('click', async () => {
-        appPrivacy.messaging = document.getElementById('priv-messaging').value;
-        appPrivacy.lastseen = document.getElementById('priv-lastseen').value;
-        appPrivacy.avatar = document.getElementById('priv-avatar').value;
-
-        await update(ref(db, `users/${currentUser.uid}/profile/privacy`), appPrivacy);
-        alert('Настройки конфиденциальности сохранены!');
-      });
-
-      // Backup Keys
-      document.getElementById('backup-keys-btn').addEventListener('click', async () => {
-        const privStr = await LocalStore.get('keys', currentUser.uid);
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
-          uid: currentUser.uid,
-          privateKey: privStr
-        }));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `tsuyu_keys_${currentUser.uid}.json`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-      });
-
-      // Regenerate Keys
-      document.getElementById('regen-keys-btn').addEventListener('click', async () => {
-        if (confirm('Сменить приватный ключ? Новые сообщения будут шифроваться новым ключом.')) {
-          const kp = await E2EECrypto.generateKeyPair();
-          const privStr = await E2EECrypto.exportPrivateKey(kp.privateKey);
-          const pubStr = await E2EECrypto.exportPublicKey(kp.publicKey);
-
-          await LocalStore.set('keys', currentUser.uid, privStr);
-          await update(ref(db, `users/${currentUser.uid}/profile`), { publicKey: pubStr });
-          userKeyPair = kp;
-          alert('Новый ключ создан и активирован!');
-        }
-      });
-
-      // Logout
-      document.getElementById('logout-btn').addEventListener('click', () => {
-        signOut(auth);
-      });
-
-      // Clear Chat for Both
-      document.getElementById('menu-clear-chat').addEventListener('click', async () => {
-        if (activeChatRecipient && confirm('Очистить всю переписку у обоих пользователей?')) {
-          const chatId = [currentUser.uid, activeChatRecipient.uid].sort().join('_');
-          await remove(ref(db, `chats/${chatId}/messages`));
-          closeModal('chat-menu-sheet');
-        }
-      });
-
-      // Export Chat Trigger
-      document.getElementById('menu-export-chat').addEventListener('click', () => {
-        closeModal('chat-menu-sheet');
-        openModal('export-modal');
-      });
-
-      document.getElementById('confirm-export-btn').addEventListener('click', exportDecryptedChat);
-    }
-
-    // MEDIA ATTACHMENT HANDLERS
-    async function handlePhotoAttachment(e) {
-      closeModal('attach-sheet');
-      const files = Array.from(e.target.files);
-      if (!files.length) return;
-
-      if (files.length === 1) {
-        const base64 = await fileToBase64(files[0]);
-        sendMessage(base64, 'photo');
-      } else {
-        const base64List = await Promise.all(files.map(f => fileToBase64(f)));
-        sendMessage(JSON.stringify(base64List), 'collage');
-      }
-    }
-
-    async function handleVideoAttachment(e) {
-      closeModal('attach-sheet');
-      const file = e.target.files[0];
-      if (file) {
-        const base64 = await fileToBase64(file);
-        sendMessage(base64, 'video');
-      }
-    }
-
-    async function handleAudioAttachment(e) {
-      closeModal('attach-sheet');
-      const file = e.target.files[0];
-      if (file) {
-        const base64 = await fileToBase64(file);
-        sendMessage(base64, 'audio');
-      }
-    }
-
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-        reader.readAsDataURL(file);
-      });
-    }
-
-    // CIRCULAR VIDEO NOTE & VOICE RECORDER ENGINE
-    function setupMediaRecorders() {
-      const micCircleBtn = document.getElementById('mic-circle-btn');
-      let mediaRecorder = null;
-      let recordedChunks = [];
-
-      micCircleBtn.addEventListener('click', async () => {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
-          const videoElem = document.getElementById('video-rec-element');
-          videoElem.srcObject = stream;
-
-          openModal('video-rec-modal');
-
-          recordedChunks = [];
-          mediaRecorder = new MediaRecorder(stream);
-          mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) recordedChunks.push(e.data);
-          };
-
-          mediaRecorder.onstop = async () => {
-            const blob = new Blob(recordedChunks, { type: 'video/webm' });
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              sendMessage(reader.result, 'videonote');
-            };
-            reader.readAsDataURL(blob);
-
-            stream.getTracks().forEach(track => track.stop());
-            closeModal('video-rec-modal');
-          };
-
-          mediaRecorder.start();
-
-          document.getElementById('video-rec-stop-btn').onclick = () => {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-              mediaRecorder.stop();
+        /* =========================================================================
+           4. PROCEDURAL TEXTURES (GENERATED ON THE FLY FOR MAX EFFICIENCY)
+           ========================================================================= */
+        function createGrassTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#2d5a27';
+            ctx.fillRect(0,0,512,512);
+            for(let i=0; i<40000; i++) {
+                ctx.fillStyle = Math.random() > 0.5 ? '#3a7233' : '#1e4019';
+                ctx.fillRect(Math.random()*512, Math.random()*512, 2, 8);
             }
-          };
-        } catch (err) {
-          alert('Доступ к камере/микрофону отклонен');
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(40, 40);
+            return texture;
         }
-      });
-    }
 
-    // FULLSCREEN MEDIA VIEWER WITH PINCH ZOOM
-    window.openMediaViewer = function(url, type) {
-      const img = document.getElementById('viewer-img');
-      const vid = document.getElementById('viewer-video');
-
-      if (type === 'image') {
-        vid.style.display = 'none';
-        img.src = url;
-        img.style.display = 'block';
-        setupPinchZoom(img);
-      } else {
-        img.style.display = 'none';
-        vid.src = url;
-        vid.style.display = 'block';
-      }
-
-      openModal('media-viewer');
-    };
-
-    function setupPinchZoom(imgElem) {
-      let scale = 1;
-      let initialDist = 0;
-
-      imgElem.ontouchstart = (e) => {
-        if (e.touches.length === 2) {
-          initialDist = Math.hypot(
-            e.touches[0].pageX - e.touches[1].pageX,
-            e.touches[0].pageY - e.touches[1].pageY
-          );
+        function createBarkTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#2b1b17';
+            ctx.fillRect(0,0,256,256);
+            for(let i=0; i<3000; i++) {
+                ctx.fillStyle = Math.random() > 0.5 ? '#3d2822' : '#1c100d';
+                ctx.fillRect(Math.random()*256, Math.random()*256, 3, 20);
+            }
+            return new THREE.CanvasTexture(canvas);
         }
-      };
 
-      imgElem.ontouchmove = (e) => {
-        if (e.touches.length === 2) {
-          const dist = Math.hypot(
-            e.touches[0].pageX - e.touches[1].pageX,
-            e.touches[0].pageY - e.touches[1].pageY
-          );
-          scale = Math.max(1, Math.min(4, scale * (dist / initialDist)));
-          imgElem.style.transform = `scale(${scale})`;
-          initialDist = dist;
+        const grassTexture = createGrassTexture();
+        const barkTexture = createBarkTexture();
+
+        /* =========================================================================
+           5. TERRAIN & WATER GENERATION
+           ========================================================================= */
+        const terrainSize = 500;
+        const terrainGeo = new THREE.PlaneGeometry(terrainSize, terrainSize, 120, 120);
+        terrainGeo.rotateX(-Math.PI / 2);
+
+        const posAttr = terrainGeo.attributes.position;
+        function getTerrainHeight(x, z) {
+            const hill1 = Math.sin(x * 0.015) * Math.cos(z * 0.015) * 12;
+            const hill2 = Math.sin(x * 0.04 + 1.5) * Math.sin(z * 0.03) * 4;
+            const valley = Math.sin((x+z)*0.01) * 6;
+            return hill1 + hill2 + valley;
         }
-      };
 
-      imgElem.ontouchend = () => {
-        if (scale === 1) imgElem.style.transform = 'scale(1)';
-      };
-    }
+        for (let i = 0; i < posAttr.count; i++) {
+            const x = posAttr.getX(i);
+            const z = posAttr.getZ(i);
+            posAttr.setY(i, getTerrainHeight(x, z));
+        }
+        terrainGeo.computeVertexNormals();
 
-    window.playAudio = function(id, url) {
-      const a = new Audio(url);
-      a.play();
-    };
-
-    // EXPORT DECRYPTED CHAT
-    async function exportDecryptedChat() {
-      if (!activeChatRecipient) return;
-
-      const incText = document.getElementById('exp-opt-text').checked;
-      const incPhoto = document.getElementById('exp-opt-photo').checked;
-      const incVideo = document.getElementById('exp-opt-video').checked;
-      const incVoice = document.getElementById('exp-opt-voice').checked;
-
-      const chatId = [currentUser.uid, activeChatRecipient.uid].sort().join('_');
-      const msgsSnap = await get(ref(db, `chats/${chatId}/messages`));
-
-      if (!msgsSnap.exists()) return alert('Нет сообщений для экспорта');
-
-      const recipientPubKey = await E2EECrypto.importPublicKey(activeChatRecipient.publicKey);
-      const sharedKey = await E2EECrypto.deriveAESKey(userKeyPair.privateKey, recipientPubKey);
-
-      const msgs = msgsSnap.val();
-      const exportList = [];
-
-      for (let id in msgs) {
-        const m = msgs[id];
-        if (m.type === 'text' && !incText) continue;
-        if ((m.type === 'photo' || m.type === 'collage') && !incPhoto) continue;
-        if ((m.type === 'video' || m.type === 'videonote') && !incVideo) continue;
-        if (m.type === 'audio' && !incVoice) continue;
-
-        const dec = await E2EECrypto.decrypt(sharedKey, m.iv, m.ciphertext);
-        exportList.push({
-          sender: m.sender,
-          type: m.type,
-          content: dec,
-          timestamp: new Date(m.timestamp).toISOString()
+        const terrainMat = new THREE.MeshStandardMaterial({
+            map: grassTexture,
+            roughness: 0.85,
+            metalness: 0.05
         });
-      }
+        const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+        terrain.receiveShadow = true;
+        scene.add(terrain);
 
-      const blobStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportList, null, 2));
-      const a = document.createElement('a');
-      a.setAttribute("href", blobStr);
-      a.setAttribute("download", `tsuyu_export_${activeChatRecipient.username}.json`);
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      closeModal('export-modal');
-    }
+        // Dynamic Water Lake
+        const waterGeo = new THREE.PlaneGeometry(160, 160);
+        const waterMat = new THREE.MeshStandardMaterial({
+            color: 0x66ccff,
+            roughness: 0.1,
+            metalness: 0.8,
+            transparent: true,
+            opacity: 0.75
+        });
+        const water = new THREE.Mesh(waterGeo, waterMat);
+        water.rotation.x = -Math.PI / 2;
+        water.position.set(0, -3.5, 0);
+        scene.add(water);
 
-    // CUSTOMIZATION LOADER & APPLY
-    function loadSettingsValues() {
-      if (currentUserProfile) {
-        document.getElementById('settings-avatar-img').src = currentUserProfile.avatar || '';
-        document.getElementById('settings-name-input').value = currentUserProfile.displayName || '';
-        document.getElementById('settings-bio-input').value = currentUserProfile.bio || '';
-      }
-    }
+        /* =========================================================================
+           6. PROCEDURAL SAKURA TREES & PETALS
+           ========================================================================= */
+        const treeGroup = new THREE.Group();
+        const sakuraCount = 60;
 
-    function applyCustomizationStyles() {
-      document.documentElement.style.setProperty('--app-font-size', appCustomization.fontSize);
-      document.documentElement.style.setProperty('--app-font-style', appCustomization.fontStyle);
-      document.getElementById('chat-text-input').placeholder = appCustomization.phrasePlaceholder;
-    }
+        // Tree Leaf Material (Pink Glowing Shader look)
+        const leafMat = new THREE.MeshStandardMaterial({
+            color: 0xffa6c9,
+            roughness: 0.3,
+            metalness: 0.1,
+            emissive: 0xff3385,
+            emissiveIntensity: 0.15
+        });
 
-    function setupPWAAndCustomization() {
-      document.getElementById('font-file-input').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            const fontFace = new FontFace('CustomUserFont', ev.target.result);
-            fontFace.load().then((loadedFont) => {
-              document.fonts.add(loadedFont);
-              document.documentElement.style.setProperty('--app-font-family', 'CustomUserFont');
-              alert('Шрифт успешно установлен!');
-            });
-          };
-          reader.readAsArrayBuffer(file);
+        const trunkMat = new THREE.MeshStandardMaterial({
+            map: barkTexture,
+            roughness: 0.9
+        });
+
+        function createSakuraTree(x, z) {
+            const y = getTerrainHeight(x, z);
+            if (y < -2) return; // Don't spawn inside lake
+
+            const tree = new THREE.Group();
+            tree.position.set(x, y, z);
+
+            // Trunk
+            const trunkGeo = new THREE.CylinderGeometry(0.6, 1.2, 8, 8);
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = 4;
+            trunk.castShadow = true;
+            trunk.receiveShadow = true;
+            tree.add(trunk);
+
+            // Leaf Canopy Clusters
+            const clusterCount = 5;
+            for(let i=0; i<clusterCount; i++) {
+                const size = 3.5 + Math.random() * 2.5;
+                const leafGeo = new THREE.DodecahedronGeometry(size, 1);
+                const leafMesh = new THREE.Mesh(leafGeo, leafMat);
+                leafMesh.position.set(
+                    (Math.random() - 0.5) * 4,
+                    7 + Math.random() * 4,
+                    (Math.random() - 0.5) * 4
+                );
+                leafMesh.castShadow = true;
+                tree.add(leafMesh);
+            }
+            scene.add(tree);
         }
-      });
-    }
-  </script>
+
+        // Scatter Sakura Trees
+        for (let i = 0; i < sakuraCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 20 + Math.random() * 180;
+            const x = Math.cos(angle) * dist;
+            const z = Math.sin(angle) * dist;
+            createSakuraTree(x, z);
+        }
+
+        /* =========================================================================
+           7. GPU INSTANCED FALLING PETALS SYSTEM (ZERO LAG)
+           ========================================================================= */
+        const petalCount = 3500;
+        const petalGeo = new THREE.PlaneGeometry(0.25, 0.25);
+        const petalMat = new THREE.MeshBasicMaterial({
+            color: 0xffb6c1,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.85
+        });
+
+        const petalInstanced = new THREE.InstancedMesh(petalGeo, petalMat, petalCount);
+        const dummy = new THREE.Object3D();
+        const petalData = [];
+
+        for (let i = 0; i < petalCount; i++) {
+            const x = (Math.random() - 0.5) * 250;
+            const y = Math.random() * 30 + 2;
+            const z = (Math.random() - 0.5) * 250;
+            const speedY = 0.03 + Math.random() * 0.05;
+            const rotSpeed = Math.random() * 0.04;
+            const swayFreq = 1 + Math.random() * 2;
+
+            petalData.push({ x, y, z, speedY, rotSpeed, swayFreq, initialY: y, timeOffset: Math.random() * 100 });
+
+            dummy.position.set(x, y, z);
+            dummy.updateMatrix();
+            petalInstanced.setMatrixAt(i, dummy.matrix);
+        }
+        scene.add(petalInstanced);
+
+        /* =========================================================================
+           8. CONTROLS & CAMERA (FPS & MULTITOUCH)
+           ========================================================================= */
+        const player = {
+            position: new THREE.Vector3(0, 5, 20),
+            velocity: new THREE.Vector3(),
+            yaw: 0,
+            pitch: 0,
+            speed: 0.16,
+            sprintMultiplier: 1.8,
+            isSprinting: false,
+            isGrounded: true,
+            height: 1.7,
+            jumpVelocity: 0
+        };
+
+        camera.position.copy(player.position);
+
+        // Input States
+        const keys = { w: false, a: false, s: false, d: false, Shift: false };
+        let moveVector = { x: 0, y: 0 }; // Joystick input (-1 to 1)
+
+        // PC Keyboard
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'w' || e.key === 'W' || e.key === 'Ц' || e.key === 'ц') keys.w = true;
+            if (e.key === 's' || e.key === 'S' || e.key === 'Ы' || e.key === 'ы') keys.s = true;
+            if (e.key === 'a' || e.key === 'A' || e.key === 'Ф' || e.key === 'ф') keys.a = true;
+            if (e.key === 'd' || e.key === 'D' || e.key === 'В' || e.key === 'в') keys.d = true;
+            if (e.key === 'Shift') player.isSprinting = true;
+            if (e.key === ' ' && player.isGrounded) jump();
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'w' || e.key === 'W' || e.key === 'Ц' || e.key === 'ц') keys.w = false;
+            if (e.key === 's' || e.key === 'S' || e.key === 'Ы' || e.key === 'ы') keys.s = false;
+            if (e.key === 'a' || e.key === 'A' || e.key === 'Ф' || e.key === 'ф') keys.a = false;
+            if (e.key === 'd' || e.key === 'D' || e.key === 'В' || e.key === 'в') keys.d = false;
+            if (e.key === 'Shift') player.isSprinting = false;
+        });
+
+        // Pointer Lock for PC Mouse Look
+        let isPointerLocked = false;
+        container.addEventListener('click', () => {
+            if (window.innerWidth > 768 && !isPointerLocked) {
+                container.requestPointerLock();
+            }
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            isPointerLocked = document.pointerLockElement === container;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isPointerLocked) {
+                const sensitivity = 0.0022;
+                player.yaw -= e.movementX * sensitivity;
+                player.pitch -= e.movementY * sensitivity;
+                player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, player.pitch));
+            }
+        });
+
+        /* GENSHIN IMPACT TOUCH SYSTEM (MULTITOUCH) */
+        const joystickZone = document.getElementById('joystick-zone');
+        const joystickThumb = document.getElementById('joystick-thumb');
+        let joystickTouchId = null;
+        let joystickCenter = { x: 0, y: 0 };
+
+        let lookTouchId = null;
+        let lookLastPos = { x: 0, y: 0 };
+
+        window.addEventListener('touchstart', (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                const x = touch.clientX;
+                const y = touch.clientY;
+
+                // Left Half Screen -> Joystick
+                if (x < window.innerWidth / 2 && joystickTouchId === null) {
+                    joystickTouchId = touch.identifier;
+                    const rect = joystickZone.getBoundingClientRect();
+                    joystickCenter = {
+                        x: rect.left + rect.width / 2,
+                        y: rect.top + rect.height / 2
+                    };
+                    updateJoystick(touch.clientX, touch.clientY);
+                } 
+                // Right Half Screen -> Camera Rotation
+                else if (x >= window.innerWidth / 2 && lookTouchId === null) {
+                    // Ignore clicks on action buttons
+                    if (e.target.closest('#action-buttons') || e.target.closest('.header-bar')) continue;
+                    lookTouchId = touch.identifier;
+                    lookLastPos = { x: touch.clientX, y: touch.clientY };
+                }
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (touch.identifier === joystickTouchId) {
+                    updateJoystick(touch.clientX, touch.clientY);
+                } else if (touch.identifier === lookTouchId) {
+                    const dx = touch.clientX - lookLastPos.x;
+                    const dy = touch.clientY - lookLastPos.y;
+                    const sens = 0.004;
+                    player.yaw -= dx * sens;
+                    player.pitch -= dy * sens;
+                    player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, player.pitch));
+                    lookLastPos = { x: touch.clientX, y: touch.clientY };
+                }
+            }
+        }, { passive: false });
+
+        function resetJoystick() {
+            joystickTouchId = null;
+            moveVector = { x: 0, y: 0 };
+            joystickThumb.style.transform = `translate(-50%, -50%)`;
+        }
+
+        window.addEventListener('touchend', (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (touch.identifier === joystickTouchId) resetJoystick();
+                if (touch.identifier === lookTouchId) lookTouchId = null;
+            }
+        });
+
+        window.addEventListener('touchcancel', (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (touch.identifier === joystickTouchId) resetJoystick();
+                if (touch.identifier === lookTouchId) lookTouchId = null;
+            }
+        });
+
+        function updateJoystick(clientX, clientY) {
+            const maxRadius = 50;
+            let dx = clientX - joystickCenter.x;
+            let dy = clientY - joystickCenter.y;
+            let dist = Math.hypot(dx, dy);
+
+            if (dist > maxRadius) {
+                dx = (dx / dist) * maxRadius;
+                dy = (dy / dist) * maxRadius;
+            }
+
+            joystickThumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+            moveVector.x = dx / maxRadius;
+            moveVector.y = dy / maxRadius;
+        }
+
+        // Action Buttons
+        const sprintBtn = document.getElementById('btn-sprint');
+        sprintBtn.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            player.isSprinting = !player.isSprinting;
+            sprintBtn.style.borderColor = player.isSprinting ? '#ff69b4' : 'rgba(255,255,255,0.4)';
+        });
+
+        const jumpBtn = document.getElementById('btn-jump');
+        jumpBtn.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            jump();
+        });
+
+        function jump() {
+            if (player.isGrounded) {
+                player.jumpVelocity = 0.18;
+                player.isGrounded = false;
+            }
+        }
+
+        /* =========================================================================
+           9. GENERATIVE NATURE SOUNDS (WEB AUDIO API)
+           ========================================================================= */
+        let audioCtx = null;
+        let isAudioPlaying = false;
+
+        function initAudio() {
+            if (audioCtx) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+
+            // Wind Noise Generator
+            const bufferSize = audioCtx.sampleRate * 2;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const whiteNoise = audioCtx.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+            whiteNoise.loop = true;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(400, audioCtx.currentTime);
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+
+            whiteNoise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            whiteNoise.start();
+            isAudioPlaying = true;
+        }
+
+        document.getElementById('audio-toggle-btn').addEventListener('click', () => {
+            if (!audioCtx) {
+                initAudio();
+            } else if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+                isAudioPlaying = true;
+            } else if (audioCtx.state === 'running') {
+                audioCtx.suspend();
+                isAudioPlaying = false;
+            }
+        });
+
+        /* =========================================================================
+           10. MAIN ANIMATION & PHYSICS LOOP
+           ========================================================================= */
+        let clock = new THREE.Clock();
+        let frameCount = 0;
+        let lastFpsTime = performance.now();
+        const fpsDisplay = document.getElementById('fps-display');
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const time = clock.getElapsedTime();
+
+            // FPS Counter
+            frameCount++;
+            const now = performance.now();
+            if (now - lastFpsTime >= 1000) {
+                fpsDisplay.innerText = `${frameCount} FPS`;
+                frameCount = 0;
+                lastFpsTime = now;
+            }
+
+            // Movement Calculation
+            let moveX = 0;
+            let moveZ = 0;
+
+            if (keys.w) moveZ -= 1;
+            if (keys.s) moveZ += 1;
+            if (keys.a) moveX -= 1;
+            if (keys.d) moveX += 1;
+
+            // Combine Touch Joystick Input
+            if (moveVector.x !== 0 || moveVector.y !== 0) {
+                moveX = moveVector.x;
+                moveZ = moveVector.y;
+            }
+
+            const currentSpeed = player.speed * (player.isSprinting ? player.sprintMultiplier : 1.0);
+
+            if (moveX !== 0 || moveZ !== 0) {
+                const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.yaw);
+                const side = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.yaw);
+
+                const moveDir = new THREE.Vector3()
+                    .addScaledVector(forward, -moveZ)
+                    .addScaledVector(side, moveX)
+                    .normalize();
+
+                player.position.addScaledVector(moveDir, currentSpeed);
+
+                // Natural Head Bobbing
+                player.position.y += Math.sin(time * 12) * 0.015;
+            }
+
+            // Gravity & Terrain Collision
+            const targetTerrainHeight = getTerrainHeight(player.position.x, player.position.z) + player.height;
+
+            if (!player.isGrounded) {
+                player.position.y += player.jumpVelocity;
+                player.jumpVelocity -= 0.009; // Gravity
+
+                if (player.position.y <= targetTerrainHeight) {
+                    player.position.y = targetTerrainHeight;
+                    player.isGrounded = true;
+                    player.jumpVelocity = 0;
+                }
+            } else {
+                player.position.y = THREE.MathUtils.lerp(player.position.y, targetTerrainHeight, 0.25);
+            }
+
+            // Update Camera Rotation Matrix
+            const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+            euler.x = player.pitch;
+            euler.y = player.yaw;
+            camera.quaternion.setFromEuler(euler);
+            camera.position.copy(player.position);
+
+            // Animate Falling Sakuras (Instanced Mesh Updates)
+            for (let i = 0; i < petalCount; i++) {
+                const data = petalData[i];
+                data.y -= data.speedY;
+                data.x += Math.sin(time * data.swayFreq + data.timeOffset) * 0.03;
+                data.z += Math.cos(time * data.swayFreq + data.timeOffset) * 0.02;
+
+                if (data.y < getTerrainHeight(data.x, data.z)) {
+                    data.y = data.initialY + 15;
+                    data.x = player.position.x + (Math.random() - 0.5) * 120;
+                    data.z = player.position.z + (Math.random() - 0.5) * 120;
+                }
+
+                dummy.position.set(data.x, data.y, data.z);
+                dummy.rotation.set(time + data.timeOffset, time * data.rotSpeed, 0);
+                dummy.updateMatrix();
+                petalInstanced.setMatrixAt(i, dummy.matrix);
+            }
+            petalInstanced.instanceMatrix.needsUpdate = true;
+
+            // Render with Bloom RTX Postprocessing
+            composer.render();
+        }
+
+        /* =========================================================================
+           11. UI & FULLSCREEN CONTROLS
+           ========================================================================= */
+        const startModal = document.getElementById('start-modal');
+        const startBtn = document.getElementById('start-btn');
+        startBtn.addEventListener('click', () => {
+            startModal.style.opacity = '0';
+            setTimeout(() => startModal.style.display = 'none', 500);
+            initAudio();
+            animate();
+        });
+
+        // Fullscreen Toggle Button
+        document.getElementById('fullscreen-btn').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        // Window Resize Listener
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
 </body>
 </html>
