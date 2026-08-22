@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sakura World RTX - 3D Open World</title>
+    <title>Sakura World RTX - Clear Sky Edition</title>
     <style>
         * {
             box-sizing: border-box;
@@ -29,7 +29,7 @@
             left: 0;
             z-index: 1;
         }
-        /* UI Overlay */
+        /* UI Overlay Layer */
         #ui-overlay {
             position: absolute;
             top: 0;
@@ -42,46 +42,41 @@
             flex-direction: column;
             justify-content: space-between;
         }
-        /* Header Stats & Buttons */
         .header-bar {
             padding: 16px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%);
             pointer-events: auto;
         }
-        .title-box {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
         .title-box h1 {
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-shadow: 0 2px 10px rgba(255,105,180,0.6);
-            background: linear-gradient(45deg, #fff, #ffb6c1);
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 15px rgba(255,105,180,0.8);
+            background: linear-gradient(45deg, #ffffff, #ffb6c1, #ffd700);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .badge {
-            background: rgba(255, 105, 180, 0.25);
-            border: 1px solid rgba(255, 182, 193, 0.6);
-            padding: 3px 8px;
-            border-radius: 12px;
+            background: rgba(255, 105, 180, 0.3);
+            border: 1px solid rgba(255, 182, 193, 0.8);
+            padding: 2px 8px;
+            border-radius: 10px;
             font-size: 10px;
-            color: #ffd1dc;
+            color: #ffffff;
             font-weight: bold;
-            backdrop-filter: blur(5px);
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
         .btn-group {
             display: flex;
             gap: 10px;
+            align-items: center;
         }
         .icon-btn {
-            background: rgba(20, 15, 30, 0.65);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(20, 15, 30, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             color: #fff;
             width: 42px;
             height: 42px;
@@ -91,12 +86,11 @@
             align-items: center;
             cursor: pointer;
             backdrop-filter: blur(8px);
-            transition: all 0.2s ease;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .icon-btn:active {
             transform: scale(0.92);
-            background: rgba(255, 105, 180, 0.4);
+            background: rgba(255, 105, 180, 0.5);
         }
         .icon-btn svg {
             width: 20px;
@@ -104,7 +98,7 @@
             fill: currentColor;
         }
 
-        /* Mobile Touch Controls Genshin Style */
+        /* Touch Controls */
         #touch-controls {
             position: absolute;
             bottom: 0;
@@ -113,7 +107,6 @@
             height: 100%;
             pointer-events: auto;
         }
-        /* Left Virtual Joystick Zone */
         #joystick-zone {
             position: absolute;
             bottom: 30px;
@@ -126,14 +119,14 @@
             width: 130px;
             height: 130px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,182,193,0.15) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.35);
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,105,180,0.2) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.5);
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            backdrop-filter: blur(4px);
-            box-shadow: 0 0 20px rgba(255, 105, 180, 0.2), inset 0 0 15px rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.4);
         }
         #joystick-thumb {
             width: 55px;
@@ -144,12 +137,10 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 15px rgba(255, 182, 193, 0.8), 0 4px 10px rgba(0,0,0,0.3);
-            transition: transform 0.04s ease-out;
+            box-shadow: 0 0 20px rgba(255, 182, 193, 1), 0 4px 10px rgba(0,0,0,0.3);
             border: 2px solid #fff;
         }
 
-        /* Action Buttons Right Side */
         #action-buttons {
             position: absolute;
             bottom: 35px;
@@ -157,15 +148,14 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            align-items: flex-end;
             pointer-events: auto;
         }
         .action-btn {
             width: 65px;
             height: 65px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,182,193,0.3) 0%, rgba(40,20,50,0.7) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            background: radial-gradient(circle, rgba(255,182,193,0.4) 0%, rgba(50,20,60,0.8) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.5);
             color: #fff;
             font-weight: bold;
             font-size: 13px;
@@ -174,28 +164,26 @@
             justify-content: center;
             align-items: center;
             backdrop-filter: blur(8px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4), 0 0 12px rgba(255,105,180,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4), 0 0 15px rgba(255,105,180,0.4);
             cursor: pointer;
-            touch-action: manipulation;
         }
         .action-btn:active {
             transform: scale(0.92);
-            background: rgba(255, 105, 180, 0.6);
+            background: rgba(255, 105, 180, 0.7);
         }
         .action-btn span {
             font-size: 10px;
-            opacity: 0.8;
-            margin-top: 2px;
+            opacity: 0.9;
         }
 
-        /* Start Screen Modal */
+        /* Start Modal */
         #start-modal {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle, rgba(25, 10, 35, 0.85) 0%, rgba(5, 2, 10, 0.96) 100%);
+            background: radial-gradient(circle, rgba(20, 10, 30, 0.85) 0%, rgba(5, 2, 10, 0.98) 100%);
             z-index: 100;
             display: flex;
             flex-direction: column;
@@ -203,102 +191,81 @@
             align-items: center;
             text-align: center;
             padding: 30px;
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(15px);
             transition: opacity 0.5s ease;
         }
         #start-modal h2 {
-            font-size: 32px;
-            margin-bottom: 12px;
-            background: linear-gradient(45deg, #ffffff, #ffb6c1, #ff69b4);
+            font-size: 34px;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffffff, #ffb6c1, #ffe4e1);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: 2px;
-            text-transform: uppercase;
-            filter: drop-shadow(0 0 15px rgba(255,105,180,0.5));
+            filter: drop-shadow(0 0 20px rgba(255,105,180,0.8));
         }
         #start-modal p {
-            max-width: 450px;
+            max-width: 480px;
             font-size: 15px;
             line-height: 1.6;
-            color: #d1c4e9;
+            color: #e0d5f5;
             margin-bottom: 25px;
         }
         .start-btn {
             background: linear-gradient(135deg, #ff69b4 0%, #da70d6 100%);
             color: #fff;
             border: none;
-            padding: 16px 48px;
-            font-size: 18px;
+            padding: 16px 50px;
+            font-size: 19px;
             font-weight: bold;
-            border-radius: 30px;
+            border-radius: 35px;
             cursor: pointer;
-            box-shadow: 0 0 25px rgba(255, 105, 180, 0.6), 0 5px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.8), 0 5px 15px rgba(0,0,0,0.4);
             transition: all 0.3s ease;
-            letter-spacing: 1px;
             pointer-events: auto;
         }
         .start-btn:hover {
             transform: scale(1.05);
-            box-shadow: 0 0 35px rgba(255, 105, 180, 0.9);
-        }
-        .start-btn:active {
-            transform: scale(0.98);
+            box-shadow: 0 0 40px rgba(255, 105, 180, 1);
         }
 
-        /* Controls hint box */
-        .controls-hint {
-            margin-top: 25px;
-            background: rgba(255,255,255,0.06);
-            padding: 12px 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            font-size: 12px;
-            color: #aaa;
-        }
-
-        /* Crosshair for FPS immersion */
         #crosshair {
             position: absolute;
             top: 50%;
             left: 50%;
             width: 6px;
             height: 6px;
-            background: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.7);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
-            box-shadow: 0 0 8px rgba(255, 182, 193, 0.8);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
         }
 
-        /* FPS Indicator */
         #fps-display {
             font-family: monospace;
-            font-size: 11px;
-            color: #88ff88;
-            background: rgba(0,0,0,0.4);
-            padding: 3px 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 12px;
+            color: #7dff7d;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
         }
     </style>
 </head>
 <body>
 
-    <!-- WebGL Canvas Container -->
     <div id="webgl-container"></div>
 
-    <!-- UI Overlay Layer -->
     <div id="ui-overlay">
-        <!-- Top Bar -->
         <div class="header-bar">
             <div class="title-box">
-                <h1>SAKURA RTX</h1>
-                <span class="badge">ULTRA 60FPS</span>
+                <h1>SAKURA SUNSET RTX</h1>
+                <span class="badge">CLEAR SKY • 60 FPS</span>
             </div>
             <div class="btn-group">
                 <div id="fps-display">60 FPS</div>
-                <button class="icon-btn" id="audio-toggle-btn" title="Звук природы">
-                    <svg id="audio-icon-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                <button class="icon-btn" id="audio-toggle-btn" title="Звуки">
+                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
                 </button>
                 <button class="icon-btn" id="fullscreen-btn" title="Полный экран">
                     <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
@@ -306,18 +273,14 @@
             </div>
         </div>
 
-        <!-- Center Crosshair -->
         <div id="crosshair"></div>
 
-        <!-- Mobile Touch Controls -->
         <div id="touch-controls">
-            <!-- Left Virtual Joystick -->
             <div id="joystick-zone">
                 <div id="joystick-base"></div>
                 <div id="joystick-thumb"></div>
             </div>
 
-            <!-- Action Buttons -->
             <div id="action-buttons">
                 <div class="action-btn" id="btn-sprint">
                     ⚡
@@ -331,18 +294,13 @@
         </div>
     </div>
 
-    <!-- Start / Welcome Overlay -->
     <div id="start-modal">
-        <h2>SAKURA RTX WORLD</h2>
-        <p>Добро пожаловать в бесшовный реалистичный 3D мир от первого лица! Лепестки сакуры, мягкий RTX-свет, атмосфера релакса без лагов и без врагов.</p>
-        <button class="start-btn" id="start-btn">ИССЛЕДОВАТЬ МИР</button>
-        <div class="controls-hint">
-            📱 <b>Смартфон:</b> Левый джойстик — движение | Правая часть экрана — обзор камеры<br>
-            💻 <b>Компьютер:</b> Клавиши W, A, S, D — движение | Мышь — обзор (Клик по экрану)
-        </div>
+        <h2>SAKURA ULTRA RTX</h2>
+        <p>Яркое ясное солнце, красочное небо без тумана, прыгающие милые слизняки, покачивающаяся живая трава и порхающие бабочки!</p>
+        <button class="start-btn" id="start-btn">ПОГРУЗИТЬСЯ В МИР</button>
     </div>
 
-    <!-- Libraries: Three.js + Postprocessing -->
+    <!-- Three.js + PostProcessing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
@@ -353,31 +311,30 @@
 
     <script>
         /* =========================================================================
-           1. GAME ENGINE & SCENE SETUP
+           1. ENGINE SETUP & NO FOG CLEAR SKY
            ========================================================================= */
         const container = document.getElementById('webgl-container');
         
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xffd1dc);
-        scene.fog = new THREE.FogExp2(0xffc2d4, 0.007);
+        // NO FOG! COMPLETELY CLEAR VISION
+        scene.fog = null;
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
         
         const renderer = new THREE.WebGLRenderer({ 
             antialias: true, 
-            powerPreference: "high-performance",
-            alpha: false
+            powerPreference: "high-performance"
         });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Dynamic capping for 60fps
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.15;
+        renderer.toneMappingExposure = 1.25;
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(renderer.domElement);
 
         /* =========================================================================
-           2. POST-PROCESSING (RTX BLOOM & GLOW EFFECT)
+           2. RTX POST-PROCESSING BLOOM
            ========================================================================= */
         const composer = new THREE.EffectComposer(renderer);
         const renderPass = new THREE.RenderPass(scene, camera);
@@ -385,88 +342,114 @@
 
         const bloomPass = new THREE.UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            0.55,  // strength
-            0.4,   // radius
-            0.82   // threshold
+            0.6,   // Strength
+            0.4,   // Radius
+            0.8    // Threshold
         );
         composer.addPass(bloomPass);
 
         /* =========================================================================
-           3. LIGHTING (PHOTOREALISTIC SUN & ATMOSPHERE)
+           3. BEAUTIFUL PROCEDURAL SKY & BRIGHT SUN
            ========================================================================= */
-        const ambientLight = new THREE.AmbientLight(0xffdbec, 0.75);
+        // Dynamic Sky Dome
+        const skyGeo = new THREE.SphereGeometry(1000, 32, 32);
+        
+        // Procedural Gradient Sky Texture (Bright Blue to Warm Sunset Gold/Pink)
+        function createSkyTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 512);
+            gradient.addColorStop(0.0, '#1e5799'); // Deep Blue Top
+            gradient.addColorStop(0.4, '#7db9e8'); // Sky Blue
+            gradient.addColorStop(0.7, '#ffaebe'); // Sakura Pink Horizon
+            gradient.addColorStop(0.9, '#ffcc00'); // Sun Gold Horizon
+            gradient.addColorStop(1.0, '#ffa07a'); // Sunset Bottom
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 1, 512);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        const skyMat = new THREE.MeshBasicMaterial({
+            map: createSkyTexture(),
+            side: THREE.BackSide
+        });
+        const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+        scene.add(skyMesh);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffebf0, 0.9);
         scene.add(ambientLight);
 
-        const sunLight = new THREE.DirectionalLight(0xfff0e6, 2.2);
-        sunLight.position.set(120, 150, -100);
+        const sunLight = new THREE.DirectionalLight(0xfff5ea, 2.5);
+        sunLight.position.set(200, 180, -300);
         sunLight.castShadow = true;
         sunLight.shadow.mapSize.width = 2048;
         sunLight.shadow.mapSize.height = 2048;
         sunLight.shadow.camera.near = 0.5;
-        sunLight.shadow.camera.far = 350;
-        const d = 120;
+        sunLight.shadow.camera.far = 600;
+        const d = 150;
         sunLight.shadow.camera.left = -d;
         sunLight.shadow.camera.right = d;
         sunLight.shadow.camera.top = d;
         sunLight.shadow.camera.bottom = -d;
-        sunLight.shadow.bias = -0.0003;
+        sunLight.shadow.bias = -0.0002;
         scene.add(sunLight);
 
-        // Sun Visual Sphere
-        const sunGeo = new THREE.SphereGeometry(12, 32, 32);
-        const sunMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        // Glowing Sun Sphere
+        const sunGeo = new THREE.SphereGeometry(22, 32, 32);
+        const sunMat = new THREE.MeshBasicMaterial({ 
+            color: 0xffffff,
+            emissive: 0xffffaa
+        });
         const sunMesh = new THREE.Mesh(sunGeo, sunMat);
         sunMesh.position.copy(sunLight.position);
         scene.add(sunMesh);
 
+        // Sun Corona Lens Flare Glow
+        const coronaGeo = new THREE.SphereGeometry(38, 32, 32);
+        const coronaMat = new THREE.MeshBasicMaterial({
+            color: 0xffcc33,
+            transparent: true,
+            opacity: 0.35,
+            side: THREE.BackSide
+        });
+        const coronaMesh = new THREE.Mesh(coronaGeo, coronaMat);
+        coronaMesh.position.copy(sunLight.position);
+        scene.add(coronaMesh);
+
         /* =========================================================================
-           4. PROCEDURAL TEXTURES (GENERATED ON THE FLY FOR MAX EFFICIENCY)
+           4. PROCEDURAL TERRAIN & REALISTIC WATER LAKE
            ========================================================================= */
         function createGrassTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 512; canvas.height = 512;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#2d5a27';
+            ctx.fillStyle = '#3a6e2d';
             ctx.fillRect(0,0,512,512);
-            for(let i=0; i<40000; i++) {
-                ctx.fillStyle = Math.random() > 0.5 ? '#3a7233' : '#1e4019';
-                ctx.fillRect(Math.random()*512, Math.random()*512, 2, 8);
+            for(let i=0; i<35000; i++) {
+                ctx.fillStyle = Math.random() > 0.5 ? '#4b8b3b' : '#28501e';
+                ctx.fillRect(Math.random()*512, Math.random()*512, 2, 7);
             }
             const texture = new THREE.CanvasTexture(canvas);
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(40, 40);
+            texture.repeat.set(45, 45);
             return texture;
         }
 
-        function createBarkTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 256; canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#2b1b17';
-            ctx.fillRect(0,0,256,256);
-            for(let i=0; i<3000; i++) {
-                ctx.fillStyle = Math.random() > 0.5 ? '#3d2822' : '#1c100d';
-                ctx.fillRect(Math.random()*256, Math.random()*256, 3, 20);
-            }
-            return new THREE.CanvasTexture(canvas);
-        }
-
-        const grassTexture = createGrassTexture();
-        const barkTexture = createBarkTexture();
-
-        /* =========================================================================
-           5. TERRAIN & WATER GENERATION
-           ========================================================================= */
-        const terrainSize = 500;
-        const terrainGeo = new THREE.PlaneGeometry(terrainSize, terrainSize, 120, 120);
+        const terrainSize = 600;
+        const terrainGeo = new THREE.PlaneGeometry(terrainSize, terrainSize, 140, 140);
         terrainGeo.rotateX(-Math.PI / 2);
 
         const posAttr = terrainGeo.attributes.position;
         function getTerrainHeight(x, z) {
-            const hill1 = Math.sin(x * 0.015) * Math.cos(z * 0.015) * 12;
-            const hill2 = Math.sin(x * 0.04 + 1.5) * Math.sin(z * 0.03) * 4;
-            const valley = Math.sin((x+z)*0.01) * 6;
+            const hill1 = Math.sin(x * 0.012) * Math.cos(z * 0.012) * 14;
+            const hill2 = Math.sin(x * 0.035 + 1.2) * Math.sin(z * 0.025) * 5;
+            const valley = Math.sin((x + z) * 0.008) * 8;
             return hill1 + hill2 + valley;
         }
 
@@ -478,73 +461,99 @@
         terrainGeo.computeVertexNormals();
 
         const terrainMat = new THREE.MeshStandardMaterial({
-            map: grassTexture,
-            roughness: 0.85,
+            map: createGrassTexture(),
+            roughness: 0.8,
             metalness: 0.05
         });
         const terrain = new THREE.Mesh(terrainGeo, terrainMat);
         terrain.receiveShadow = true;
         scene.add(terrain);
 
-        // Dynamic Water Lake
-        const waterGeo = new THREE.PlaneGeometry(160, 160);
+        // Water Lake
+        const waterGeo = new THREE.PlaneGeometry(200, 200);
         const waterMat = new THREE.MeshStandardMaterial({
-            color: 0x66ccff,
-            roughness: 0.1,
-            metalness: 0.8,
+            color: 0x44bbff,
+            roughness: 0.08,
+            metalness: 0.85,
             transparent: true,
-            opacity: 0.75
+            opacity: 0.8
         });
         const water = new THREE.Mesh(waterGeo, waterMat);
         water.rotation.x = -Math.PI / 2;
-        water.position.set(0, -3.5, 0);
+        water.position.set(0, -3.8, 0);
         scene.add(water);
 
         /* =========================================================================
-           6. PROCEDURAL SAKURA TREES & PETALS
+           5. ANIMATED 3D WAVING GRASS (БЕСКОНЕЧНОЕ КОЛЕБАНИЕ ТРАВЫ)
            ========================================================================= */
-        const treeGroup = new THREE.Group();
-        const sakuraCount = 60;
+        const grassTuftCount = 3000;
+        const grassBladeGeo = new THREE.ConeGeometry(0.2, 1.2, 3);
+        grassBladeGeo.translate(0, 0.6, 0); // Origin at bottom
 
-        // Tree Leaf Material (Pink Glowing Shader look)
+        const grassBladeMat = new THREE.MeshStandardMaterial({
+            color: 0x55aa33,
+            roughness: 0.6,
+            side: THREE.DoubleSide
+        });
+
+        const grassInstanced = new THREE.InstancedMesh(grassBladeGeo, grassBladeMat, grassTuftCount);
+        const dummy = new THREE.Object3D();
+        const grassData = [];
+
+        for(let i=0; i<grassTuftCount; i++) {
+            const x = (Math.random() - 0.5) * 350;
+            const z = (Math.random() - 0.5) * 350;
+            const y = getTerrainHeight(x, z);
+
+            if (y > -2) { // Only grow above water level
+                const scaleY = 0.8 + Math.random() * 0.8;
+                const phase = Math.random() * Math.PI * 2;
+                grassData.push({ index: i, x, y, z, phase, scaleY });
+
+                dummy.position.set(x, y, z);
+                dummy.scale.set(1, scaleY, 1);
+                dummy.updateMatrix();
+                grassInstanced.setMatrixAt(i, dummy.matrix);
+            }
+        }
+        scene.add(grassInstanced);
+
+        /* =========================================================================
+           6. SAKURA TREES & PETALS
+           ========================================================================= */
         const leafMat = new THREE.MeshStandardMaterial({
-            color: 0xffa6c9,
-            roughness: 0.3,
-            metalness: 0.1,
-            emissive: 0xff3385,
+            color: 0xffb3cb,
+            roughness: 0.4,
+            emissive: 0xff3377,
             emissiveIntensity: 0.15
         });
 
         const trunkMat = new THREE.MeshStandardMaterial({
-            map: barkTexture,
+            color: 0x3d2314,
             roughness: 0.9
         });
 
         function createSakuraTree(x, z) {
             const y = getTerrainHeight(x, z);
-            if (y < -2) return; // Don't spawn inside lake
+            if (y < -1) return;
 
             const tree = new THREE.Group();
             tree.position.set(x, y, z);
 
-            // Trunk
-            const trunkGeo = new THREE.CylinderGeometry(0.6, 1.2, 8, 8);
+            const trunkGeo = new THREE.CylinderGeometry(0.7, 1.3, 9, 8);
             const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-            trunk.position.y = 4;
+            trunk.position.y = 4.5;
             trunk.castShadow = true;
-            trunk.receiveShadow = true;
             tree.add(trunk);
 
-            // Leaf Canopy Clusters
-            const clusterCount = 5;
-            for(let i=0; i<clusterCount; i++) {
-                const size = 3.5 + Math.random() * 2.5;
+            for(let i=0; i<6; i++) {
+                const size = 3.8 + Math.random() * 2.5;
                 const leafGeo = new THREE.DodecahedronGeometry(size, 1);
                 const leafMesh = new THREE.Mesh(leafGeo, leafMat);
                 leafMesh.position.set(
-                    (Math.random() - 0.5) * 4,
-                    7 + Math.random() * 4,
-                    (Math.random() - 0.5) * 4
+                    (Math.random() - 0.5) * 5,
+                    8 + Math.random() * 4,
+                    (Math.random() - 0.5) * 5
                 );
                 leafMesh.castShadow = true;
                 tree.add(leafMesh);
@@ -552,41 +561,36 @@
             scene.add(tree);
         }
 
-        // Scatter Sakura Trees
-        for (let i = 0; i < sakuraCount; i++) {
+        for (let i = 0; i < 70; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const dist = 20 + Math.random() * 180;
-            const x = Math.cos(angle) * dist;
-            const z = Math.sin(angle) * dist;
-            createSakuraTree(x, z);
+            const dist = 15 + Math.random() * 220;
+            createSakuraTree(Math.cos(angle) * dist, Math.sin(angle) * dist);
         }
 
-        /* =========================================================================
-           7. GPU INSTANCED FALLING PETALS SYSTEM (ZERO LAG)
-           ========================================================================= */
-        const petalCount = 3500;
+        // Falling Sakura Petals
+        const petalCount = 3000;
         const petalGeo = new THREE.PlaneGeometry(0.25, 0.25);
         const petalMat = new THREE.MeshBasicMaterial({
-            color: 0xffb6c1,
+            color: 0xffc0cb,
             side: THREE.DoubleSide,
             transparent: true,
-            opacity: 0.85
+            opacity: 0.9
         });
 
         const petalInstanced = new THREE.InstancedMesh(petalGeo, petalMat, petalCount);
-        const dummy = new THREE.Object3D();
         const petalData = [];
 
         for (let i = 0; i < petalCount; i++) {
-            const x = (Math.random() - 0.5) * 250;
-            const y = Math.random() * 30 + 2;
-            const z = (Math.random() - 0.5) * 250;
-            const speedY = 0.03 + Math.random() * 0.05;
-            const rotSpeed = Math.random() * 0.04;
-            const swayFreq = 1 + Math.random() * 2;
-
-            petalData.push({ x, y, z, speedY, rotSpeed, swayFreq, initialY: y, timeOffset: Math.random() * 100 });
-
+            const x = (Math.random() - 0.5) * 300;
+            const y = Math.random() * 35 + 3;
+            const z = (Math.random() - 0.5) * 300;
+            petalData.push({
+                x, y, z,
+                speedY: 0.03 + Math.random() * 0.04,
+                sway: 1 + Math.random() * 2,
+                initialY: y,
+                timeOffset: Math.random() * 100
+            });
             dummy.position.set(x, y, z);
             dummy.updateMatrix();
             petalInstanced.setMatrixAt(i, dummy.matrix);
@@ -594,15 +598,117 @@
         scene.add(petalInstanced);
 
         /* =========================================================================
-           8. CONTROLS & CAMERA (FPS & MULTITOUCH)
+           7. CUTE SLIMES (МИЛЫЕ ПРЫГАЮЩИЕ СЛИЗНЯКИ ИЗ GENSHIN)
+           ========================================================================= */
+        const slimes = [];
+        const slimeColors = [0xff69b4, 0x00ffff, 0xffd700, 0x76ff03];
+
+        function createCuteSlime(x, z, color) {
+            const slimeGroup = new THREE.Group();
+
+            // Jelly Body
+            const bodyGeo = new THREE.SphereGeometry(1.2, 32, 24);
+            bodyGeo.scale(1, 0.85, 1);
+            const bodyMat = new THREE.MeshPhysicalMaterial({
+                color: color,
+                transmission: 0.6,
+                opacity: 0.95,
+                transparent: true,
+                roughness: 0.1,
+                ior: 1.3,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.1
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 1;
+            body.castShadow = true;
+            slimeGroup.add(body);
+
+            // Eyes (Cute Cartoon Style)
+            const eyeGeo = new THREE.SphereGeometry(0.22, 16, 16);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const pupilGeo = new THREE.SphereGeometry(0.12, 16, 16);
+            const pupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+
+            // Left Eye
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(-0.4, 1.2, 0.95);
+            const leftPupil = new THREE.Mesh(pupilGeo, pupilMat);
+            leftPupil.position.set(-0.4, 1.2, 1.12);
+
+            // Right Eye
+            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+            rightEye.position.set(0.4, 1.2, 0.95);
+            const rightPupil = new THREE.Mesh(pupilGeo, pupilMat);
+            rightPupil.position.set(0.4, 1.2, 1.12);
+
+            slimeGroup.add(leftEye, leftPupil, rightEye, rightPupil);
+
+            // Initial Position
+            const terrainY = getTerrainHeight(x, z);
+            slimeGroup.position.set(x, terrainY, z);
+            scene.add(slimeGroup);
+
+            slimes.push({
+                group: slimeGroup,
+                body: body,
+                baseX: x,
+                baseZ: z,
+                phase: Math.random() * 10,
+                speed: 1.8 + Math.random() * 1.5,
+                jumpHeight: 2.2 + Math.random() * 1.5
+            });
+        }
+
+        // Spawn 25 Cute Slimes randomly in world
+        for(let i=0; i<25; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 10 + Math.random() * 160;
+            const x = Math.cos(angle) * dist;
+            const z = Math.sin(angle) * dist;
+            const color = slimeColors[Math.floor(Math.random() * slimeColors.length)];
+            createCuteSlime(x, z, color);
+        }
+
+        /* =========================================================================
+           8. FLUTTERING GLOWING BUTTERFLIES (БАБОЧКИ)
+           ========================================================================= */
+        const butterflies = [];
+        const butterflyGeo = new THREE.BufferGeometry();
+        // Simple wing triangle vertices
+        const wingVerts = new Float32Array([
+            0,0,0,  0.4,0.3,0,  0,0.5,0,
+            0,0,0, -0.4,0.3,0,  0,0.5,0
+        ]);
+        butterflyGeo.setAttribute('position', new THREE.BufferAttribute(wingVerts, 3));
+        const butterflyMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            side: THREE.DoubleSide
+        });
+
+        for(let i=0; i<30; i++) {
+            const mesh = new THREE.Mesh(butterflyGeo, butterflyMat);
+            const x = (Math.random() - 0.5) * 150;
+            const z = (Math.random() - 0.5) * 150;
+            const y = getTerrainHeight(x, z) + 1.5 + Math.random() * 3;
+            mesh.position.set(x, y, z);
+            scene.add(mesh);
+            butterflies.push({
+                mesh,
+                baseX: x, baseY: y, baseZ: z,
+                phase: Math.random() * 100
+            });
+        }
+
+        /* =========================================================================
+           9. MULTITOUCH & PC CONTROLS (GENSHIN STYLE)
            ========================================================================= */
         const player = {
             position: new THREE.Vector3(0, 5, 20),
-            velocity: new THREE.Vector3(),
             yaw: 0,
             pitch: 0,
-            speed: 0.16,
-            sprintMultiplier: 1.8,
+            speed: 0.18,
+            sprintMultiplier: 1.85,
             isSprinting: false,
             isGrounded: true,
             height: 1.7,
@@ -611,77 +717,59 @@
 
         camera.position.copy(player.position);
 
-        // Input States
-        const keys = { w: false, a: false, s: false, d: false, Shift: false };
-        let moveVector = { x: 0, y: 0 }; // Joystick input (-1 to 1)
+        const keys = { w: false, a: false, s: false, d: false };
+        let moveVector = { x: 0, y: 0 };
 
-        // PC Keyboard
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'w' || e.key === 'W' || e.key === 'Ц' || e.key === 'ц') keys.w = true;
-            if (e.key === 's' || e.key === 'S' || e.key === 'Ы' || e.key === 'ы') keys.s = true;
-            if (e.key === 'a' || e.key === 'A' || e.key === 'Ф' || e.key === 'ф') keys.a = true;
-            if (e.key === 'd' || e.key === 'D' || e.key === 'В' || e.key === 'в') keys.d = true;
+            if (['w','W','Ц','ц'].includes(e.key)) keys.w = true;
+            if (['s','S','Ы','ы'].includes(e.key)) keys.s = true;
+            if (['a','A','Ф','ф'].includes(e.key)) keys.a = true;
+            if (['d','D','В','в'].includes(e.key)) keys.d = true;
             if (e.key === 'Shift') player.isSprinting = true;
             if (e.key === ' ' && player.isGrounded) jump();
         });
 
         window.addEventListener('keyup', (e) => {
-            if (e.key === 'w' || e.key === 'W' || e.key === 'Ц' || e.key === 'ц') keys.w = false;
-            if (e.key === 's' || e.key === 'S' || e.key === 'Ы' || e.key === 'ы') keys.s = false;
-            if (e.key === 'a' || e.key === 'A' || e.key === 'Ф' || e.key === 'ф') keys.a = false;
-            if (e.key === 'd' || e.key === 'D' || e.key === 'В' || e.key === 'в') keys.d = false;
+            if (['w','W','Ц','ц'].includes(e.key)) keys.w = false;
+            if (['s','S','Ы','ы'].includes(e.key)) keys.s = false;
+            if (['a','A','Ф','ф'].includes(e.key)) keys.a = false;
+            if (['d','D','В','в'].includes(e.key)) keys.d = false;
             if (e.key === 'Shift') player.isSprinting = false;
         });
 
-        // Pointer Lock for PC Mouse Look
         let isPointerLocked = false;
         container.addEventListener('click', () => {
-            if (window.innerWidth > 768 && !isPointerLocked) {
-                container.requestPointerLock();
-            }
+            if (window.innerWidth > 768 && !isPointerLocked) container.requestPointerLock();
         });
-
         document.addEventListener('pointerlockchange', () => {
             isPointerLocked = document.pointerLockElement === container;
         });
-
         document.addEventListener('mousemove', (e) => {
             if (isPointerLocked) {
-                const sensitivity = 0.0022;
-                player.yaw -= e.movementX * sensitivity;
-                player.pitch -= e.movementY * sensitivity;
+                const sens = 0.0022;
+                player.yaw -= e.movementX * sens;
+                player.pitch -= e.movementY * sens;
                 player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, player.pitch));
             }
         });
 
-        /* GENSHIN IMPACT TOUCH SYSTEM (MULTITOUCH) */
+        /* MULTITOUCH GENSHIN ENGINE */
         const joystickZone = document.getElementById('joystick-zone');
         const joystickThumb = document.getElementById('joystick-thumb');
         let joystickTouchId = null;
         let joystickCenter = { x: 0, y: 0 };
-
         let lookTouchId = null;
         let lookLastPos = { x: 0, y: 0 };
 
         window.addEventListener('touchstart', (e) => {
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const touch = e.changedTouches[i];
-                const x = touch.clientX;
-                const y = touch.clientY;
-
-                // Left Half Screen -> Joystick
-                if (x < window.innerWidth / 2 && joystickTouchId === null) {
+                if (touch.clientX < window.innerWidth / 2 && joystickTouchId === null) {
                     joystickTouchId = touch.identifier;
                     const rect = joystickZone.getBoundingClientRect();
-                    joystickCenter = {
-                        x: rect.left + rect.width / 2,
-                        y: rect.top + rect.height / 2
-                    };
+                    joystickCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
                     updateJoystick(touch.clientX, touch.clientY);
-                } 
-                // Right Half Screen -> Camera Rotation
-                else if (x >= window.innerWidth / 2 && lookTouchId === null) {
-                    // Ignore clicks on action buttons
+                } else if (touch.clientX >= window.innerWidth / 2 && lookTouchId === null) {
                     if (e.target.closest('#action-buttons') || e.target.closest('.header-bar')) continue;
                     lookTouchId = touch.identifier;
                     lookLastPos = { x: touch.clientX, y: touch.clientY };
@@ -720,69 +808,50 @@
             }
         });
 
-        window.addEventListener('touchcancel', (e) => {
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const touch = e.changedTouches[i];
-                if (touch.identifier === joystickTouchId) resetJoystick();
-                if (touch.identifier === lookTouchId) lookTouchId = null;
-            }
-        });
-
         function updateJoystick(clientX, clientY) {
             const maxRadius = 50;
             let dx = clientX - joystickCenter.x;
             let dy = clientY - joystickCenter.y;
             let dist = Math.hypot(dx, dy);
-
             if (dist > maxRadius) {
                 dx = (dx / dist) * maxRadius;
                 dy = (dy / dist) * maxRadius;
             }
-
             joystickThumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
             moveVector.x = dx / maxRadius;
             moveVector.y = dy / maxRadius;
         }
 
-        // Action Buttons
-        const sprintBtn = document.getElementById('btn-sprint');
-        sprintBtn.addEventListener('touchstart', (e) => {
+        document.getElementById('btn-sprint').addEventListener('touchstart', (e) => {
             e.stopPropagation();
             player.isSprinting = !player.isSprinting;
-            sprintBtn.style.borderColor = player.isSprinting ? '#ff69b4' : 'rgba(255,255,255,0.4)';
+            e.currentTarget.style.borderColor = player.isSprinting ? '#ff69b4' : 'rgba(255,255,255,0.5)';
         });
 
-        const jumpBtn = document.getElementById('btn-jump');
-        jumpBtn.addEventListener('touchstart', (e) => {
+        document.getElementById('btn-jump').addEventListener('touchstart', (e) => {
             e.stopPropagation();
             jump();
         });
 
         function jump() {
             if (player.isGrounded) {
-                player.jumpVelocity = 0.18;
+                player.jumpVelocity = 0.2;
                 player.isGrounded = false;
             }
         }
 
         /* =========================================================================
-           9. GENERATIVE NATURE SOUNDS (WEB AUDIO API)
+           10. AUDIO SYNTH
            ========================================================================= */
         let audioCtx = null;
-        let isAudioPlaying = false;
-
         function initAudio() {
             if (audioCtx) return;
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             audioCtx = new AudioContext();
-
-            // Wind Noise Generator
             const bufferSize = audioCtx.sampleRate * 2;
             const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const output = noiseBuffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                output[i] = Math.random() * 2 - 1;
-            }
+            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
 
             const whiteNoise = audioCtx.createBufferSource();
             whiteNoise.buffer = noiseBuffer;
@@ -790,32 +859,21 @@
 
             const filter = audioCtx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(400, audioCtx.currentTime);
+            filter.frequency.setValueAtTime(450, audioCtx.currentTime);
 
             const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
 
             whiteNoise.connect(filter);
             filter.connect(gain);
             gain.connect(audioCtx.destination);
             whiteNoise.start();
-            isAudioPlaying = true;
         }
 
-        document.getElementById('audio-toggle-btn').addEventListener('click', () => {
-            if (!audioCtx) {
-                initAudio();
-            } else if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-                isAudioPlaying = true;
-            } else if (audioCtx.state === 'running') {
-                audioCtx.suspend();
-                isAudioPlaying = false;
-            }
-        });
+        document.getElementById('audio-toggle-btn').addEventListener('click', initAudio);
 
         /* =========================================================================
-           10. MAIN ANIMATION & PHYSICS LOOP
+           11. ANIMATION & GAME LOOP
            ========================================================================= */
         let clock = new THREE.Clock();
         let frameCount = 0;
@@ -836,16 +894,13 @@
                 lastFpsTime = now;
             }
 
-            // Movement Calculation
-            let moveX = 0;
-            let moveZ = 0;
-
+            // Player Movement logic
+            let moveX = 0, moveZ = 0;
             if (keys.w) moveZ -= 1;
             if (keys.s) moveZ += 1;
             if (keys.a) moveX -= 1;
             if (keys.d) moveX += 1;
 
-            // Combine Touch Joystick Input
             if (moveVector.x !== 0 || moveVector.y !== 0) {
                 moveX = moveVector.x;
                 moveZ = moveVector.y;
@@ -863,71 +918,103 @@
                     .normalize();
 
                 player.position.addScaledVector(moveDir, currentSpeed);
-
-                // Natural Head Bobbing
-                player.position.y += Math.sin(time * 12) * 0.015;
+                player.position.y += Math.sin(time * 12) * 0.015; // Natural Bobbing
             }
 
-            // Gravity & Terrain Collision
-            const targetTerrainHeight = getTerrainHeight(player.position.x, player.position.z) + player.height;
-
+            // Gravity & Terrain Ground Check
+            const targetHeight = getTerrainHeight(player.position.x, player.position.z) + player.height;
             if (!player.isGrounded) {
                 player.position.y += player.jumpVelocity;
-                player.jumpVelocity -= 0.009; // Gravity
-
-                if (player.position.y <= targetTerrainHeight) {
-                    player.position.y = targetTerrainHeight;
+                player.jumpVelocity -= 0.01;
+                if (player.position.y <= targetHeight) {
+                    player.position.y = targetHeight;
                     player.isGrounded = true;
                     player.jumpVelocity = 0;
                 }
             } else {
-                player.position.y = THREE.MathUtils.lerp(player.position.y, targetTerrainHeight, 0.25);
+                player.position.y = THREE.MathUtils.lerp(player.position.y, targetHeight, 0.25);
             }
 
-            // Update Camera Rotation Matrix
+            // Camera orientation
             const euler = new THREE.Euler(0, 0, 0, 'YXZ');
             euler.x = player.pitch;
             euler.y = player.yaw;
             camera.quaternion.setFromEuler(euler);
             camera.position.copy(player.position);
 
-            // Animate Falling Sakuras (Instanced Mesh Updates)
-            for (let i = 0; i < petalCount; i++) {
-                const data = petalData[i];
-                data.y -= data.speedY;
-                data.x += Math.sin(time * data.swayFreq + data.timeOffset) * 0.03;
-                data.z += Math.cos(time * data.swayFreq + data.timeOffset) * 0.02;
+            // ANIMATE WAVING GRASS (КОЛЕБАНИЕ ТРАВЫ ОТ ВЕТРА)
+            for(let i=0; i<grassData.length; i++) {
+                const g = grassData[i];
+                const wind = Math.sin(time * 2.5 + g.phase + g.x * 0.1) * 0.25;
+                dummy.position.set(g.x, g.y, g.z);
+                dummy.rotation.set(wind, 0, wind * 0.5);
+                dummy.scale.set(1, g.scaleY, 1);
+                dummy.updateMatrix();
+                grassInstanced.setMatrixAt(g.index, dummy.matrix);
+            }
+            grassInstanced.instanceMatrix.needsUpdate = true;
 
-                if (data.y < getTerrainHeight(data.x, data.z)) {
-                    data.y = data.initialY + 15;
-                    data.x = player.position.x + (Math.random() - 0.5) * 120;
-                    data.z = player.position.z + (Math.random() - 0.5) * 120;
+            // ANIMATE FALLING SAKURA PETALS
+            for (let i = 0; i < petalCount; i++) {
+                const p = petalData[i];
+                p.y -= p.speedY;
+                p.x += Math.sin(time * p.sway + p.timeOffset) * 0.035;
+                p.z += Math.cos(time * p.sway + p.timeOffset) * 0.025;
+
+                if (p.y < getTerrainHeight(p.x, p.z)) {
+                    p.y = p.initialY + 15;
+                    p.x = player.position.x + (Math.random() - 0.5) * 140;
+                    p.z = player.position.z + (Math.random() - 0.5) * 140;
                 }
 
-                dummy.position.set(data.x, data.y, data.z);
-                dummy.rotation.set(time + data.timeOffset, time * data.rotSpeed, 0);
+                dummy.position.set(p.x, p.y, p.z);
+                dummy.rotation.set(time + p.timeOffset, time * 0.02, 0);
                 dummy.updateMatrix();
                 petalInstanced.setMatrixAt(i, dummy.matrix);
             }
             petalInstanced.instanceMatrix.needsUpdate = true;
 
-            // Render with Bloom RTX Postprocessing
+            // ANIMATE CUTE SLIMES (ПРЫГАЮЩИЕ СЛИЗНЯКИ С ДЕФОРМАЦИЕЙ)
+            for (let i = 0; i < slimes.length; i++) {
+                const s = slimes[i];
+                const jumpCycle = Math.sin(time * s.speed + s.phase);
+                const jumpY = Math.max(0, jumpCycle) * s.jumpHeight;
+                const terrainY = getTerrainHeight(s.baseX, s.baseZ);
+
+                s.group.position.y = terrainY + jumpY;
+
+                // Squash and stretch deformation
+                if (jumpY > 0.1) {
+                    s.body.scale.set(0.85, 1.2, 0.85); // Stretch vertically in air
+                } else {
+                    s.body.scale.set(1.25, 0.75, 1.25); // Squash horizontally on land
+                }
+            }
+
+            // ANIMATE BUTTERFLIES
+            for(let i=0; i<butterflies.length; i++) {
+                const b = butterflies[i];
+                b.mesh.position.x = b.baseX + Math.sin(time * 1.5 + b.phase) * 2;
+                b.mesh.position.z = b.baseZ + Math.cos(time * 1.5 + b.phase) * 2;
+                b.mesh.position.y = b.baseY + Math.sin(time * 3 + b.phase) * 0.5;
+                b.mesh.rotation.y = time * 2 + b.phase;
+            }
+
+            // Render with Bloom
             composer.render();
         }
 
         /* =========================================================================
-           11. UI & FULLSCREEN CONTROLS
+           12. START & FULLSCREEN HANDLERS
            ========================================================================= */
         const startModal = document.getElementById('start-modal');
-        const startBtn = document.getElementById('start-btn');
-        startBtn.addEventListener('click', () => {
+        document.getElementById('start-btn').addEventListener('click', () => {
             startModal.style.opacity = '0';
             setTimeout(() => startModal.style.display = 'none', 500);
             initAudio();
             animate();
         });
 
-        // Fullscreen Toggle Button
         document.getElementById('fullscreen-btn').addEventListener('click', () => {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => console.log(err));
@@ -936,7 +1023,6 @@
             }
         });
 
-        // Window Resize Listener
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
