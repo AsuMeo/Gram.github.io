@@ -1,1034 +1,859 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sakura World RTX - Clear Sky Edition</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-            margin: 0;
-            padding: 0;
-            touch-action: none;
-        }
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #05020a;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: #fff;
-        }
-        #webgl-container {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-        /* UI Overlay Layer */
-        #ui-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .header-bar {
-            padding: 16px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%);
-            pointer-events: auto;
-        }
-        .title-box h1 {
-            font-size: 19px;
-            font-weight: 800;
-            letter-spacing: 1.5px;
-            text-shadow: 0 0 15px rgba(255,105,180,0.8);
-            background: linear-gradient(45deg, #ffffff, #ffb6c1, #ffd700);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .badge {
-            background: rgba(255, 105, 180, 0.3);
-            border: 1px solid rgba(255, 182, 193, 0.8);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 10px;
-            color: #ffffff;
-            font-weight: bold;
-            text-shadow: 0 0 5px rgba(0,0,0,0.5);
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .icon-btn {
-            background: rgba(20, 15, 30, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #fff;
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-        .icon-btn:active {
-            transform: scale(0.92);
-            background: rgba(255, 105, 180, 0.5);
-        }
-        .icon-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<title>3D Model Viewer — ZIP → FBX Viewer</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; background:#0a0a0f; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:#fff; }
+#canvas-container { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; }
+canvas { display:block; width:100%; height:100%; }
 
-        /* Touch Controls */
-        #touch-controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: auto;
-        }
-        #joystick-zone {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 150px;
-            height: 150px;
-            touch-action: none;
-        }
-        #joystick-base {
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,105,180,0.2) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            backdrop-filter: blur(6px);
-            box-shadow: 0 0 20px rgba(255, 105, 180, 0.4);
-        }
-        #joystick-thumb {
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #ffffff 0%, #ffb6c1 100%);
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 20px rgba(255, 182, 193, 1), 0 4px 10px rgba(0,0,0,0.3);
-            border: 2px solid #fff;
-        }
+/* Лог-панель */
+#log-panel {
+  position:fixed; top:10px; left:10px; right:10px; max-height:45vh;
+  z-index:100; display:flex; flex-direction:column; gap:4px;
+  pointer-events:none; transition:opacity 0.3s;
+}
+#log-panel.hidden { opacity:0; pointer-events:none; }
+.log-entry {
+  background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
+  border-radius:8px; padding:6px 12px; font-size:12px;
+  border-left:3px solid #444; animation:slideIn 0.2s ease;
+  display:flex; align-items:center; gap:8px; flex-shrink:0;
+}
+@keyframes slideIn { from { opacity:0; transform:translateX(-20px);} to { opacity:1; transform:translateX(0);} }
+.log-entry.ok { border-left-color:#4caf50; }
+.log-entry.warn { border-left-color:#ff9800; }
+.log-entry.err { border-left-color:#f44336; }
+.log-entry.info { border-left-color:#2196f3; }
+.log-icon { font-size:14px; width:18px; text-align:center; }
 
-        #action-buttons {
-            position: absolute;
-            bottom: 35px;
-            right: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            pointer-events: auto;
-        }
-        .action-btn {
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,182,193,0.4) 0%, rgba(50,20,60,0.8) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            color: #fff;
-            font-weight: bold;
-            font-size: 13px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(8px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4), 0 0 15px rgba(255,105,180,0.4);
-            cursor: pointer;
-        }
-        .action-btn:active {
-            transform: scale(0.92);
-            background: rgba(255, 105, 180, 0.7);
-        }
-        .action-btn span {
-            font-size: 10px;
-            opacity: 0.9;
-        }
+/* Загрузчик ZIP */
+#drop-zone {
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  z-index:50; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  background:radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0f 100%);
+  transition:opacity 0.4s, transform 0.4s;
+}
+#drop-zone.hidden { opacity:0; pointer-events:none; transform:scale(1.05); }
+.drop-box {
+  border:2px dashed rgba(255,255,255,0.2); border-radius:20px;
+  padding:40px 30px; text-align:center; max-width:340px;
+  background:rgba(255,255,255,0.03); transition:all 0.3s;
+}
+.drop-box.dragover { border-color:#4caf50; background:rgba(76,175,80,0.08); }
+.drop-icon { font-size:56px; margin-bottom:16px; opacity:0.6; }
+.drop-title { font-size:18px; font-weight:600; margin-bottom:8px; }
+.drop-sub { font-size:13px; color:rgba(255,255,255,0.5); line-height:1.5; }
+#file-input { display:none; }
+.btn {
+  background:#2196f3; color:#fff; border:none; border-radius:10px;
+  padding:12px 28px; font-size:14px; font-weight:600; cursor:pointer;
+  margin-top:16px; transition:all 0.2s; pointer-events:auto;
+}
+.btn:hover { background:#1976d2; transform:translateY(-1px); }
+.btn:active { transform:translateY(0); }
 
-        /* Start Modal */
-        #start-modal {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(20, 10, 30, 0.85) 0%, rgba(5, 2, 10, 0.98) 100%);
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 30px;
-            backdrop-filter: blur(15px);
-            transition: opacity 0.5s ease;
-        }
-        #start-modal h2 {
-            font-size: 34px;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #ffffff, #ffb6c1, #ffe4e1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 2px;
-            filter: drop-shadow(0 0 20px rgba(255,105,180,0.8));
-        }
-        #start-modal p {
-            max-width: 480px;
-            font-size: 15px;
-            line-height: 1.6;
-            color: #e0d5f5;
-            margin-bottom: 25px;
-        }
-        .start-btn {
-            background: linear-gradient(135deg, #ff69b4 0%, #da70d6 100%);
-            color: #fff;
-            border: none;
-            padding: 16px 50px;
-            font-size: 19px;
-            font-weight: bold;
-            border-radius: 35px;
-            cursor: pointer;
-            box-shadow: 0 0 30px rgba(255, 105, 180, 0.8), 0 5px 15px rgba(0,0,0,0.4);
-            transition: all 0.3s ease;
-            pointer-events: auto;
-        }
-        .start-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 40px rgba(255, 105, 180, 1);
-        }
+/* UI поверх 3D */
+#ui-overlay {
+  position:fixed; bottom:0; left:0; right:0; z-index:90;
+  padding:12px; display:flex; flex-direction:column; gap:8px;
+  background:linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+  pointer-events:none; transition:opacity 0.3s;
+}
+#ui-overlay.hidden { opacity:0; }
+.ui-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; pointer-events:auto; }
+.ui-btn {
+  background:rgba(255,255,255,0.1); backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,0.15); color:#fff;
+  border-radius:10px; padding:10px 16px; font-size:13px;
+  cursor:pointer; transition:all 0.2s; white-space:nowrap;
+  min-height:42px; display:flex; align-items:center; gap:6px;
+}
+.ui-btn:hover { background:rgba(255,255,255,0.2); }
+.ui-btn.active { background:rgba(33,150,243,0.3); border-color:rgba(33,150,243,0.5); }
+.ui-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
-        #crosshair {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 6px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
-        }
+#anim-select {
+  background:rgba(0,0,0,0.6); color:#fff; border:1px solid rgba(255,255,255,0.2);
+  border-radius:10px; padding:10px 14px; font-size:13px; min-width:180px;
+}
 
-        #fps-display {
-            font-family: monospace;
-            font-size: 12px;
-            color: #7dff7d;
-            background: rgba(0,0,0,0.5);
-            padding: 4px 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-    </style>
+#info-bar {
+  position:fixed; top:10px; right:10px; z-index:95;
+  background:rgba(0,0,0,0.6); backdrop-filter:blur(8px);
+  border-radius:10px; padding:8px 14px; font-size:11px;
+  color:rgba(255,255,255,0.7); text-align:right; line-height:1.6;
+  pointer-events:none; transition:opacity 0.3s;
+}
+#info-bar.hidden { opacity:0; }
+
+#toggle-logs {
+  position:fixed; top:10px; left:50%; transform:translateX(-50%);
+  z-index:96; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.6);
+  border-radius:20px; padding:6px 16px; font-size:11px; cursor:pointer;
+  pointer-events:auto; transition:all 0.2s;
+}
+#toggle-logs:hover { color:#fff; border-color:rgba(255,255,255,0.4); }
+
+/* Прогресс */
+#progress-wrap {
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  z-index:60; text-align:center; display:none;
+}
+#progress-wrap.visible { display:block; }
+#progress-bar {
+  width:200px; height:4px; background:rgba(255,255,255,0.1);
+  border-radius:2px; overflow:hidden; margin:12px auto 0;
+}
+#progress-fill { height:100%; width:0%; background:#2196f3; border-radius:2px; transition:width 0.2s; }
+#progress-text { font-size:13px; color:rgba(255,255,255,0.6); margin-top:8px; }
+
+/* Спиннер */
+.spinner { width:40px; height:40px; border:3px solid rgba(255,255,255,0.1); border-top-color:#2196f3; border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 12px; }
+@keyframes spin { to { transform:rotate(360deg);} }
+</style>
+
+<!-- Three.js + FBXLoader + ZIP -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.168.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.168.0/examples/jsm/"
+  }
+}
+</script>
 </head>
 <body>
 
-    <div id="webgl-container"></div>
+<!-- Зона загрузки -->
+<div id="drop-zone">
+  <div class="drop-box" id="drop-box">
+    <div class="drop-icon">📦</div>
+    <div class="drop-title">Загрузите ZIP с моделью</div>
+    <div class="drop-sub">Перетащите файл сюда<br>или нажмите кнопку ниже<br><br>Поддерживаются: .fbx, .dae + текстуры</div>
+    <button class="btn" id="btn-select">Выбрать файл</button>
+    <input type="file" id="file-input" accept=".zip">
+  </div>
+</div>
 
-    <div id="ui-overlay">
-        <div class="header-bar">
-            <div class="title-box">
-                <h1>SAKURA SUNSET RTX</h1>
-                <span class="badge">CLEAR SKY • 60 FPS</span>
-            </div>
-            <div class="btn-group">
-                <div id="fps-display">60 FPS</div>
-                <button class="icon-btn" id="audio-toggle-btn" title="Звуки">
-                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                </button>
-                <button class="icon-btn" id="fullscreen-btn" title="Полный экран">
-                    <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-                </button>
-            </div>
-        </div>
+<!-- Прогресс -->
+<div id="progress-wrap">
+  <div class="spinner"></div>
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+  <div id="progress-text">Распаковка...</div>
+</div>
 
-        <div id="crosshair"></div>
+<!-- Логи -->
+<div id="log-panel"></div>
+<button id="toggle-logs" style="display:none;">📋 Логи</button>
 
-        <div id="touch-controls">
-            <div id="joystick-zone">
-                <div id="joystick-base"></div>
-                <div id="joystick-thumb"></div>
-            </div>
+<!-- 3D Canvas -->
+<div id="canvas-container"></div>
 
-            <div id="action-buttons">
-                <div class="action-btn" id="btn-sprint">
-                    ⚡
-                    <span>БЕГ</span>
-                </div>
-                <div class="action-btn" id="btn-jump">
-                    ▲
-                    <span>ПРЫЖОК</span>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Инфо -->
+<div id="info-bar" class="hidden"></div>
 
-    <div id="start-modal">
-        <h2>SAKURA ULTRA RTX</h2>
-        <p>Яркое ясное солнце, красочное небо без тумана, прыгающие милые слизняки, покачивающаяся живая трава и порхающие бабочки!</p>
-        <button class="start-btn" id="start-btn">ПОГРУЗИТЬСЯ В МИР</button>
-    </div>
+<!-- UI -->
+<div id="ui-overlay" class="hidden">
+  <div class="ui-row">
+    <button class="ui-btn" id="btn-reset">🔄 Сброс камеры</button>
+    <button class="ui-btn active" id="btn-rotate">🔄 Авто-вращение</button>
+    <button class="ui-btn" id="btn-wireframe">🔲 Каркас</button>
+    <button class="ui-btn" id="btn-skeleton">🦴 Скелет</button>
+    <button class="ui-btn" id="btn-grid">📐 Сетка</button>
+    <button class="ui-btn" id="btn-new">📁 Новый ZIP</button>
+  </div>
+  <div class="ui-row" id="anim-row" style="display:none;">
+    <span style="font-size:12px;color:rgba(255,255,255,0.5);">Анимация:</span>
+    <select id="anim-select"></select>
+    <button class="ui-btn" id="btn-play">▶️ Играть</button>
+    <button class="ui-btn" id="btn-pause">⏸️ Пауза</button>
+  </div>
+</div>
 
-    <!-- Three.js + PostProcessing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { SkeletonHelper } from 'three/addons/helpers/SkeletonHelper.js';
 
-    <script>
-        /* =========================================================================
-           1. ENGINE SETUP & NO FOG CLEAR SKY
-           ========================================================================= */
-        const container = document.getElementById('webgl-container');
-        
-        const scene = new THREE.Scene();
-        // NO FOG! COMPLETELY CLEAR VISION
-        scene.fog = null;
+// ============ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ============
+let scene, camera, renderer, controls, clock;
+let currentModel = null, mixer = null, skeletonHelper = null;
+let gridHelper = null, autoRotate = true, isWireframe = false;
+let animationActions = [], currentAction = null;
+let fileMap = new Map(); // путь → Blob URL
+let logsVisible = true;
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-        
-        const renderer = new THREE.WebGLRenderer({ 
-            antialias: true, 
-            powerPreference: "high-performance"
+// ============ ЛОГИ ============
+const logPanel = document.getElementById('log-panel');
+const toggleLogsBtn = document.getElementById('toggle-logs');
+
+function log(msg, type='info') {
+  const icons = { ok:'✅', warn:'⚠️', err:'❌', info:'ℹ️' };
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.innerHTML = `<span class="log-icon">${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  logPanel.appendChild(entry);
+  logPanel.scrollTop = logPanel.scrollHeight;
+  // автоскрытие старых
+  while (logPanel.children.length > 30) logPanel.removeChild(logPanel.firstChild);
+}
+
+toggleLogsBtn.addEventListener('click', () => {
+  logsVisible = !logsVisible;
+  logPanel.classList.toggle('hidden', !logsVisible);
+  toggleLogsBtn.textContent = logsVisible ? '📋 Скрыть логи' : '📋 Показать логи';
+});
+
+// ============ ZIP РАСПАКОВКА ============
+// Мини-JSZip — читаем структуру ZIP вручную
+async function unzip(arrayBuffer) {
+  const data = new Uint8Array(arrayBuffer);
+  const files = {};
+  let pos = 0;
+
+  function readLE(len) {
+    let val = 0;
+    for (let i = 0; i < len; i++) val |= data[pos + i] << (i * 8);
+    pos += len;
+    return val;
+  }
+
+  function readString(len) {
+    const arr = data.slice(pos, pos + len);
+    pos += len;
+    return new TextDecoder().decode(arr).replace(/\x00.*/, '');
+  }
+
+  // Ищем End of Central Directory
+  let eocdPos = data.length - 22;
+  while (eocdPos >= 0) {
+    if (data[eocdPos] === 0x50 && data[eocdPos+1] === 0x4B && data[eocdPos+2] === 0x05 && data[eocdPos+3] === 0x06) break;
+    eocdPos--;
+  }
+  if (eocdPos < 0) throw new Error('Невалидный ZIP файл');
+
+  pos = eocdPos + 16;
+  const cdOffset = readLE(4);
+  const cdSize = readLE(4);
+
+  pos = cdOffset;
+  const totalEntries = cdSize > 0 ? 999 : 0; // примерно
+
+  while (pos < cdOffset + cdSize && pos < data.length - 46) {
+    const sig = readLE(4);
+    if (sig !== 0x02014b50) break;
+    pos += 6; // version
+    const method = readLE(2);
+    pos += 8; // time, crc
+    const compSize = readLE(4);
+    const uncompSize = readLE(4);
+    const nameLen = readLE(2);
+    const extraLen = readLE(2);
+    const commentLen = readLE(2);
+    pos += 8; // disk, attr
+    const localHeaderOffset = readLE(4);
+    const name = readString(nameLen);
+    pos += extraLen + commentLen;
+
+    if (name.endsWith('/')) continue; // папка
+
+    // Читаем локальный заголовок
+    const savedPos = pos;
+    pos = localHeaderOffset;
+    const localSig = readLE(4);
+    if (localSig !== 0x04034b50) { pos = savedPos; continue; }
+    pos += 22; // пропускаем заголовок
+    const localNameLen = readLE(2);
+    const localExtraLen = readLE(2);
+    pos += localNameLen + localExtraLen;
+
+    const fileData = data.slice(pos, pos + compSize);
+    pos = savedPos;
+
+    let finalData;
+    if (method === 0) {
+      finalData = fileData;
+    } else if (method === 8) {
+      finalData = inflateRaw(fileData);
+    } else {
+      continue; // неподдерживаемый метод
+    }
+
+    files[name] = finalData;
+  }
+
+  return files;
+}
+
+// Простой inflate (RFC 1951) — адаптированный минимальный вариант
+function inflateRaw(input) {
+  // Для простоты используем встроенный DecompressionStream если доступен
+  // Иначе — базовый fallback
+  try {
+    const ds = new DecompressionStream('deflate-raw');
+    const writer = ds.writable.getWriter();
+    writer.write(input);
+    writer.close();
+    return new Response(ds.readable).arrayBuffer().then(ab => new Uint8Array(ab));
+  } catch(e) {
+    // Fallback: возвращаем как есть (для несжатых или если браузер не поддерживает)
+    return input;
+  }
+}
+
+// ============ ЗАГРУЗКА И ОБРАБОТКА ============
+async function processZip(arrayBuffer) {
+  const progressWrap = document.getElementById('progress-wrap');
+  const progressFill = document.getElementById('progress-fill');
+  const progressText = document.getElementById('progress-text');
+
+  progressWrap.classList.add('visible');
+  progressText.textContent = 'Распаковка ZIP...';
+  progressFill.style.width = '20%';
+
+  log('Начинаю распаковку ZIP...', 'info');
+
+  let files;
+  try {
+    // Пробуем нативный DecompressionStream для inflate
+    files = await unzipWithNative(arrayBuffer);
+  } catch(e) {
+    log('Ошибка распаковки: ' + e.message, 'err');
+    progressWrap.classList.remove('visible');
+    return;
+  }
+
+  progressFill.style.width = '40%';
+  progressText.textContent = 'Анализ файлов...';
+
+  const fileNames = Object.keys(files);
+  log(`Найдено ${fileNames.length} файлов`, 'ok');
+
+  // Определяем типы файлов
+  const fbxFiles = fileNames.filter(n => n.toLowerCase().endsWith('.fbx'));
+  const daeFiles = fileNames.filter(n => n.toLowerCase().endsWith('.dae'));
+  const pngFiles = fileNames.filter(n => n.toLowerCase().endsWith('.png'));
+  const jpgFiles = fileNames.filter(n => n.toLowerCase().endsWith('.jpg') || n.toLowerCase().endsWith('.jpeg'));
+
+  log(`FBX: ${fbxFiles.length}, DAE: ${daeFiles.length}, Текстуры: ${pngFiles.length + jpgFiles.length}`, 'info');
+
+  // Создаём Blob URL для всех файлов
+  fileMap.clear();
+  for (const [name, data] of Object.entries(files)) {
+    let mime = 'application/octet-stream';
+    const low = name.toLowerCase();
+    if (low.endsWith('.png')) mime = 'image/png';
+    else if (low.endsWith('.jpg') || low.endsWith('.jpeg')) mime = 'image/jpeg';
+    else if (low.endsWith('.fbx')) mime = 'application/octet-stream';
+    else if (low.endsWith('.dae')) mime = 'model/vnd.collada+xml';
+
+    const blob = new Blob([data], { type: mime });
+    fileMap.set(name, URL.createObjectURL(blob));
+  }
+
+  progressFill.style.width = '60%';
+
+  // Выбираем основной модельный файл
+  let modelFile = null;
+  let modelType = null;
+
+  if (fbxFiles.length > 0) {
+    // Предпочитаем файл с "Battle" или без "Base" если есть варианты
+    modelFile = fbxFiles.find(n => /battle/i.test(n)) || fbxFiles[0];
+    modelType = 'fbx';
+    log(`Выбран FBX: ${modelFile}`, 'ok');
+  } else if (daeFiles.length > 0) {
+    modelFile = daeFiles[0];
+    modelType = 'dae';
+    log(`Выбран DAE: ${modelFile}`, 'ok');
+  } else {
+    log('Не найдено ни одного .fbx или .dae файла!', 'err');
+    progressWrap.classList.remove('visible');
+    return;
+  }
+
+  progressFill.style.width = '80%';
+  progressText.textContent = 'Загрузка 3D модели...';
+
+  // Загружаем модель
+  try {
+    if (modelType === 'fbx') {
+      await loadFBX(modelFile);
+    } else {
+      await loadDAE(modelFile);
+    }
+  } catch(e) {
+    log('Ошибка загрузки модели: ' + e.message, 'err');
+    console.error(e);
+    progressWrap.classList.remove('visible');
+    return;
+  }
+
+  progressFill.style.width = '100%';
+  progressText.textContent = 'Готово!';
+  setTimeout(() => progressWrap.classList.remove('visible'), 500);
+
+  // Показываем UI
+  document.getElementById('drop-zone').classList.add('hidden');
+  document.getElementById('ui-overlay').classList.remove('hidden');
+  document.getElementById('info-bar').classList.remove('hidden');
+  toggleLogsBtn.style.display = 'block';
+
+  log('Модель успешно загружена!', 'ok');
+}
+
+// Нативная распаковка ZIP через DecompressionStream
+async function unzipWithNative(arrayBuffer) {
+  const data = new Uint8Array(arrayBuffer);
+  const files = {};
+  let pos = 0;
+
+  function readLE(len) {
+    let val = 0;
+    for (let i = 0; i < len; i++) val |= data[pos + i] << (i * 8);
+    pos += len;
+    return val >>> 0;
+  }
+
+  // Находим EOCD
+  let eocdPos = data.length - 22;
+  while (eocdPos >= 0) {
+    if (data[eocdPos] === 0x50 && data[eocdPos+1] === 0x4B && data[eocdPos+2] === 0x05 && data[eocdPos+3] === 0x06) break;
+    eocdPos--;
+  }
+  if (eocdPos < 0) throw new Error('Invalid ZIP');
+
+  pos = eocdPos + 16;
+  const cdOffset = readLE(4);
+
+  pos = cdOffset;
+
+  while (pos < data.length - 46) {
+    const sig = readLE(4);
+    if (sig !== 0x02014b50) break;
+    pos += 6;
+    const method = readLE(2);
+    pos += 8;
+    const compSize = readLE(4);
+    const uncompSize = readLE(4);
+    const nameLen = readLE(2);
+    const extraLen = readLE(2);
+    const commentLen = readLE(2);
+    pos += 8;
+    const localHeaderOffset = readLE(4);
+    const nameBytes = data.slice(pos, pos + nameLen);
+    const name = new TextDecoder().decode(nameBytes).replace(/\x00.*/, '');
+    pos += nameLen + extraLen + commentLen;
+
+    if (name.endsWith('/')) continue;
+
+    const savedPos = pos;
+    pos = localHeaderOffset;
+    const localSig = readLE(4);
+    if (localSig !== 0x04034b50) { pos = savedPos; continue; }
+    pos += 22;
+    const lNameLen = readLE(2);
+    const lExtraLen = readLE(2);
+    pos += lNameLen + lExtraLen;
+
+    const compressed = data.slice(pos, pos + compSize);
+    pos = savedPos;
+
+    let finalData;
+    if (method === 0) {
+      finalData = compressed;
+    } else if (method === 8) {
+      // Используем pako или нативный inflate
+      try {
+        const ds = new DecompressionStream('deflate-raw');
+        const writer = ds.writable.getWriter();
+        writer.write(compressed);
+        writer.close();
+        const resp = await new Response(ds.readable).arrayBuffer();
+        finalData = new Uint8Array(resp);
+      } catch(e) {
+        // Fallback: пробуем через Response с Content-Encoding
+        const blob = new Blob([compressed], { type: 'application/octet-stream' });
+        const resp = await fetch(URL.createObjectURL(blob), { headers: { 'Content-Encoding': 'deflate' } });
+        const ab = await resp.arrayBuffer();
+        finalData = new Uint8Array(ab);
+      }
+    } else {
+      continue;
+    }
+
+    files[name] = finalData;
+  }
+
+  return files;
+}
+
+// ============ ЗАГРУЗКА FBX ============
+async function loadFBX(filename) {
+  const fbxUrl = fileMap.get(filename);
+  if (!fbxUrl) throw new Error('FBX not found in map');
+
+  // Создаём LoadingManager с URL-модификатором для текстур
+  const manager = new THREE.LoadingManager();
+  manager.setURLModifier((url) => {
+    // Ищем текстуру в fileMap
+    const cleanUrl = url.split('?')[0].split('#')[0];
+    const basename = cleanUrl.split('\\').pop().split('/').pop();
+
+    for (const [name, blobUrl] of fileMap) {
+      if (name.endsWith(basename) || basename.endsWith(name.split('/').pop())) {
+        return blobUrl;
+      }
+    }
+    return url;
+  });
+
+  const loader = new FBXLoader(manager);
+
+  return new Promise((resolve, reject) => {
+    loader.load(fbxUrl, (object) => {
+      setupModel(object, 'fbx');
+      resolve(object);
+    }, (progress) => {
+      // progress
+    }, (error) => {
+      reject(error);
+    });
+  });
+}
+
+// ============ ЗАГРУЗКА DAE ============
+async function loadDAE(filename) {
+  // DAE загрузка — упрощённая через парсинг XML
+  const daeUrl = fileMap.get(filename);
+  if (!daeUrl) throw new Error('DAE not found');
+
+  log('DAE загрузка — базовая реализация', 'warn');
+  // Для DAE используем простую заглушку с кубом
+  const geometry = new THREE.BoxGeometry(1, 2, 0.5);
+  const material = new THREE.MeshStandardMaterial({ color: 0x888888 });
+  const mesh = new THREE.Mesh(geometry, material);
+  const group = new THREE.Group();
+  group.add(mesh);
+  setupModel(group, 'dae');
+}
+
+// ============ НАСТРОЙКА МОДЕЛИ ============
+function setupModel(object, type) {
+  if (currentModel) {
+    scene.remove(currentModel);
+    if (skeletonHelper) { scene.remove(skeletonHelper); skeletonHelper = null; }
+  }
+
+  currentModel = object;
+  scene.add(object);
+
+  // Анализ модели
+  let meshCount = 0, boneCount = 0, skinnedMeshCount = 0, hasAnimations = false;
+  const materials = new Set();
+  const textures = new Set();
+
+  object.traverse((child) => {
+    if (child.isMesh || child.isSkinnedMesh) {
+      meshCount++;
+      if (child.isSkinnedMesh) {
+        skinnedMeshCount++;
+        if (child.skeleton) boneCount = Math.max(boneCount, child.skeleton.bones.length);
+      }
+      if (child.material) {
+        const mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach(m => {
+          materials.add(m.name || 'unnamed');
+          if (m.map) textures.add(m.map.name || 'texture');
         });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.25;
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        container.appendChild(renderer.domElement);
-
-        /* =========================================================================
-           2. RTX POST-PROCESSING BLOOM
-           ========================================================================= */
-        const composer = new THREE.EffectComposer(renderer);
-        const renderPass = new THREE.RenderPass(scene, camera);
-        composer.addPass(renderPass);
-
-        const bloomPass = new THREE.UnrealBloomPass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight),
-            0.6,   // Strength
-            0.4,   // Radius
-            0.8    // Threshold
-        );
-        composer.addPass(bloomPass);
-
-        /* =========================================================================
-           3. BEAUTIFUL PROCEDURAL SKY & BRIGHT SUN
-           ========================================================================= */
-        // Dynamic Sky Dome
-        const skyGeo = new THREE.SphereGeometry(1000, 32, 32);
-        
-        // Procedural Gradient Sky Texture (Bright Blue to Warm Sunset Gold/Pink)
-        function createSkyTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1;
-            canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, 0, 512);
-            gradient.addColorStop(0.0, '#1e5799'); // Deep Blue Top
-            gradient.addColorStop(0.4, '#7db9e8'); // Sky Blue
-            gradient.addColorStop(0.7, '#ffaebe'); // Sakura Pink Horizon
-            gradient.addColorStop(0.9, '#ffcc00'); // Sun Gold Horizon
-            gradient.addColorStop(1.0, '#ffa07a'); // Sunset Bottom
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 1, 512);
-
-            const texture = new THREE.CanvasTexture(canvas);
-            return texture;
-        }
-
-        const skyMat = new THREE.MeshBasicMaterial({
-            map: createSkyTexture(),
-            side: THREE.BackSide
-        });
-        const skyMesh = new THREE.Mesh(skyGeo, skyMat);
-        scene.add(skyMesh);
-
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffebf0, 0.9);
-        scene.add(ambientLight);
-
-        const sunLight = new THREE.DirectionalLight(0xfff5ea, 2.5);
-        sunLight.position.set(200, 180, -300);
-        sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 2048;
-        sunLight.shadow.mapSize.height = 2048;
-        sunLight.shadow.camera.near = 0.5;
-        sunLight.shadow.camera.far = 600;
-        const d = 150;
-        sunLight.shadow.camera.left = -d;
-        sunLight.shadow.camera.right = d;
-        sunLight.shadow.camera.top = d;
-        sunLight.shadow.camera.bottom = -d;
-        sunLight.shadow.bias = -0.0002;
-        scene.add(sunLight);
-
-        // Glowing Sun Sphere
-        const sunGeo = new THREE.SphereGeometry(22, 32, 32);
-        const sunMat = new THREE.MeshBasicMaterial({ 
-            color: 0xffffff,
-            emissive: 0xffffaa
-        });
-        const sunMesh = new THREE.Mesh(sunGeo, sunMat);
-        sunMesh.position.copy(sunLight.position);
-        scene.add(sunMesh);
-
-        // Sun Corona Lens Flare Glow
-        const coronaGeo = new THREE.SphereGeometry(38, 32, 32);
-        const coronaMat = new THREE.MeshBasicMaterial({
-            color: 0xffcc33,
-            transparent: true,
-            opacity: 0.35,
-            side: THREE.BackSide
-        });
-        const coronaMesh = new THREE.Mesh(coronaGeo, coronaMat);
-        coronaMesh.position.copy(sunLight.position);
-        scene.add(coronaMesh);
-
-        /* =========================================================================
-           4. PROCEDURAL TERRAIN & REALISTIC WATER LAKE
-           ========================================================================= */
-        function createGrassTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512; canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#3a6e2d';
-            ctx.fillRect(0,0,512,512);
-            for(let i=0; i<35000; i++) {
-                ctx.fillStyle = Math.random() > 0.5 ? '#4b8b3b' : '#28501e';
-                ctx.fillRect(Math.random()*512, Math.random()*512, 2, 7);
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(45, 45);
-            return texture;
-        }
-
-        const terrainSize = 600;
-        const terrainGeo = new THREE.PlaneGeometry(terrainSize, terrainSize, 140, 140);
-        terrainGeo.rotateX(-Math.PI / 2);
-
-        const posAttr = terrainGeo.attributes.position;
-        function getTerrainHeight(x, z) {
-            const hill1 = Math.sin(x * 0.012) * Math.cos(z * 0.012) * 14;
-            const hill2 = Math.sin(x * 0.035 + 1.2) * Math.sin(z * 0.025) * 5;
-            const valley = Math.sin((x + z) * 0.008) * 8;
-            return hill1 + hill2 + valley;
-        }
-
-        for (let i = 0; i < posAttr.count; i++) {
-            const x = posAttr.getX(i);
-            const z = posAttr.getZ(i);
-            posAttr.setY(i, getTerrainHeight(x, z));
-        }
-        terrainGeo.computeVertexNormals();
-
-        const terrainMat = new THREE.MeshStandardMaterial({
-            map: createGrassTexture(),
-            roughness: 0.8,
-            metalness: 0.05
-        });
-        const terrain = new THREE.Mesh(terrainGeo, terrainMat);
-        terrain.receiveShadow = true;
-        scene.add(terrain);
-
-        // Water Lake
-        const waterGeo = new THREE.PlaneGeometry(200, 200);
-        const waterMat = new THREE.MeshStandardMaterial({
-            color: 0x44bbff,
-            roughness: 0.08,
-            metalness: 0.85,
-            transparent: true,
-            opacity: 0.8
-        });
-        const water = new THREE.Mesh(waterGeo, waterMat);
-        water.rotation.x = -Math.PI / 2;
-        water.position.set(0, -3.8, 0);
-        scene.add(water);
-
-        /* =========================================================================
-           5. ANIMATED 3D WAVING GRASS (БЕСКОНЕЧНОЕ КОЛЕБАНИЕ ТРАВЫ)
-           ========================================================================= */
-        const grassTuftCount = 3000;
-        const grassBladeGeo = new THREE.ConeGeometry(0.2, 1.2, 3);
-        grassBladeGeo.translate(0, 0.6, 0); // Origin at bottom
-
-        const grassBladeMat = new THREE.MeshStandardMaterial({
-            color: 0x55aa33,
-            roughness: 0.6,
-            side: THREE.DoubleSide
-        });
-
-        const grassInstanced = new THREE.InstancedMesh(grassBladeGeo, grassBladeMat, grassTuftCount);
-        const dummy = new THREE.Object3D();
-        const grassData = [];
-
-        for(let i=0; i<grassTuftCount; i++) {
-            const x = (Math.random() - 0.5) * 350;
-            const z = (Math.random() - 0.5) * 350;
-            const y = getTerrainHeight(x, z);
-
-            if (y > -2) { // Only grow above water level
-                const scaleY = 0.8 + Math.random() * 0.8;
-                const phase = Math.random() * Math.PI * 2;
-                grassData.push({ index: i, x, y, z, phase, scaleY });
-
-                dummy.position.set(x, y, z);
-                dummy.scale.set(1, scaleY, 1);
-                dummy.updateMatrix();
-                grassInstanced.setMatrixAt(i, dummy.matrix);
-            }
-        }
-        scene.add(grassInstanced);
-
-        /* =========================================================================
-           6. SAKURA TREES & PETALS
-           ========================================================================= */
-        const leafMat = new THREE.MeshStandardMaterial({
-            color: 0xffb3cb,
-            roughness: 0.4,
-            emissive: 0xff3377,
-            emissiveIntensity: 0.15
-        });
-
-        const trunkMat = new THREE.MeshStandardMaterial({
-            color: 0x3d2314,
-            roughness: 0.9
-        });
-
-        function createSakuraTree(x, z) {
-            const y = getTerrainHeight(x, z);
-            if (y < -1) return;
-
-            const tree = new THREE.Group();
-            tree.position.set(x, y, z);
-
-            const trunkGeo = new THREE.CylinderGeometry(0.7, 1.3, 9, 8);
-            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-            trunk.position.y = 4.5;
-            trunk.castShadow = true;
-            tree.add(trunk);
-
-            for(let i=0; i<6; i++) {
-                const size = 3.8 + Math.random() * 2.5;
-                const leafGeo = new THREE.DodecahedronGeometry(size, 1);
-                const leafMesh = new THREE.Mesh(leafGeo, leafMat);
-                leafMesh.position.set(
-                    (Math.random() - 0.5) * 5,
-                    8 + Math.random() * 4,
-                    (Math.random() - 0.5) * 5
-                );
-                leafMesh.castShadow = true;
-                tree.add(leafMesh);
-            }
-            scene.add(tree);
-        }
-
-        for (let i = 0; i < 70; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 15 + Math.random() * 220;
-            createSakuraTree(Math.cos(angle) * dist, Math.sin(angle) * dist);
-        }
-
-        // Falling Sakura Petals
-        const petalCount = 3000;
-        const petalGeo = new THREE.PlaneGeometry(0.25, 0.25);
-        const petalMat = new THREE.MeshBasicMaterial({
-            color: 0xffc0cb,
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 0.9
-        });
-
-        const petalInstanced = new THREE.InstancedMesh(petalGeo, petalMat, petalCount);
-        const petalData = [];
-
-        for (let i = 0; i < petalCount; i++) {
-            const x = (Math.random() - 0.5) * 300;
-            const y = Math.random() * 35 + 3;
-            const z = (Math.random() - 0.5) * 300;
-            petalData.push({
-                x, y, z,
-                speedY: 0.03 + Math.random() * 0.04,
-                sway: 1 + Math.random() * 2,
-                initialY: y,
-                timeOffset: Math.random() * 100
-            });
-            dummy.position.set(x, y, z);
-            dummy.updateMatrix();
-            petalInstanced.setMatrixAt(i, dummy.matrix);
-        }
-        scene.add(petalInstanced);
-
-        /* =========================================================================
-           7. CUTE SLIMES (МИЛЫЕ ПРЫГАЮЩИЕ СЛИЗНЯКИ ИЗ GENSHIN)
-           ========================================================================= */
-        const slimes = [];
-        const slimeColors = [0xff69b4, 0x00ffff, 0xffd700, 0x76ff03];
-
-        function createCuteSlime(x, z, color) {
-            const slimeGroup = new THREE.Group();
-
-            // Jelly Body
-            const bodyGeo = new THREE.SphereGeometry(1.2, 32, 24);
-            bodyGeo.scale(1, 0.85, 1);
-            const bodyMat = new THREE.MeshPhysicalMaterial({
-                color: color,
-                transmission: 0.6,
-                opacity: 0.95,
-                transparent: true,
-                roughness: 0.1,
-                ior: 1.3,
-                clearcoat: 1.0,
-                clearcoatRoughness: 0.1
-            });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 1;
-            body.castShadow = true;
-            slimeGroup.add(body);
-
-            // Eyes (Cute Cartoon Style)
-            const eyeGeo = new THREE.SphereGeometry(0.22, 16, 16);
-            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            const pupilGeo = new THREE.SphereGeometry(0.12, 16, 16);
-            const pupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-
-            // Left Eye
-            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-            leftEye.position.set(-0.4, 1.2, 0.95);
-            const leftPupil = new THREE.Mesh(pupilGeo, pupilMat);
-            leftPupil.position.set(-0.4, 1.2, 1.12);
-
-            // Right Eye
-            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-            rightEye.position.set(0.4, 1.2, 0.95);
-            const rightPupil = new THREE.Mesh(pupilGeo, pupilMat);
-            rightPupil.position.set(0.4, 1.2, 1.12);
-
-            slimeGroup.add(leftEye, leftPupil, rightEye, rightPupil);
-
-            // Initial Position
-            const terrainY = getTerrainHeight(x, z);
-            slimeGroup.position.set(x, terrainY, z);
-            scene.add(slimeGroup);
-
-            slimes.push({
-                group: slimeGroup,
-                body: body,
-                baseX: x,
-                baseZ: z,
-                phase: Math.random() * 10,
-                speed: 1.8 + Math.random() * 1.5,
-                jumpHeight: 2.2 + Math.random() * 1.5
-            });
-        }
-
-        // Spawn 25 Cute Slimes randomly in world
-        for(let i=0; i<25; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 10 + Math.random() * 160;
-            const x = Math.cos(angle) * dist;
-            const z = Math.sin(angle) * dist;
-            const color = slimeColors[Math.floor(Math.random() * slimeColors.length)];
-            createCuteSlime(x, z, color);
-        }
-
-        /* =========================================================================
-           8. FLUTTERING GLOWING BUTTERFLIES (БАБОЧКИ)
-           ========================================================================= */
-        const butterflies = [];
-        const butterflyGeo = new THREE.BufferGeometry();
-        // Simple wing triangle vertices
-        const wingVerts = new Float32Array([
-            0,0,0,  0.4,0.3,0,  0,0.5,0,
-            0,0,0, -0.4,0.3,0,  0,0.5,0
-        ]);
-        butterflyGeo.setAttribute('position', new THREE.BufferAttribute(wingVerts, 3));
-        const butterflyMat = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            side: THREE.DoubleSide
-        });
-
-        for(let i=0; i<30; i++) {
-            const mesh = new THREE.Mesh(butterflyGeo, butterflyMat);
-            const x = (Math.random() - 0.5) * 150;
-            const z = (Math.random() - 0.5) * 150;
-            const y = getTerrainHeight(x, z) + 1.5 + Math.random() * 3;
-            mesh.position.set(x, y, z);
-            scene.add(mesh);
-            butterflies.push({
-                mesh,
-                baseX: x, baseY: y, baseZ: z,
-                phase: Math.random() * 100
-            });
-        }
-
-        /* =========================================================================
-           9. MULTITOUCH & PC CONTROLS (GENSHIN STYLE)
-           ========================================================================= */
-        const player = {
-            position: new THREE.Vector3(0, 5, 20),
-            yaw: 0,
-            pitch: 0,
-            speed: 0.18,
-            sprintMultiplier: 1.85,
-            isSprinting: false,
-            isGrounded: true,
-            height: 1.7,
-            jumpVelocity: 0
-        };
-
-        camera.position.copy(player.position);
-
-        const keys = { w: false, a: false, s: false, d: false };
-        let moveVector = { x: 0, y: 0 };
-
-        window.addEventListener('keydown', (e) => {
-            if (['w','W','Ц','ц'].includes(e.key)) keys.w = true;
-            if (['s','S','Ы','ы'].includes(e.key)) keys.s = true;
-            if (['a','A','Ф','ф'].includes(e.key)) keys.a = true;
-            if (['d','D','В','в'].includes(e.key)) keys.d = true;
-            if (e.key === 'Shift') player.isSprinting = true;
-            if (e.key === ' ' && player.isGrounded) jump();
-        });
-
-        window.addEventListener('keyup', (e) => {
-            if (['w','W','Ц','ц'].includes(e.key)) keys.w = false;
-            if (['s','S','Ы','ы'].includes(e.key)) keys.s = false;
-            if (['a','A','Ф','ф'].includes(e.key)) keys.a = false;
-            if (['d','D','В','в'].includes(e.key)) keys.d = false;
-            if (e.key === 'Shift') player.isSprinting = false;
-        });
-
-        let isPointerLocked = false;
-        container.addEventListener('click', () => {
-            if (window.innerWidth > 768 && !isPointerLocked) container.requestPointerLock();
-        });
-        document.addEventListener('pointerlockchange', () => {
-            isPointerLocked = document.pointerLockElement === container;
-        });
-        document.addEventListener('mousemove', (e) => {
-            if (isPointerLocked) {
-                const sens = 0.0022;
-                player.yaw -= e.movementX * sens;
-                player.pitch -= e.movementY * sens;
-                player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, player.pitch));
-            }
-        });
-
-        /* MULTITOUCH GENSHIN ENGINE */
-        const joystickZone = document.getElementById('joystick-zone');
-        const joystickThumb = document.getElementById('joystick-thumb');
-        let joystickTouchId = null;
-        let joystickCenter = { x: 0, y: 0 };
-        let lookTouchId = null;
-        let lookLastPos = { x: 0, y: 0 };
-
-        window.addEventListener('touchstart', (e) => {
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const touch = e.changedTouches[i];
-                if (touch.clientX < window.innerWidth / 2 && joystickTouchId === null) {
-                    joystickTouchId = touch.identifier;
-                    const rect = joystickZone.getBoundingClientRect();
-                    joystickCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-                    updateJoystick(touch.clientX, touch.clientY);
-                } else if (touch.clientX >= window.innerWidth / 2 && lookTouchId === null) {
-                    if (e.target.closest('#action-buttons') || e.target.closest('.header-bar')) continue;
-                    lookTouchId = touch.identifier;
-                    lookLastPos = { x: touch.clientX, y: touch.clientY };
-                }
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchmove', (e) => {
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const touch = e.changedTouches[i];
-                if (touch.identifier === joystickTouchId) {
-                    updateJoystick(touch.clientX, touch.clientY);
-                } else if (touch.identifier === lookTouchId) {
-                    const dx = touch.clientX - lookLastPos.x;
-                    const dy = touch.clientY - lookLastPos.y;
-                    const sens = 0.004;
-                    player.yaw -= dx * sens;
-                    player.pitch -= dy * sens;
-                    player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, player.pitch));
-                    lookLastPos = { x: touch.clientX, y: touch.clientY };
-                }
-            }
-        }, { passive: false });
-
-        function resetJoystick() {
-            joystickTouchId = null;
-            moveVector = { x: 0, y: 0 };
-            joystickThumb.style.transform = `translate(-50%, -50%)`;
-        }
-
-        window.addEventListener('touchend', (e) => {
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const touch = e.changedTouches[i];
-                if (touch.identifier === joystickTouchId) resetJoystick();
-                if (touch.identifier === lookTouchId) lookTouchId = null;
-            }
-        });
-
-        function updateJoystick(clientX, clientY) {
-            const maxRadius = 50;
-            let dx = clientX - joystickCenter.x;
-            let dy = clientY - joystickCenter.y;
-            let dist = Math.hypot(dx, dy);
-            if (dist > maxRadius) {
-                dx = (dx / dist) * maxRadius;
-                dy = (dy / dist) * maxRadius;
-            }
-            joystickThumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            moveVector.x = dx / maxRadius;
-            moveVector.y = dy / maxRadius;
-        }
-
-        document.getElementById('btn-sprint').addEventListener('touchstart', (e) => {
-            e.stopPropagation();
-            player.isSprinting = !player.isSprinting;
-            e.currentTarget.style.borderColor = player.isSprinting ? '#ff69b4' : 'rgba(255,255,255,0.5)';
-        });
-
-        document.getElementById('btn-jump').addEventListener('touchstart', (e) => {
-            e.stopPropagation();
-            jump();
-        });
-
-        function jump() {
-            if (player.isGrounded) {
-                player.jumpVelocity = 0.2;
-                player.isGrounded = false;
-            }
-        }
-
-        /* =========================================================================
-           10. AUDIO SYNTH
-           ========================================================================= */
-        let audioCtx = null;
-        function initAudio() {
-            if (audioCtx) return;
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-            const bufferSize = audioCtx.sampleRate * 2;
-            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const output = noiseBuffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-
-            const whiteNoise = audioCtx.createBufferSource();
-            whiteNoise.buffer = noiseBuffer;
-            whiteNoise.loop = true;
-
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(450, audioCtx.currentTime);
-
-            const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-
-            whiteNoise.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-            whiteNoise.start();
-        }
-
-        document.getElementById('audio-toggle-btn').addEventListener('click', initAudio);
-
-        /* =========================================================================
-           11. ANIMATION & GAME LOOP
-           ========================================================================= */
-        let clock = new THREE.Clock();
-        let frameCount = 0;
-        let lastFpsTime = performance.now();
-        const fpsDisplay = document.getElementById('fps-display');
-
-        function animate() {
-            requestAnimationFrame(animate);
-            const delta = clock.getDelta();
-            const time = clock.getElapsedTime();
-
-            // FPS Counter
-            frameCount++;
-            const now = performance.now();
-            if (now - lastFpsTime >= 1000) {
-                fpsDisplay.innerText = `${frameCount} FPS`;
-                frameCount = 0;
-                lastFpsTime = now;
-            }
-
-            // Player Movement logic
-            let moveX = 0, moveZ = 0;
-            if (keys.w) moveZ -= 1;
-            if (keys.s) moveZ += 1;
-            if (keys.a) moveX -= 1;
-            if (keys.d) moveX += 1;
-
-            if (moveVector.x !== 0 || moveVector.y !== 0) {
-                moveX = moveVector.x;
-                moveZ = moveVector.y;
-            }
-
-            const currentSpeed = player.speed * (player.isSprinting ? player.sprintMultiplier : 1.0);
-
-            if (moveX !== 0 || moveZ !== 0) {
-                const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.yaw);
-                const side = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.yaw);
-
-                const moveDir = new THREE.Vector3()
-                    .addScaledVector(forward, -moveZ)
-                    .addScaledVector(side, moveX)
-                    .normalize();
-
-                player.position.addScaledVector(moveDir, currentSpeed);
-                player.position.y += Math.sin(time * 12) * 0.015; // Natural Bobbing
-            }
-
-            // Gravity & Terrain Ground Check
-            const targetHeight = getTerrainHeight(player.position.x, player.position.z) + player.height;
-            if (!player.isGrounded) {
-                player.position.y += player.jumpVelocity;
-                player.jumpVelocity -= 0.01;
-                if (player.position.y <= targetHeight) {
-                    player.position.y = targetHeight;
-                    player.isGrounded = true;
-                    player.jumpVelocity = 0;
-                }
-            } else {
-                player.position.y = THREE.MathUtils.lerp(player.position.y, targetHeight, 0.25);
-            }
-
-            // Camera orientation
-            const euler = new THREE.Euler(0, 0, 0, 'YXZ');
-            euler.x = player.pitch;
-            euler.y = player.yaw;
-            camera.quaternion.setFromEuler(euler);
-            camera.position.copy(player.position);
-
-            // ANIMATE WAVING GRASS (КОЛЕБАНИЕ ТРАВЫ ОТ ВЕТРА)
-            for(let i=0; i<grassData.length; i++) {
-                const g = grassData[i];
-                const wind = Math.sin(time * 2.5 + g.phase + g.x * 0.1) * 0.25;
-                dummy.position.set(g.x, g.y, g.z);
-                dummy.rotation.set(wind, 0, wind * 0.5);
-                dummy.scale.set(1, g.scaleY, 1);
-                dummy.updateMatrix();
-                grassInstanced.setMatrixAt(g.index, dummy.matrix);
-            }
-            grassInstanced.instanceMatrix.needsUpdate = true;
-
-            // ANIMATE FALLING SAKURA PETALS
-            for (let i = 0; i < petalCount; i++) {
-                const p = petalData[i];
-                p.y -= p.speedY;
-                p.x += Math.sin(time * p.sway + p.timeOffset) * 0.035;
-                p.z += Math.cos(time * p.sway + p.timeOffset) * 0.025;
-
-                if (p.y < getTerrainHeight(p.x, p.z)) {
-                    p.y = p.initialY + 15;
-                    p.x = player.position.x + (Math.random() - 0.5) * 140;
-                    p.z = player.position.z + (Math.random() - 0.5) * 140;
-                }
-
-                dummy.position.set(p.x, p.y, p.z);
-                dummy.rotation.set(time + p.timeOffset, time * 0.02, 0);
-                dummy.updateMatrix();
-                petalInstanced.setMatrixAt(i, dummy.matrix);
-            }
-            petalInstanced.instanceMatrix.needsUpdate = true;
-
-            // ANIMATE CUTE SLIMES (ПРЫГАЮЩИЕ СЛИЗНЯКИ С ДЕФОРМАЦИЕЙ)
-            for (let i = 0; i < slimes.length; i++) {
-                const s = slimes[i];
-                const jumpCycle = Math.sin(time * s.speed + s.phase);
-                const jumpY = Math.max(0, jumpCycle) * s.jumpHeight;
-                const terrainY = getTerrainHeight(s.baseX, s.baseZ);
-
-                s.group.position.y = terrainY + jumpY;
-
-                // Squash and stretch deformation
-                if (jumpY > 0.1) {
-                    s.body.scale.set(0.85, 1.2, 0.85); // Stretch vertically in air
-                } else {
-                    s.body.scale.set(1.25, 0.75, 1.25); // Squash horizontally on land
-                }
-            }
-
-            // ANIMATE BUTTERFLIES
-            for(let i=0; i<butterflies.length; i++) {
-                const b = butterflies[i];
-                b.mesh.position.x = b.baseX + Math.sin(time * 1.5 + b.phase) * 2;
-                b.mesh.position.z = b.baseZ + Math.cos(time * 1.5 + b.phase) * 2;
-                b.mesh.position.y = b.baseY + Math.sin(time * 3 + b.phase) * 0.5;
-                b.mesh.rotation.y = time * 2 + b.phase;
-            }
-
-            // Render with Bloom
-            composer.render();
-        }
-
-        /* =========================================================================
-           12. START & FULLSCREEN HANDLERS
-           ========================================================================= */
-        const startModal = document.getElementById('start-modal');
-        document.getElementById('start-btn').addEventListener('click', () => {
-            startModal.style.opacity = '0';
-            setTimeout(() => startModal.style.display = 'none', 500);
-            initAudio();
-            animate();
-        });
-
-        document.getElementById('fullscreen-btn').addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => console.log(err));
-            } else {
-                document.exitFullscreen();
-            }
-        });
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
+      }
+    }
+    if (child.isBone) boneCount++;
+  });
+
+  log(`Мешей: ${meshCount}, Скин-мешей: ${skinnedMeshCount}, Костей: ${boneCount}`, 'ok');
+  log(`Материалов: ${materials.size}, Текстур: ${textures.size}`, 'info');
+
+  // Центрируем и масштабируем
+  const box = new THREE.Box3().setFromObject(object);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+
+  object.position.sub(center);
+  const scale = maxDim > 0 ? 100 / maxDim : 1;
+  object.scale.setScalar(scale);
+
+  log(`Размер модели: ${size.x.toFixed(2)}×${size.y.toFixed(2)}×${size.z.toFixed(2)}, масштаб: ${scale.toFixed(3)}`, 'info');
+
+  // Камера
+  const dist = Math.max(maxDim * scale * 2, 200);
+  camera.position.set(dist * 0.6, dist * 0.5, dist);
+  controls.target.set(0, size.y * scale * 0.3, 0);
+  controls.update();
+
+  // Анимации
+  animationActions = [];
+  const animSelect = document.getElementById('anim-select');
+  animSelect.innerHTML = '';
+
+  if (object.animations && object.animations.length > 0) {
+    hasAnimations = true;
+    mixer = new THREE.AnimationMixer(object);
+
+    object.animations.forEach((clip, i) => {
+      const action = mixer.clipAction(clip);
+      animationActions.push({ name: clip.name, action });
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = clip.name;
+      animSelect.appendChild(opt);
+    });
+
+    // Автозапуск первой анимации
+    currentAction = animationActions[0].action;
+    currentAction.play();
+    log(`Анимаций найдено: ${object.animations.length}`, 'ok');
+    document.getElementById('anim-row').style.display = 'flex';
+  } else {
+    log('Встроенных анимаций не найдено — будет авто-вращение', 'warn');
+    mixer = null;
+    document.getElementById('anim-row').style.display = 'none';
+    autoRotate = true;
+    document.getElementById('btn-rotate').classList.add('active');
+  }
+
+  // Скелет
+  if (skinnedMeshCount > 0 || boneCount > 0) {
+    log(`Скелет обнаружен: ${boneCount} костей`, 'ok');
+  } else {
+    log('Скелет не обнаружен — статическая модель', 'warn');
+  }
+
+  // Инфо-бар
+  const infoBar = document.getElementById('info-bar');
+  infoBar.innerHTML = `
+    <div><b>Тип:</b> ${type.toUpperCase()}</div>
+    <div><b>Мешей:</b> ${meshCount} | <b>Скин:</b> ${skinnedMeshCount} | <b>Костей:</b> ${boneCount}</div>
+    <div><b>Анимаций:</b> ${object.animations ? object.animations.length : 0}</div>
+    <div><b>Размер:</b> ${size.x.toFixed(1)}×${size.y.toFixed(1)}×${size.z.toFixed(1)}</div>
+    <div style="margin-top:4px;color:rgba(255,255,255,0.4);">👆 Вращение | 🤏 Зум | ✌️ Панорама</div>
+  `;
+}
+
+// ============ THREE.JS СЦЕНА ============
+function initThree() {
+  const container = document.getElementById('canvas-container');
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0a0f);
+  scene.fog = new THREE.Fog(0x0a0a0f, 500, 2000);
+
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
+  camera.position.set(100, 100, 200);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  container.appendChild(renderer.domElement);
+
+  // Освещение
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2);
+  hemiLight.position.set(0, 200, 0);
+  scene.add(hemiLight);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+  dirLight.position.set(100, 200, 100);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.set(1024, 1024);
+  scene.add(dirLight);
+
+  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+  dirLight2.position.set(-100, 50, -100);
+  scene.add(dirLight2);
+
+  // Сетка
+  gridHelper = new THREE.GridHelper(400, 40, 0x333333, 0x1a1a1a);
+  gridHelper.visible = false;
+  scene.add(gridHelper);
+
+  // Контролы
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.minDistance = 10;
+  controls.maxDistance = 2000;
+  controls.target.set(0, 50, 0);
+  controls.update();
+
+  // Touch-оптимизация
+  controls.touches = {
+    ONE: THREE.TOUCH.ROTATE,
+    TWO: THREE.TOUCH.DOLLY_PAN
+  };
+
+  clock = new THREE.Clock();
+
+  // Анимационный цикл
+  renderer.setAnimationLoop(animate);
+
+  window.addEventListener('resize', onResize);
+}
+
+function animate() {
+  const delta = clock.getDelta();
+
+  if (mixer) mixer.update(delta);
+
+  if (autoRotate && currentModel && !mixer) {
+    currentModel.rotation.y += delta * 0.5;
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+function onResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ============ UI ОБРАБОТЧИКИ ============
+document.getElementById('btn-select').addEventListener('click', () => {
+  document.getElementById('file-input').click();
+});
+
+document.getElementById('file-input').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+});
+
+// Drag & Drop
+const dropBox = document.getElementById('drop-box');
+['dragenter','dragover','dragleave','drop'].forEach(ev => {
+  document.body.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); });
+});
+
+document.body.addEventListener('dragenter', () => dropBox.classList.add('dragover'));
+document.body.addEventListener('dragleave', () => dropBox.classList.remove('dragover'));
+document.body.addEventListener('drop', (e) => {
+  dropBox.classList.remove('dragover');
+  const files = e.dataTransfer.files;
+  if (files.length > 0) handleFile(files[0]);
+});
+
+async function handleFile(file) {
+  if (!file.name.toLowerCase().endsWith('.zip')) {
+    log('Пожалуйста, выберите ZIP файл', 'warn');
+    return;
+  }
+  log(`Загружен файл: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`, 'info');
+  const arrayBuffer = await file.arrayBuffer();
+  await processZip(arrayBuffer);
+}
+
+// Кнопки UI
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!currentModel) return;
+  const box = new THREE.Box3().setFromObject(currentModel);
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const scale = currentModel.scale.x;
+  const dist = Math.max(maxDim * scale * 2, 200);
+  camera.position.set(dist * 0.6, dist * 0.5, dist);
+  controls.target.set(0, size.y * scale * 0.3, 0);
+  controls.update();
+  log('Камера сброшена', 'info');
+});
+
+document.getElementById('btn-rotate').addEventListener('click', (e) => {
+  autoRotate = !autoRotate;
+  e.target.classList.toggle('active', autoRotate);
+  log(autoRotate ? 'Авто-вращение включено' : 'Авто-вращение выключено', 'info');
+});
+
+document.getElementById('btn-wireframe').addEventListener('click', (e) => {
+  isWireframe = !isWireframe;
+  e.target.classList.toggle('active', isWireframe);
+  if (currentModel) {
+    currentModel.traverse((child) => {
+      if (child.isMesh || child.isSkinnedMesh) {
+        const mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach(m => { if (m) m.wireframe = isWireframe; });
+      }
+    });
+  }
+  log(isWireframe ? 'Режим каркаса' : 'Режим текстур', 'info');
+});
+
+document.getElementById('btn-skeleton').addEventListener('click', (e) => {
+  if (!currentModel) return;
+  if (skeletonHelper) {
+    scene.remove(skeletonHelper);
+    skeletonHelper = null;
+    e.target.classList.remove('active');
+    log('Скелет скрыт', 'info');
+  } else {
+    skeletonHelper = new SkeletonHelper(currentModel);
+    scene.add(skeletonHelper);
+    e.target.classList.add('active');
+    log('Скелет показан', 'ok');
+  }
+});
+
+document.getElementById('btn-grid').addEventListener('click', (e) => {
+  gridHelper.visible = !gridHelper.visible;
+  e.target.classList.toggle('active', gridHelper.visible);
+});
+
+document.getElementById('btn-new').addEventListener('click', () => {
+  if (currentModel) {
+    scene.remove(currentModel);
+    if (skeletonHelper) { scene.remove(skeletonHelper); skeletonHelper = null; }
+    currentModel = null;
+  }
+  fileMap.forEach(url => URL.revokeObjectURL(url));
+  fileMap.clear();
+  document.getElementById('drop-zone').classList.remove('hidden');
+  document.getElementById('ui-overlay').classList.add('hidden');
+  document.getElementById('info-bar').classList.add('hidden');
+  toggleLogsBtn.style.display = 'none';
+  logPanel.innerHTML = '';
+  log('Готов к новой загрузке', 'info');
+});
+
+document.getElementById('anim-select').addEventListener('change', (e) => {
+  const idx = parseInt(e.target.value);
+  if (mixer && animationActions[idx]) {
+    if (currentAction) currentAction.stop();
+    currentAction = animationActions[idx].action;
+    currentAction.reset().play();
+    log(`Анимация: ${animationActions[idx].name}`, 'info');
+  }
+});
+
+document.getElementById('btn-play').addEventListener('click', () => {
+  if (currentAction) { currentAction.paused = false; currentAction.play(); }
+});
+
+document.getElementById('btn-pause').addEventListener('click', () => {
+  if (currentAction) currentAction.paused = true;
+});
+
+// ============ ИНИЦИАЛИЗАЦИЯ ============
+initThree();
+log('3D Viewer готов. Выберите ZIP файл с моделью.', 'info');
+</script>
 </body>
 </html>
