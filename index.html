@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Tsuyu // Live Network</title>
+    <title>Tsuyu // Live Realtime Network</title>
 
     <!-- PWA Settings -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Tsuyu Live">
     <meta name="theme-color" content="#000000">
     <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlRzdXl1IiwKICAic2hvcnRfbmFtZSI6ICJUc3V5dSIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDAwMDAwIiwKICAidGhlbWVfY29sb3IiOiAiIzAwMDAwMCIKfQ==">
 
@@ -24,16 +23,15 @@
     <style>
         :root {
             --bg: #000000;
-            --surface: #0e0e10;
-            --surface-hover: #18181c;
-            --border: #1f1f24;
-            --border-focus: #33333e;
+            --surface: #0a0a0a;
+            --surface-hover: #141414;
+            --border: #1f1f1f;
+            --border-focus: #333333;
             --text: #ffffff;
-            --text-secondary: #8e8e93;
-            --text-muted: #545458;
-            --accent: #2AABEE;
-            --accent-hover: #229ED9;
-            --accent-invert: #ffffff;
+            --text-secondary: #8a8a8a;
+            --text-muted: #525252;
+            --accent: #ffffff;
+            --accent-invert: #000000;
             --danger: #ff453a;
             --success: #30d158;
             --radius-sm: 8px;
@@ -63,6 +61,81 @@
             user-select: none;
         }
 
+        /* Fullscreen TG Auth Screen */
+        .auth-screen-fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background-color: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            overflow-y: auto;
+        }
+
+        .auth-screen-fullscreen.hidden {
+            display: none !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .auth-card-lg {
+            width: 100%;
+            max-width: 420px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+            animation: fadeInScale 0.25s cubic-bezier(0.1, 1, 0.1, 1);
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .auth-logo-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            text-align: center;
+        }
+
+        .auth-logo-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffffff 0%, #333333 100%);
+            color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15);
+        }
+
+        .auth-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.4px;
+        }
+
+        .auth-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
         .app-container {
             display: flex;
             flex-direction: column;
@@ -87,110 +160,13 @@
             }
         }
 
-        /* Telegram-Style Full Screen Auth Container */
-        .full-auth-screen {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, #090b10 0%, #000000 100%);
-            z-index: 5000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-
-        .full-auth-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(0.96);
-        }
-
-        .auth-card {
-            width: 100%;
-            max-width: 360px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .auth-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: var(--radius-full);
-            background: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 30px rgba(42, 171, 238, 0.3);
-            margin-bottom: 8px;
-        }
-
-        .auth-logo svg {
-            width: 42px;
-            height: 42px;
-            fill: #ffffff;
-        }
-
-        .auth-title {
-            font-size: 22px;
-            font-weight: 700;
-            color: var(--text);
-            text-align: center;
-        }
-
-        .auth-subtitle {
-            font-size: 13px;
-            color: var(--text-secondary);
-            text-align: center;
-            margin-top: -12px;
-        }
-
-        .auth-tabs {
-            display: flex;
-            width: 100%;
-            background-color: var(--surface);
-            border-radius: var(--radius-sm);
-            padding: 3px;
-            border: 1px solid var(--border);
-        }
-
-        .auth-tab-btn {
-            flex: 1;
-            padding: 10px;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 13.5px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .auth-tab-btn.active {
-            background-color: var(--surface-hover);
-            color: var(--text);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-        }
-
-        .auth-form {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
         /* Header */
         .header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: calc(var(--safe-top) + 12px) 16px 12px 16px;
-            background-color: rgba(0,0,0,0.8);
-            backdrop-filter: blur(12px);
+            background-color: var(--bg);
             border-bottom: 1px solid var(--border);
             z-index: 100;
             flex-shrink: 0;
@@ -214,7 +190,9 @@
             justify-content: center;
             font-weight: 700;
             font-size: 15px;
+            letter-spacing: -0.5px;
             overflow: hidden;
+            object-fit: cover;
             color: var(--text);
         }
 
@@ -229,6 +207,7 @@
             font-weight: 600;
             line-height: 1.2;
             color: var(--text);
+            letter-spacing: -0.2px;
         }
 
         .channel-info p {
@@ -237,49 +216,22 @@
             margin-top: 1px;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
         }
 
         .online-dot {
-            width: 7px;
-            height: 7px;
+            width: 6px;
+            height: 6px;
             background-color: var(--success);
             border-radius: 50%;
             display: inline-block;
             box-shadow: 0 0 8px var(--success);
-            animation: pulseDot 2s infinite;
-        }
-
-        @keyframes pulseDot {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.15); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.8; }
         }
 
         .header-actions {
             display: flex;
             align-items: center;
             gap: 8px;
-        }
-
-        .logout-btn-header {
-            background-color: rgba(255, 69, 58, 0.12);
-            color: var(--danger);
-            border: 1px solid rgba(255, 69, 58, 0.3);
-            border-radius: var(--radius-full);
-            padding: 6px 14px;
-            font-size: 12.5px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.15s;
-        }
-
-        .logout-btn-header:active {
-            transform: scale(0.95);
-            background-color: rgba(255, 69, 58, 0.25);
         }
 
         .icon-btn {
@@ -293,17 +245,39 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: background 0.1s, border-color 0.1s;
         }
 
         .icon-btn:active {
             background-color: var(--surface-hover);
+            border-color: var(--border-focus);
+            transform: scale(0.95);
         }
 
         .icon-btn svg {
             width: 18px;
             height: 18px;
             fill: currentColor;
+        }
+
+        .logout-header-btn {
+            background-color: rgba(255, 69, 58, 0.12);
+            border: 1px solid rgba(255, 69, 58, 0.3);
+            color: var(--danger);
+            padding: 6px 12px;
+            border-radius: var(--radius-full);
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.1s, transform 0.1s;
+        }
+
+        .logout-header-btn:active {
+            background-color: rgba(255, 69, 58, 0.25);
+            transform: scale(0.95);
         }
 
         /* Feed */
@@ -315,6 +289,7 @@
             flex-direction: column;
             gap: 16px;
             scroll-behavior: smooth;
+            content-visibility: auto;
         }
 
         .feed::-webkit-scrollbar {
@@ -323,39 +298,6 @@
         .feed::-webkit-scrollbar-thumb {
             background: var(--border);
             border-radius: var(--radius-full);
-        }
-
-        /* Telegram Spinner Indicator */
-        .tg-loader {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            border-top-color: #ffffff;
-            animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-bar-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #2AABEE, #229ED9, #30d158);
-            background-size: 200% 100%;
-            animation: loadingGradient 1.2s ease infinite;
-            z-index: 2000;
-        }
-
-        @keyframes loadingGradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
         }
 
         /* Post Card */
@@ -368,13 +310,12 @@
             flex-direction: column;
             gap: 12px;
             position: relative;
-            transition: border-color 0.2s;
-            animation: fadeInPost 0.25s ease-out;
+            transition: border-color 0.15s;
+            transform: translateZ(0);
         }
 
-        @keyframes fadeInPost {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .post:hover {
+            border-color: var(--border-focus);
         }
 
         .post-header {
@@ -390,14 +331,14 @@
         }
 
         .post-author-avatar {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: var(--radius-full);
             background-color: var(--border-focus);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             overflow: hidden;
             flex-shrink: 0;
@@ -411,13 +352,13 @@
         }
 
         .post-author-name {
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 600;
             color: var(--text);
         }
 
         .post-time {
-            font-size: 11.5px;
+            font-size: 11px;
             color: var(--text-muted);
         }
 
@@ -495,8 +436,8 @@
 
         .audio-cover {
             position: relative;
-            width: 44px;
-            height: 44px;
+            width: 48px;
+            height: 48px;
             border-radius: 6px;
             object-fit: cover;
             flex-shrink: 0;
@@ -565,7 +506,7 @@
         .audio-play-btn svg {
             width: 14px;
             height: 14px;
-            fill: #ffffff;
+            fill: var(--accent-invert);
         }
 
         .audio-progress-wrapper {
@@ -589,10 +530,10 @@
             top: 0;
             left: 0;
             height: 100%;
-            background-color: var(--accent);
+            background-color: var(--text);
             border-radius: var(--radius-full);
             width: 0%;
-            transition: width 0.1s linear;
+            transition: width 0.05s linear;
         }
 
         .audio-time-row {
@@ -626,13 +567,13 @@
             position: fixed;
             inset: 0;
             background-color: rgba(0, 0, 0, 0.95);
-            z-index: 6000;
+            z-index: 3000;
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.2s ease;
+            transition: opacity 0.15s ease;
         }
 
         .lightbox-modal.active {
@@ -669,7 +610,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            z-index: 6010;
+            z-index: 3010;
         }
 
         /* Poll Widget */
@@ -699,7 +640,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: border-color 0.2s;
+            transition: border-color 0.15s;
         }
 
         .poll-option:hover {
@@ -713,7 +654,7 @@
             bottom: 0;
             background-color: var(--surface-hover);
             z-index: 1;
-            transition: width 0.4s cubic-bezier(0.1, 1, 0.1, 1);
+            transition: width 0.25s cubic-bezier(0.1, 1, 0.1, 1);
         }
 
         .poll-option span {
@@ -726,7 +667,7 @@
             color: var(--text-secondary);
         }
 
-        /* Post Footer */
+        /* Post Footer & Realtime TG View Counter */
         .post-footer {
             display: flex;
             align-items: center;
@@ -756,12 +697,12 @@
             align-items: center;
             gap: 6px;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all 0.1s;
         }
 
         .reaction-btn:active, .reaction-btn.active, .comment-btn:active {
             background-color: var(--surface-hover);
-            border-color: var(--accent);
+            border-color: var(--text);
             color: var(--text);
             transform: scale(0.96);
         }
@@ -778,7 +719,6 @@
             object-fit: contain;
         }
 
-        /* Telegram-Style Realtime View Counter Badge */
         .post-views {
             display: flex;
             align-items: center;
@@ -786,22 +726,32 @@
             font-size: 11.5px;
             color: var(--text-secondary);
             margin-left: auto;
-            background-color: rgba(255,255,255,0.04);
+            font-weight: 500;
+            background-color: var(--bg);
             padding: 4px 8px;
             border-radius: var(--radius-full);
-            border: 1px solid rgba(255,255,255,0.06);
-            transition: color 0.2s, border-color 0.2s;
-        }
-
-        .post-views.view-updated {
-            color: #2AABEE;
-            border-color: rgba(42, 171, 238, 0.4);
+            border: 1px solid var(--border);
         }
 
         .post-views svg {
             width: 14px;
             height: 14px;
-            fill: currentColor;
+            fill: var(--text-secondary);
+        }
+
+        .post-views .live-pulse-dot {
+            width: 5px;
+            height: 5px;
+            background-color: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 6px var(--success);
+            animation: pulseGlow 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.4; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.2); }
         }
 
         /* Dedicated Comments Screen Overlay */
@@ -813,7 +763,7 @@
             display: flex;
             flex-direction: column;
             transform: translateX(100%);
-            transition: transform 0.28s cubic-bezier(0.1, 1, 0.1, 1);
+            transition: transform 0.22s cubic-bezier(0.1, 1, 0.1, 1);
         }
 
         .comments-screen.active {
@@ -841,7 +791,7 @@
             width: 34px;
             height: 34px;
             border-radius: var(--radius-full);
-            transition: background 0.15s;
+            transition: background 0.1s;
         }
 
         .back-btn:active {
@@ -885,7 +835,7 @@
         }
 
         .original-post-pinned {
-            border-left: 3px solid var(--accent);
+            border-left: 3px solid var(--text);
         }
 
         .comments-divider {
@@ -963,6 +913,7 @@
             font-size: 13.5px;
             font-weight: 600;
             color: var(--text);
+            letter-spacing: -0.2px;
         }
 
         .comment-time {
@@ -1037,7 +988,7 @@
             align-items: center;
             justify-content: center;
             border-radius: var(--radius-full);
-            transition: color 0.15s;
+            transition: color 0.1s;
         }
 
         .sticker-btn-icon:hover, .paperclip-btn-icon:hover {
@@ -1055,14 +1006,14 @@
             height: 38px;
             border-radius: var(--radius-full);
             background-color: var(--accent);
-            color: #ffffff;
+            color: var(--accent-invert);
             border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             flex-shrink: 0;
-            transition: transform 0.1s, opacity 0.15s;
+            transition: transform 0.1s, opacity 0.1s;
         }
 
         .comment-send-btn:active {
@@ -1099,12 +1050,12 @@
             cursor: pointer;
             font-size: 10px;
             font-weight: 500;
-            transition: color 0.15s;
+            transition: color 0.1s;
             width: 60px;
         }
 
         .nav-item.active {
-            color: var(--accent);
+            color: var(--text);
         }
 
         .nav-item svg {
@@ -1124,7 +1075,7 @@
             align-items: flex-end;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.25s ease;
+            transition: opacity 0.2s ease;
         }
 
         .modal-overlay.open {
@@ -1144,7 +1095,7 @@
             flex-direction: column;
             gap: 12px;
             transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.1, 1, 0.1, 1);
+            transition: transform 0.25s cubic-bezier(0.1, 1, 0.1, 1);
             max-height: 85vh;
             overflow-y: auto;
             position: relative;
@@ -1191,7 +1142,7 @@
             cursor: pointer;
             padding: 4px;
             border-radius: var(--radius-full);
-            transition: color 0.15s, background 0.15s;
+            transition: color 0.1s, background 0.1s;
             flex-shrink: 0;
         }
 
@@ -1328,7 +1279,7 @@
 
         .picker-tab-btn.active {
             color: var(--text);
-            border-bottom-color: var(--accent);
+            border-bottom-color: var(--text);
         }
 
         .sticker-picker-popup {
@@ -1379,7 +1330,7 @@
             aspect-ratio: 1;
             object-fit: contain;
             cursor: pointer;
-            transition: transform 0.12s ease;
+            transition: transform 0.1s ease;
         }
 
         .sticker-item:active {
@@ -1408,38 +1359,29 @@
             font-family: var(--font);
             font-size: 14px;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.15s;
         }
 
         .text-input:focus {
-            border-color: var(--accent);
+            border-color: var(--text);
         }
 
         .btn-primary {
             background-color: var(--accent);
-            color: #ffffff;
+            color: var(--accent-invert);
             border: none;
             border-radius: var(--radius-sm);
             padding: 14px;
-            font-size: 14.5px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: opacity 0.15s, transform 0.1s;
+            transition: opacity 0.1s, transform 0.1s;
         }
 
         .btn-primary:active {
             opacity: 0.85;
             transform: scale(0.98);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
         }
 
         /* Search Bar View */
@@ -1617,84 +1559,69 @@
             display: none !important;
         }
 
-        /* Toast Popup Notification */
-        .toast-popup {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-20px);
-            background-color: rgba(26, 26, 30, 0.95);
-            border: 1px solid var(--border-focus);
-            color: var(--text);
-            padding: 10px 18px;
-            border-radius: var(--radius-full);
-            font-size: 13px;
-            font-weight: 500;
-            z-index: 7000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s, transform 0.2s;
+        .auth-tab-row {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 4px;
         }
 
-        .toast-popup.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
+        .auth-tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+        }
+
+        .auth-tab-btn.active {
+            color: var(--text);
+            border-bottom-color: var(--text);
         }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div id="top-loading-bar" class="loading-bar-overlay hidden"></div>
-
-    <!-- Toast Banner -->
-    <div id="toast-banner" class="toast-popup">
-        <span id="toast-icon">ℹ️</span>
-        <span id="toast-message">Уведомление</span>
-    </div>
-
-    <!-- Full Screen Telegram-Style Auth Gate Screen -->
-    <div class="full-auth-screen" id="full-auth-gate">
-        <div class="auth-card">
-            <div class="auth-logo">
-                <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            </div>
-            <div class="auth-title">Tsuyu Network</div>
-            <div class="auth-subtitle">Войдите в аккаунт для доступа к сети в реальном времени</div>
-
-            <div class="auth-tabs">
-                <button class="auth-tab-btn active" id="tab-gate-login" onclick="switchAuthGateMode('login')">Вход</button>
-                <button class="auth-tab-btn" id="tab-gate-reg" onclick="switchAuthGateMode('register')">Регистрация</button>
-            </div>
-
-            <form class="auth-form" id="gate-auth-form" onsubmit="handleGateAuthSubmit(event)">
-                <div class="input-group" id="gate-name-group" style="display: none;">
-                    <label class="input-label">Ваше имя</label>
-                    <input type="text" class="text-input" id="gate-name-input" placeholder="Алексей">
-                </div>
-
-                <div class="input-group">
-                    <label class="input-label">Email адрес</label>
-                    <input type="email" class="text-input" id="gate-email-input" placeholder="user@example.com" required autocomplete="email">
-                </div>
-
-                <div class="input-group">
-                    <label class="input-label">Пароль</label>
-                    <input type="password" class="text-input" id="gate-password-input" placeholder="••••••••" required autocomplete="current-password">
-                </div>
-
-                <button type="submit" class="btn-primary" id="gate-auth-btn">
-                    <span id="gate-btn-text">Войти в сеть</span>
-                    <span id="gate-btn-loader" class="tg-loader hidden"></span>
-                </button>
-            </form>
+<!-- Modern Telegram-Style Fullscreen Registration / Login Screen -->
+<div class="auth-screen-fullscreen" id="fullscreen-auth-screen">
+    <div class="auth-card-lg">
+        <div class="auth-logo-box">
+            <div class="auth-logo-icon">TS</div>
+            <h2 class="auth-title">Вход в Tsuyu Live</h2>
+            <p class="auth-subtitle">Введите Email и Пароль для доступа к моментальной реалтайм сети</p>
         </div>
-    </div>
 
+        <div class="auth-tab-row">
+            <button class="auth-tab-btn active" id="auth-tab-login" onclick="setAuthTab('login')">Вход</button>
+            <button class="auth-tab-btn" id="auth-tab-register" onclick="setAuthTab('register')">Регистрация</button>
+        </div>
+
+        <div class="input-group" id="reg-name-group" style="display: none;">
+            <label class="input-label">Имя пользователя</label>
+            <input type="text" class="text-input" id="auth-name-input" placeholder="Алексей" autocomplete="nickname">
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">Электронная почта (Email)</label>
+            <input type="email" class="text-input" id="auth-email-input" placeholder="name@domain.com" autocomplete="email">
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">Пароль</label>
+            <input type="password" class="text-input" id="auth-password-input" placeholder="••••••••" autocomplete="current-password">
+        </div>
+
+        <div id="auth-error-msg" style="color: var(--danger); font-size: 12.5px; text-align: center; display: none;"></div>
+
+        <button class="btn-primary" id="auth-submit-btn">Войти</button>
+    </div>
+</div>
+
+<div class="app-container">
     <!-- Header -->
     <header class="header">
         <div class="header-left" id="header-channel-profile">
@@ -1705,12 +1632,12 @@
             </div>
         </div>
         <div class="header-actions">
+            <button class="logout-header-btn" id="header-logout-btn" title="Выйти из аккаунта">
+                <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: currentColor;"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+                <span>Выйти</span>
+            </button>
             <button class="icon-btn" id="search-toggle-btn" title="Поиск">
                 <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-            </button>
-            <button class="logout-btn-header" id="header-logout-btn" title="Выйти из аккаунта">
-                <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: currentColor;"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
-                <span>Выйти</span>
             </button>
         </div>
     </header>
@@ -1773,16 +1700,19 @@
         <!-- Sticky Comment Input Bar -->
         <div class="comments-input-bar-wrapper">
             <!-- Comment Attachments Preview Grid -->
-            <div class="attachments-preview-grid hidden" id="comment-attachments-preview" style="margin-bottom: 8px;"></div>
+            <div class="attachments-preview-grid hidden" id="comment-attachments-preview" style="margin-bottom: 8px;">
+                <!-- Dynamic attachment thumbs -->
+            </div>
 
             <div class="comments-input-bar">
                 <div class="comment-avatar" id="tg-comment-user-avatar" style="width: 32px; height: 32px; font-size: 13px;">U</div>
                 <div class="comments-input-box">
                     <div class="editable-editor" id="tg-comment-input" contenteditable="true" data-placeholder="Прокомментировать..."></div>
                     
-                    <label class="paperclip-btn-icon" id="comment-paperclip-btn" title="Прикрепить фото, видео">
+                    <!-- Paperclip for Comment Attachments -->
+                    <label class="paperclip-btn-icon" id="comment-paperclip-btn" title="Прикрепить фото, видео или аудио">
                         <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
-                        <input type="file" id="comment-multi-file-input" accept="image/*,video/*" multiple style="display: none;">
+                        <input type="file" id="comment-multi-file-input" accept="image/*,video/*,audio/*" multiple style="display: none;">
                     </label>
 
                     <button class="sticker-btn-icon" id="tg-comment-sticker-toggle" title="Стикеры и Премиум Эмодзи">
@@ -1855,10 +1785,7 @@
             <input type="text" class="text-input" id="new-post-poll" placeholder="Опрос (варианты через запятую)">
         </div>
 
-        <button class="btn-primary" id="publish-btn">
-            <span id="publish-btn-text">Опубликовать</span>
-            <span id="publish-btn-spinner" class="tg-loader hidden"></span>
-        </button>
+        <button class="btn-primary" id="publish-btn">Опубликовать</button>
     </div>
 </div>
 
@@ -1869,7 +1796,7 @@
 </div>
 
 <script>
-    // Initialize Firebase
+    // Initialize Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBm0mIvHVznIeF2PoFk6dtdaiT5r877wyA",
       authDomain: "meow-874ce.firebaseapp.com",
@@ -1884,24 +1811,8 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // Enable Local Persistence so login stays saved automatically
+    // Enable Auth Persistence in Local Storage (remembers session on modern web / PWA)
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
-    // Toast Notification Helper
-    function showToast(msg, icon = 'ℹ️') {
-        const toast = document.getElementById('toast-banner');
-        document.getElementById('toast-icon').textContent = icon;
-        document.getElementById('toast-message').textContent = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-
-    // Top Progress Bar Helper
-    function setGlobalLoading(isLoading) {
-        const bar = document.getElementById('top-loading-bar');
-        if (isLoading) bar.classList.remove('hidden');
-        else bar.classList.add('hidden');
-    }
 
     // Security HTML Escape
     function escapeHTML(str) {
@@ -1914,8 +1825,8 @@
             .replace(/'/g, "&#039;");
     }
 
-    // Ultra-Fast Canvas Downscaling for Instant Uploads over Mobile Data
-    function compressImage(file, maxDim = 720, quality = 0.65) {
+    // High-speed Canvas Downscaling Helper (Zero artificial delays for mobile networks)
+    function compressImage(file, maxDim = 1000, quality = 0.8) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -1935,7 +1846,7 @@
                     const canvas = document.createElement('canvas');
                     canvas.width = w;
                     canvas.height = h;
-                    const ctx = canvas.getContext('2d');
+                    const ctx = canvas.getContext('2d', { alpha: true });
                     ctx.drawImage(img, 0, 0, w, h);
                     resolve(canvas.toDataURL('image/jpeg', quality));
                 };
@@ -1947,34 +1858,7 @@
         });
     }
 
-    // Resize Stickers (Png transparency preservation)
-    function resizeStickerImage(dataUrl, maxW = 280, maxH = 280) {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                let w = img.width;
-                let h = img.height;
-                if (w > maxW || h > maxH) {
-                    if (w > h) {
-                        h = Math.round((h * maxW) / w);
-                        w = maxW;
-                    } else {
-                        w = Math.round((w * maxH) / h);
-                        h = maxH;
-                    }
-                }
-                const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, w, h);
-                resolve(canvas.toDataURL('image/png'));
-            };
-            img.onerror = () => resolve(dataUrl);
-            img.src = dataUrl;
-        });
-    }
-
+    // Insert Custom Emoji Image directly into editable element
     function insertEmojiToEditable(containerId, imgSrc) {
         const el = document.getElementById(containerId);
         el.focus();
@@ -2003,18 +1887,46 @@
         }
     }
 
+    // Clean html content to safely store and render text + inline emojis
     function getCleanHTMLContent(containerId) {
         const el = document.getElementById(containerId);
         if (!el) return '';
         return el.innerHTML;
     }
 
-    // App State
+    // Canvas Downscaling Helper (Preserves PNG/WebP transparency for stickers)
+    function resizeStickerImage(dataUrl, maxW = 300, maxH = 300) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                let w = img.width;
+                let h = img.height;
+                if (w > maxW || h > maxH) {
+                    if (w > h) {
+                        h = Math.round((h * maxW) / w);
+                        w = maxW;
+                    } else {
+                        w = Math.round((w * maxH) / h);
+                        h = maxH;
+                    }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
+        });
+    }
+
+    // State Variables
     let currentUser = null;
     let stickerPack = [];
     let emojiPack = [];
     let posts = [];
-    let gateAuthMode = 'login';
 
     let channelPermissions = {
         allowPhotos: true,
@@ -2027,7 +1939,8 @@
 
     let channelConfig = {
         name: "Tsuyu Stream",
-        avatar: null
+        avatar: null,
+        subscribers: "0 пользователей"
     };
 
     let userProfile = {
@@ -2041,11 +1954,43 @@
     let commentAttachedMediaList = [];
     let selectedStickerForPost = null;
     let activePostForComments = null;
+
     let currentPostPickerTab = 'stickers';
     let currentCommentPickerTab = 'stickers';
+    let authMode = 'login'; // 'login' | 'register'
+
+    // Realtime View Intersection Observer (Telegram View Counting)
+    const viewedPostsInSession = new Set();
+    const postViewObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const postId = entry.target.getAttribute('data-post-id');
+                if (postId && !viewedPostsInSession.has(postId) && currentUser) {
+                    viewedPostsInSession.add(postId);
+                    recordRealtimePostView(postId);
+                }
+            }
+        });
+    }, { threshold: 0.4 });
+
+    function recordRealtimePostView(postId) {
+        if (!currentUser) return;
+        const uid = currentUser.uid;
+        const postViewRef = db.ref(`posts/${postId}/viewsMap/${uid}`);
+        
+        // Transaction to register unique user view instantly and broadcast view count
+        postViewRef.set(true).then(() => {
+            const viewsCountRef = db.ref(`posts/${postId}/viewsMap`);
+            viewsCountRef.once('value', (snap) => {
+                const totalViews = snap.numChildren();
+                db.ref(`posts/${postId}/views`).set(totalViews);
+            });
+        }).catch(() => {});
+    }
 
     // DOM Elements
-    const fullAuthGate = document.getElementById('full-auth-gate');
+    const fullscreenAuthScreen = document.getElementById('fullscreen-auth-screen');
+    const headerLogoutBtn = document.getElementById('header-logout-btn');
     const feedContainer = document.getElementById('feed-container');
     const createModal = document.getElementById('create-modal');
     const openCreateModalBtn = document.getElementById('open-create-modal');
@@ -2054,7 +1999,6 @@
     const searchBarWrapper = document.getElementById('search-bar-wrapper');
     const searchInput = document.getElementById('search-input');
     const navItems = document.querySelectorAll('.nav-item[data-tab]');
-    const headerLogoutBtn = document.getElementById('header-logout-btn');
 
     const tgMultiFileInput = document.getElementById('tg-multi-file-input');
     const tgFileStatus = document.getElementById('tg-file-status');
@@ -2084,11 +2028,11 @@
     const tgCommentsSubtitle = document.getElementById('tg-comments-subtitle');
     const tgCommentUserAvatar = document.getElementById('tg-comment-user-avatar');
 
-    // Realtime Presence System & Online Users Tracker
-    let userPresenceRef = null;
-    db.ref('.info/connected').on('value', (snap) => {
+    // Realtime Online Presence System
+    const presenceRef = db.ref('.info/connected');
+    presenceRef.on('value', (snap) => {
         if (snap.val() === true && currentUser) {
-            userPresenceRef = db.ref(`presence/${currentUser.uid}`);
+            const userPresenceRef = db.ref(`presence/${currentUser.uid}`);
             userPresenceRef.onDisconnect().remove();
             userPresenceRef.set({
                 online: true,
@@ -2109,106 +2053,31 @@
         return 'пользователей';
     }
 
-    // Telegram-Style Auth Screen Gate
-    window.switchAuthGateMode = function(mode) {
-        gateAuthMode = mode;
-        const loginBtn = document.getElementById('tab-gate-login');
-        const regBtn = document.getElementById('tab-gate-reg');
-        const nameGroup = document.getElementById('gate-name-group');
-        const btnText = document.getElementById('gate-btn-text');
-
-        if (mode === 'login') {
-            loginBtn.classList.add('active');
-            regBtn.classList.remove('active');
-            nameGroup.style.display = 'none';
-            btnText.textContent = 'Войти в сеть';
-        } else {
-            regBtn.classList.add('active');
-            loginBtn.classList.remove('active');
-            nameGroup.style.display = 'flex';
-            btnText.textContent = 'Зарегистрироваться';
-        }
-    };
-
-    window.handleGateAuthSubmit = async function(e) {
-        e.preventDefault();
-        const email = document.getElementById('gate-email-input').value.trim();
-        const pass = document.getElementById('gate-password-input').value.trim();
-        const name = document.getElementById('gate-name-input').value.trim();
-        const loader = document.getElementById('gate-btn-loader');
-        const btnText = document.getElementById('gate-btn-text');
-        const btn = document.getElementById('gate-auth-btn');
-
-        if (!email || !pass) {
-            showToast('Заполните Email и Пароль', '⚠️');
-            return;
-        }
-
-        btn.disabled = true;
-        loader.classList.remove('hidden');
-        btnText.style.opacity = '0.5';
-
-        try {
-            if (gateAuthMode === 'register') {
-                const res = await auth.createUserWithEmailAndPassword(email, pass);
-                const uid = res.user.uid;
-                userProfile.name = name || email.split('@')[0];
-                await db.ref(`users/${uid}`).set(userProfile);
-                showToast('Добро пожаловать в сеть!', '🚀');
-            } else {
-                await auth.signInWithEmailAndPassword(email, pass);
-                showToast('Успешный вход!', '⚡');
-            }
-        } catch (err) {
-            showToast(err.message, '❌');
-        } finally {
-            btn.disabled = false;
-            loader.classList.add('hidden');
-            btnText.style.opacity = '1';
-        }
-    };
-
-    // Mandatory Authentication Listener (No Anonymous Login)
+    // MANDATORY EMAIL AUTH LISTENER (Full-screen TG login flow, No anonymous auth)
     auth.onAuthStateChanged((user) => {
         currentUser = user;
-        if (user && !user.isAnonymous) {
-            // User is logged in -> Hide full screen auth & activate RTDB presence
-            fullAuthGate.classList.add('hidden');
-            if (userPresenceRef) {
-                userPresenceRef.set({ online: true, ts: firebase.database.ServerValue.TIMESTAMP });
-            }
+        if (user) {
+            // Hide Fullscreen Auth Screen if logged in
+            fullscreenAuthScreen.classList.add('hidden');
 
             db.ref(`users/${user.uid}`).on('value', (snap) => {
                 const val = snap.val();
                 if (val) {
-                    userProfile.name = val.name || user.email.split('@')[0];
+                    userProfile.name = val.name || (user.email ? user.email.split('@')[0] : "Пользователь");
                     userProfile.avatar = val.avatar || null;
                 } else {
-                    userProfile.name = user.email.split('@')[0];
+                    userProfile.name = user.email ? user.email.split('@')[0] : "Пользователь";
                     db.ref(`users/${user.uid}`).set(userProfile);
                 }
                 updateHeaderUI();
             });
         } else {
-            // Not logged in -> Show Telegram-style Auth Gate screen
-            fullAuthGate.classList.remove('hidden');
-            userProfile = { name: "Гость", avatar: null };
-            updateHeaderUI();
+            // Show Fullscreen Auth Screen immediately if NOT logged in
+            fullscreenAuthScreen.classList.remove('hidden');
         }
     });
 
-    headerLogoutBtn.addEventListener('click', () => {
-        if (confirm('Вы действительно хотите выйти из аккаунта?')) {
-            if (currentUser && userPresenceRef) {
-                userPresenceRef.remove();
-            }
-            auth.signOut().then(() => {
-                showToast('Вы вышли из профиля', '🔒');
-            });
-        }
-    });
-
-    // Realtime Sync Listeners from Firebase RTDB
+    // Realtime Database Sync Listeners (INSTANT BROADCAST FOR EVERYONE)
     db.ref('channelConfig').on('value', (snap) => {
         const data = snap.val();
         if (data) {
@@ -2229,7 +2098,7 @@
         populateStickersInPickers();
     });
 
-    // Instant Post Feed Realtime Listener with Instant View Count Sync
+    // Realtime Post & View Count Sync
     db.ref('posts').on('value', (snap) => {
         const val = snap.val();
         if (val) {
@@ -2237,6 +2106,8 @@
         } else {
             posts = [];
         }
+        
+        // Update feed or update individual post elements dynamically
         renderFeed();
         
         if (activePostForComments) {
@@ -2249,33 +2120,7 @@
         }
     });
 
-    // Telegram-Style Realtime Post View Counter System
-    const viewedPostsInSession = new Set();
-    const viewObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const postId = entry.target.getAttribute('data-post-id');
-                if (postId && !viewedPostsInSession.has(postId) && currentUser) {
-                    viewedPostsInSession.add(postId);
-                    recordRealtimeView(postId);
-                }
-            }
-        });
-    }, { threshold: 0.6 });
-
-    function recordRealtimeView(postId) {
-        if (!currentUser) return;
-        const postViewUserRef = db.ref(`posts/${postId}/seenUsers/${currentUser.uid}`);
-        postViewUserRef.get().then((snap) => {
-            if (!snap.exists()) {
-                postViewUserRef.set(true);
-                db.ref(`posts/${postId}/views`).transaction((currentViews) => {
-                    return (currentViews || 0) + 1;
-                });
-            }
-        }).catch(err => console.log('View track error:', err));
-    }
-
+    // Header UI
     function updateHeaderUI() {
         document.getElementById('header-title').textContent = channelConfig.name;
         const avatarEl = document.getElementById('header-avatar');
@@ -2286,7 +2131,50 @@
         }
     }
 
-    // Audio Player Engine
+    // Audio Tag Reader
+    function readAudioTags(file) {
+        return new Promise((resolve) => {
+            let defaultTitle = file.name.replace(/\.[^/.]+$/, "");
+            let defaultArtist = "Неизвестный исполнитель";
+
+            if (defaultTitle.includes(" - ")) {
+                const parts = defaultTitle.split(" - ");
+                defaultArtist = parts[0].trim();
+                defaultTitle = parts.slice(1).join(" - ").trim();
+            }
+
+            if (typeof jsmediatags === 'undefined') {
+                resolve({ title: defaultTitle, artist: defaultArtist, cover: null });
+                return;
+            }
+
+            jsmediatags.read(file, {
+                onSuccess: function(tag) {
+                    const tags = tag.tags;
+                    let title = tags.title ? tags.title.trim() : defaultTitle;
+                    let artist = tags.artist ? tags.artist.trim() : defaultArtist;
+                    let cover = null;
+
+                    if (tags.picture) {
+                        try {
+                            const { data, format } = tags.picture;
+                            let base64String = "";
+                            for (let i = 0; i < data.length; i++) {
+                                base64String += String.fromCharCode(data[i]);
+                            }
+                            cover = `data:${format};base64,${window.btoa(base64String)}`;
+                        } catch (e) {}
+                    }
+                    resolve({ title, artist, cover });
+                },
+                onError: function() {
+                    resolve({ title: defaultTitle, artist: defaultArtist, cover: null });
+                }
+            });
+        });
+    }
+
+    // Audio Controls
     let activeAudioElement = null;
 
     window.toggleAudio = function(postId, audioIndex) {
@@ -2376,7 +2264,7 @@
         }
     });
 
-    // Collage HTML Builder
+    // Collage HTML Generator
     function buildCollageHTML(mediaList) {
         if (!mediaList || mediaList.length === 0) return '';
         const count = mediaList.length;
@@ -2401,7 +2289,7 @@
         return `<div class="collage-grid ${gridClass}">${itemsHtml}</div>`;
     }
 
-    // Post HTML Card Generator
+    // Post HTML Generator with Realtime View Counter (Telegram Live Style)
     function buildPostHTML(post, isPinnedInComments = false) {
         let safeText = post.text || '';
 
@@ -2499,7 +2387,8 @@
             </button>
         `;
 
-        const viewCount = post.views || 1;
+        // Modern Realtime View Count display (calculated directly from Realtime DB)
+        const totalViews = post.views || (post.viewsMap ? Object.keys(post.viewsMap).length : 1);
 
         return `
             <article class="post ${isPinnedInComments ? 'original-post-pinned' : ''}" data-post-id="${post.id}">
@@ -2521,8 +2410,9 @@
                         ${!isPinnedInComments ? commentsBtnHtml : ''}
                     </div>
                     <div class="post-views" title="Просмотры в реальном времени">
+                        <span class="live-pulse-dot"></span>
                         <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                        <span>${viewCount}</span>
+                        <span class="view-count-val">${totalViews}</span>
                     </div>
                 </div>
             </article>
@@ -2555,9 +2445,9 @@
         filteredPosts.forEach(post => {
             const wrapper = document.createElement('div');
             wrapper.innerHTML = buildPostHTML(post, false);
-            const postEl = wrapper.firstElementChild;
-            feedContainer.appendChild(postEl);
-            viewObserver.observe(postEl);
+            const postElement = wrapper.firstElementChild;
+            feedContainer.appendChild(postElement);
+            postViewObserver.observe(postElement);
         });
     }
 
@@ -2574,7 +2464,7 @@
             <div class="settings-card">
                 <div class="settings-card-title">
                     <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-                    <span>Настройки канала и разрешения</span>
+                    <span>Настройки и разрешительный режим канала</span>
                 </div>
                 
                 <div class="toggle-item">
@@ -2584,6 +2474,10 @@
                 <div class="toggle-item">
                     <label>Разрешить отправку Видео</label>
                     <input type="checkbox" id="perm-videos" ${channelPermissions.allowVideos ? 'checked' : ''}>
+                </div>
+                <div class="toggle-item">
+                    <label>Разрешить отправку Аудио</label>
+                    <input type="checkbox" id="perm-audio" ${channelPermissions.allowAudio ? 'checked' : ''}>
                 </div>
                 <div class="toggle-item">
                     <label>Разрешить Стикеры</label>
@@ -2607,7 +2501,7 @@
                     </div>
                     <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
                         <label class="file-upload-btn-minimal">
-                            <span>Изменить логотип канала</span>
+                            <span>Логотип канала</span>
                             <input type="file" id="channel-avatar-input" accept="image/*" style="display: none;">
                         </label>
                     </div>
@@ -2625,6 +2519,7 @@
                     <span>Стикерпак Tsuyu (.zip)</span>
                 </div>
                 <div class="input-group">
+                    <label class="input-label">Загрузить ZIP архив со стикерами</label>
                     <label class="file-upload-btn-minimal">
                         <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
                         <span id="zip-file-text">Выбрать ZIP архив стикеров</span>
@@ -2634,12 +2529,31 @@
                 <div id="sticker-status-info" style="font-size: 12px; color: var(--text-secondary);">
                     Загружено стикеров: ${stickerPack.length} шт.
                 </div>
+                <button class="btn-primary" id="reset-stickers-btn" style="padding: 10px; background-color: var(--surface-hover); color: var(--danger); border: 1px solid var(--border);">Сбросить стикерпак</button>
+            </div>
+
+            <div class="settings-card">
+                <div class="settings-card-title">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                    <span>Премиум Эмодзи Tsuyu (.zip)</span>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Загрузить ZIP архив со статичными премиум эмодзи</label>
+                    <label class="file-upload-btn-minimal">
+                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+                        <span id="zip-emoji-text">Выбрать ZIP эмодзи</span>
+                        <input type="file" id="zip-emoji-input" accept=".zip" style="display: none;">
+                    </label>
+                </div>
+                <div id="emoji-status-info" style="font-size: 12px; color: var(--text-secondary);">
+                    Загружено эмодзи: ${emojiPack.length} шт.
+                </div>
             </div>
 
             <div class="settings-card">
                 <div class="settings-card-title">
                     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                    <span>Мой профиль</span>
+                    <span>Мой профиль сети</span>
                 </div>
                 <div class="avatar-edit-box">
                     <div class="avatar-preview-lg" id="user-avatar-display">
@@ -2674,6 +2588,7 @@
         document.getElementById('save-channel-btn').addEventListener('click', () => {
             channelPermissions.allowPhotos = document.getElementById('perm-photos').checked;
             channelPermissions.allowVideos = document.getElementById('perm-videos').checked;
+            channelPermissions.allowAudio = document.getElementById('perm-audio').checked;
             channelPermissions.allowStickers = document.getElementById('perm-stickers').checked;
             channelPermissions.allowPremiumEmoji = document.getElementById('perm-emojis').checked;
 
@@ -2685,7 +2600,7 @@
                 avatar: channelConfig.avatar,
                 permissions: channelPermissions
             });
-            showToast('Настройки канала сохранены!', '✅');
+            alert('Настройки канала сохранена в Firebase RTDB!');
         });
 
         document.getElementById('zip-sticker-input').addEventListener('change', async (e) => {
@@ -2693,8 +2608,7 @@
             if (!file) return;
 
             const btnText = document.getElementById('zip-file-text');
-            btnText.textContent = "Загрузка и сжатие...";
-            setGlobalLoading(true);
+            btnText.textContent = "Загрузка...";
 
             try {
                 const zip = await JSZip.loadAsync(file);
@@ -2711,27 +2625,64 @@
                         r.onload = () => res(r.result);
                         r.readAsDataURL(blob);
                     });
-                    const resized = await resizeStickerImage(rawDataUrl, 280, 280);
+                    const resized = await resizeStickerImage(rawDataUrl, 300, 300);
                     extracted.push(resized);
                 }
 
                 if (extracted.length > 0) {
                     await db.ref('stickerPack').set(extracted);
-                    showToast(`Загружено ${extracted.length} стикеров в RTDB`, '🎨');
+                    alert(`Загружено ${extracted.length} стикеров в Firebase!`);
                 }
             } catch (err) {
-                showToast("Ошибка ZIP: " + err.message, '❌');
-            } finally {
-                setGlobalLoading(false);
-                btnText.textContent = "Выбрать ZIP архив стикеров";
+                alert("Ошибка распаковки ZIP: " + err.message);
             }
+        });
+
+        document.getElementById('zip-emoji-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const btnText = document.getElementById('zip-emoji-text');
+            btnText.textContent = "Загрузка...";
+
+            try {
+                const zip = await JSZip.loadAsync(file);
+                let extracted = [];
+                const validFiles = Object.keys(zip.files).filter(filename => {
+                    const f = zip.files[filename];
+                    return !f.dir && !filename.includes('__MACOSX') && !filename.split('/').pop().startsWith('.') && filename.match(/\.(png|webp|jpg|jpeg)$/i);
+                });
+
+                for (let i = 0; i < validFiles.length; i++) {
+                    const blob = await zip.files[validFiles[i]].async("blob");
+                    const rawDataUrl = await new Promise(res => {
+                        const r = new FileReader();
+                        r.onload = () => res(r.result);
+                        r.readAsDataURL(blob);
+                    });
+                    const resized = await resizeStickerImage(rawDataUrl, 120, 120);
+                    extracted.push(resized);
+                }
+
+                if (extracted.length > 0) {
+                    await db.ref('emojiPack').set(extracted);
+                    alert(`Загружено ${extracted.length} премиум эмодзи в Firebase!`);
+                }
+            } catch (err) {
+                alert("Ошибка распаковки ZIP: " + err.message);
+            }
+        });
+
+        document.getElementById('reset-stickers-btn').addEventListener('click', async () => {
+            await db.ref('stickerPack').remove();
+            alert('Стикерпак очищен!');
         });
 
         document.getElementById('user-avatar-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file) {
                 try {
-                    const comp = await compressImage(file, 200, 0.75);
+                    const comp = await compressImage(file, 200, 0.8);
                     userProfile.avatar = comp;
                     document.getElementById('user-avatar-display').innerHTML = `<img src="${userProfile.avatar}">`;
                 } catch(e) {}
@@ -2744,14 +2695,14 @@
             if (nameVal) userProfile.name = nameVal;
 
             db.ref(`users/${currentUser.uid}`).set(userProfile);
-            showToast('Профиль сохранен в RTDB!', '👤');
+            alert('Профиль сохранён в сети!');
         });
 
         document.getElementById('channel-avatar-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file) {
                 try {
-                    const comp = await compressImage(file, 250, 0.75);
+                    const comp = await compressImage(file, 300, 0.8);
                     channelConfig.avatar = comp;
                     document.getElementById('channel-avatar-display').innerHTML = `<img src="${channelConfig.avatar}">`;
                 } catch(e) {}
@@ -2759,6 +2710,7 @@
         });
     }
 
+    // Populate Pickers
     function populateStickersInPickers() {
         window.switchPickerTab = (context, tab) => {
             if (context === 'post') {
@@ -2804,7 +2756,11 @@
 
     window.selectItem = function(context, type, idx) {
         if (type === 'sticker' && !channelPermissions.allowStickers) {
-            showToast("Стикеры отключены владельцем", "⚠️");
+            alert("Стикеры запрещены владельцем канала.");
+            return;
+        }
+        if (type === 'emoji' && !channelPermissions.allowPremiumEmoji) {
+            alert("Премиум эмодзи запрещены владельцем канала.");
             return;
         }
 
@@ -2851,7 +2807,7 @@
         commentsStickerPicker.classList.toggle('hidden');
     });
 
-    // Realtime Reactions Engine
+    // Realtime Reactions Toggle
     window.toggleReaction = function(postId, reactionKey) {
         if (!currentUser) return;
         const post = posts.find(p => p.id === postId);
@@ -2886,7 +2842,7 @@
         pollRef.transaction((poll) => {
             if (!poll) return poll;
             if (!poll.votes) poll.votes = {};
-            if (poll.votes[currentUser.uid] !== undefined) return poll;
+            if (poll.votes[currentUser.uid] !== undefined) return poll; // Already voted
 
             poll.votes[currentUser.uid] = optionIndex;
             if (poll.options && poll.options[optionIndex]) {
@@ -2896,7 +2852,7 @@
         });
     };
 
-    // Open Comments Screen Overlay
+    // Open Comments Overlay
     window.openTGCommentsScreen = function(postId) {
         activePostForComments = posts.find(p => p.id === postId);
         if (!activePostForComments) return;
@@ -2962,21 +2918,27 @@
         }).join('');
     }
 
-    // Comment Multi-file Attachments
+    // Comment Multi-file Attachments (Instant processing)
     commentMultiFileInput.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        setGlobalLoading(true);
-
         for (let file of files) {
+            if (file.type.startsWith('image/') && !channelPermissions.allowPhotos) continue;
+            if (file.type.startsWith('video/') && !channelPermissions.allowVideos) continue;
+            if ((file.type.startsWith('audio/') || file.name.match(/\.(mp3|m4a|flac|wav|ogg)$/i)) && !channelPermissions.allowAudio) continue;
+
             if (file.type.startsWith('image/')) {
-                const comp = await compressImage(file, 600, 0.7);
+                const comp = await compressImage(file, 800, 0.8);
                 commentAttachedMediaList.push({ type: 'image', src: comp });
+            } else if (file.type.startsWith('video/')) {
+                const dataUrl = await new Promise(res => {
+                    const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file);
+                });
+                commentAttachedMediaList.push({ type: 'video', src: dataUrl });
             }
         }
 
-        setGlobalLoading(false);
         renderCommentAttachmentsPreview();
     });
 
@@ -2989,7 +2951,7 @@
 
         commentAttachmentsPreview.innerHTML = commentAttachedMediaList.map((item, idx) => `
             <div class="attachment-thumb-item">
-                <img src="${item.src}">
+                ${item.type === 'video' ? `<video src="${item.src}"></video>` : `<img src="${item.src}">`}
                 <button type="button" class="remove-thumb-btn" onclick="removeCommentAttachmentItem(${idx})">✕</button>
             </div>
         `).join('');
@@ -3022,7 +2984,7 @@
         };
 
         db.ref(`posts/${activePostForComments.id}/comments/${commentId}`).set(commentObj).catch(err => {
-            showToast('Ошибка: ' + err.message, '❌');
+            alert('Ошибка отправки комментария: ' + err.message);
         });
 
         document.getElementById('tg-comment-input').innerHTML = '';
@@ -3030,23 +2992,40 @@
         renderCommentAttachmentsPreview();
     });
 
-    // Create Post Attachments
+    // Create Post Attachments with Zero Artificial Delays
     tgMultiFileInput.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        setGlobalLoading(true);
-        tgFileStatus.textContent = 'Обработка файлов...';
-
         for (let file of files) {
+            if (file.type.startsWith('image/') && !channelPermissions.allowPhotos) continue;
+            if (file.type.startsWith('video/') && !channelPermissions.allowVideos) continue;
+            if ((file.type.startsWith('audio/') || file.name.match(/\.(mp3|m4a|flac|wav|ogg)$/i)) && !channelPermissions.allowAudio) continue;
+
             if (file.type.startsWith('image/')) {
-                const comp = await compressImage(file, 720, 0.65);
+                const comp = await compressImage(file, 900, 0.8);
                 attachedMediaList.push({ type: 'image', src: comp });
+            } else if (file.type.startsWith('video/')) {
+                const dataUrl = await new Promise(res => {
+                    const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file);
+                });
+                attachedMediaList.push({ type: 'video', src: dataUrl });
+            } else if (file.type.startsWith('audio/') || file.name.match(/\.(mp3|m4a|flac|wav|ogg)$/i)) {
+                const dataUrl = await new Promise(res => {
+                    const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file);
+                });
+                const tags = await readAudioTags(file);
+                attachedMediaList.push({
+                    type: 'audio',
+                    src: dataUrl,
+                    title: tags.title,
+                    artist: tags.artist,
+                    cover: tags.cover,
+                    userProvidedCover: null
+                });
             }
         }
 
-        setGlobalLoading(false);
-        tgFileStatus.textContent = `Прикреплено файлов: ${attachedMediaList.length}`;
         renderAttachmentsPreviewInModal();
     });
 
@@ -3058,12 +3037,37 @@
             return;
         }
 
-        modalAttachmentsPreview.innerHTML = attachedMediaList.map((item, idx) => `
-            <div class="attachment-thumb-item">
-                <img src="${item.src}">
-                <button type="button" class="remove-thumb-btn" onclick="removeAttachmentItem(${idx})">✕</button>
-            </div>
-        `).join('');
+        modalAttachmentsPreview.innerHTML = attachedMediaList.map((item, idx) => {
+            if (item.type === 'image') {
+                return `
+                    <div class="attachment-thumb-item">
+                        <img src="${item.src}">
+                        <button type="button" class="remove-thumb-btn" onclick="removeAttachmentItem(${idx})">✕</button>
+                    </div>
+                `;
+            } else if (item.type === 'video') {
+                return `
+                    <div class="attachment-thumb-item">
+                        <video src="${item.src}"></video>
+                        <button type="button" class="remove-thumb-btn" onclick="removeAttachmentItem(${idx})">✕</button>
+                    </div>
+                `;
+            } else {
+                const currentCover = item.userProvidedCover || item.cover;
+                return `
+                    <div class="attachment-thumb-item audio-thumb">
+                        <div class="audio-thumb-cover">
+                            ${currentCover ? `<img src="${currentCover}">` : `🎵`}
+                        </div>
+                        <div class="audio-thumb-info">
+                            <div>${escapeHTML(item.title)}</div>
+                            <div>${escapeHTML(item.artist)}</div>
+                        </div>
+                        <button type="button" class="remove-thumb-btn" onclick="removeAttachmentItem(${idx})">✕</button>
+                    </div>
+                `;
+            }
+        }).join('');
 
         modalAttachmentsPreview.classList.remove('hidden');
     }
@@ -3089,23 +3093,70 @@
         if (e.target === createModal) createModal.classList.remove('open');
     });
 
-    // Instant Post Publishing with Animated Feedback
+    // Header Logout Action Button
+    headerLogoutBtn.addEventListener('click', () => {
+        auth.signOut().then(() => {
+            fullscreenAuthScreen.classList.remove('hidden');
+        });
+    });
+
+    // Auth Screen Tab Toggle (Full screen Login / Register)
+    window.setAuthTab = function(mode) {
+        authMode = mode;
+        const errBox = document.getElementById('auth-error-msg');
+        errBox.style.display = 'none';
+
+        if (mode === 'login') {
+            document.getElementById('auth-tab-login').classList.add('active');
+            document.getElementById('auth-tab-register').classList.remove('active');
+            document.getElementById('reg-name-group').style.display = 'none';
+            document.getElementById('auth-submit-btn').textContent = 'Войти';
+        } else {
+            document.getElementById('auth-tab-register').classList.add('active');
+            document.getElementById('auth-tab-login').classList.remove('active');
+            document.getElementById('reg-name-group').style.display = 'flex';
+            document.getElementById('auth-submit-btn').textContent = 'Зарегистрироваться';
+        }
+    };
+
+    // Submit Authentication (Mandatory Email Auth)
+    document.getElementById('auth-submit-btn').addEventListener('click', async () => {
+        const email = document.getElementById('auth-email-input').value.trim();
+        const pass = document.getElementById('auth-password-input').value.trim();
+        const name = document.getElementById('auth-name-input').value.trim();
+        const errBox = document.getElementById('auth-error-msg');
+        errBox.style.display = 'none';
+
+        if (!email || !pass) {
+            errBox.textContent = 'Пожалуйста, укажите email и пароль';
+            errBox.style.display = 'block';
+            return;
+        }
+
+        try {
+            if (authMode === 'register') {
+                const res = await auth.createUserWithEmailAndPassword(email, pass);
+                if (name) userProfile.name = name;
+                await db.ref(`users/${res.user.uid}`).set(userProfile);
+            } else {
+                await auth.signInWithEmailAndPassword(email, pass);
+            }
+            fullscreenAuthScreen.classList.add('hidden');
+        } catch (err) {
+            errBox.textContent = 'Ошибка авторизации: ' + err.message;
+            errBox.style.display = 'block';
+        }
+    });
+
+    // Publish Post to Firebase RTDB (INSTANT REALTIME PUBLISHING FOR ALL USERS)
     publishBtn.addEventListener('click', () => {
         const text = getCleanHTMLContent('new-post-text').trim();
         const pollInput = document.getElementById('new-post-poll').value.trim();
 
         if (!text && attachedMediaList.length === 0 && !selectedStickerForPost) {
-            showToast('Введите текст или прикрепите медиафайлы!', '⚠️');
+            alert('Введите текст сообщения, прикрепите файлы или выберите стикер!');
             return;
         }
-
-        const publishSpinner = document.getElementById('publish-btn-spinner');
-        const publishText = document.getElementById('publish-btn-text');
-
-        publishBtn.disabled = true;
-        publishSpinner.classList.remove('hidden');
-        publishText.textContent = 'Публикация...';
-        setGlobalLoading(true);
 
         let pollObj = null;
         if (pollInput) {
@@ -3120,6 +3171,8 @@
         }
 
         const mediaList = attachedMediaList.filter(m => m.type === 'image' || m.type === 'video');
+        const audioList = attachedMediaList.filter(m => m.type === 'audio');
+
         const now = new Date();
         const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
         const newPostRef = db.ref('posts').push();
@@ -3129,6 +3182,9 @@
             cupid: { count: 0, emoji: "💘", isCustom: false }
         };
 
+        const initialViewsMap = {};
+        if (currentUser) initialViewsMap[currentUser.uid] = true;
+
         const newPostData = {
             author: userProfile.name || channelConfig.name,
             authorAvatar: userProfile.avatar || channelConfig.avatar,
@@ -3136,10 +3192,11 @@
             timestamp: Date.now(),
             text: text,
             mediaList: mediaList,
-            audioList: [],
+            audioList: audioList,
             sticker: selectedStickerForPost,
             poll: pollObj,
             reactions: defaultReactions,
+            viewsMap: initialViewsMap,
             views: 1
         };
 
@@ -3148,18 +3205,12 @@
             document.getElementById('new-post-poll').value = '';
             clearModalAttachments();
             createModal.classList.remove('open');
-            showToast('Опубликовано в реальном времени!', '⚡');
         }).catch(err => {
-            showToast('Ошибка публикации: ' + err.message, '❌');
-        }).finally(() => {
-            publishBtn.disabled = false;
-            publishSpinner.classList.add('hidden');
-            publishText.textContent = 'Опубликовать';
-            setGlobalLoading(false);
+            alert('Ошибка публикации в Firebase RTDB: ' + err.message);
         });
     });
 
-    // Navigation Tabs Switcher
+    // Navigation Tabs
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             navItems.forEach(nav => nav.classList.remove('active'));
@@ -3184,20 +3235,6 @@
         searchQuery = e.target.value;
         renderFeed();
     });
-
-    // PWA Service Worker Inline Registration for instant caching
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            const swCode = `
-                self.addEventListener('install', e => self.skipWaiting());
-                self.addEventListener('activate', e => self.clients.claim());
-                self.addEventListener('fetch', e => {});
-            `;
-            const blob = new Blob([swCode], { type: 'text/javascript' });
-            const swUrl = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(swUrl).catch(() => {});
-        });
-    }
 </script>
 
 </body>
