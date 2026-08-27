@@ -289,7 +289,6 @@
             flex-direction: column;
             gap: 16px;
             scroll-behavior: smooth;
-            content-visibility: auto;
         }
 
         .feed::-webkit-scrollbar {
@@ -311,7 +310,6 @@
             gap: 12px;
             position: relative;
             transition: border-color 0.15s;
-            transform: translateZ(0);
         }
 
         .post:hover {
@@ -1954,12 +1952,13 @@
     let commentAttachedMediaList = [];
     let selectedStickerForPost = null;
     let activePostForComments = null;
+    let currentCommentsRef = null;
 
     let currentPostPickerTab = 'stickers';
     let currentCommentPickerTab = 'stickers';
     let authMode = 'login'; // 'login' | 'register'
 
-    // Realtime View Intersection Observer (Telegram View Counting)
+    // Realtime View Intersection Observer (Telegram View Counting without DOM re-renders)
     const viewedPostsInSession = new Set();
     const postViewObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -1976,12 +1975,10 @@
     function recordRealtimePostView(postId) {
         if (!currentUser) return;
         const uid = currentUser.uid;
-        const postViewRef = db.ref(`posts/${postId}/viewsMap/${uid}`);
+        const userViewRef = db.ref(`posts/${postId}/viewsMap/${uid}`);
         
-        // Transaction to register unique user view instantly and broadcast view count
-        postViewRef.set(true).then(() => {
-            const viewsCountRef = db.ref(`posts/${postId}/viewsMap`);
-            viewsCountRef.once('value', (snap) => {
+        userViewRef.set(true).then(() => {
+            db.ref(`posts/${postId}/viewsMap`).once('value', (snap) => {
                 const totalViews = snap.numChildren();
                 db.ref(`posts/${postId}/views`).set(totalViews);
             });
@@ -2057,7 +2054,6 @@
     auth.onAuthStateChanged((user) => {
         currentUser = user;
         if (user) {
-            // Hide Fullscreen Auth Screen if logged in
             fullscreenAuthScreen.classList.add('hidden');
 
             db.ref(`users/${user.uid}`).on('value', (snap) => {
@@ -2072,7 +2068,6 @@
                 updateHeaderUI();
             });
         } else {
-            // Show Fullscreen Auth Screen immediately if NOT logged in
             fullscreenAuthScreen.classList.remove('hidden');
         }
     });
@@ -2084,7 +2079,7 @@
             channelConfig = { ...channelConfig, ...data };
             if (data.permissions) channelPermissions = { ...channelPermissions, ...data.permissions };
             updateHeaderUI();
-            renderFeed();
+            syncFeedDOM();
         }
     });
 
@@ -2098,7 +2093,7 @@
         populateStickersInPickers();
     });
 
-    // Realtime Post & View Count Sync
+    // Realtime Post & View Count Sync without wiping DOM elements
     db.ref('posts').on('value', (snap) => {
         const val = snap.val();
         if (val) {
@@ -2107,15 +2102,13 @@
             posts = [];
         }
         
-        // Update feed or update individual post elements dynamically
-        renderFeed();
+        syncFeedDOM();
         
         if (activePostForComments) {
             const updated = posts.find(p => p.id === activePostForComments.id);
             if (updated) {
                 activePostForComments = updated;
                 originalPostContainer.innerHTML = buildPostHTML(activePostForComments, true);
-                renderTGCommentsFeed();
             }
         }
     });
@@ -2289,7 +2282,7 @@
         return `<div class="collage-grid ${gridClass}">${itemsHtml}</div>`;
     }
 
-    // Post HTML Generator with Realtime View Counter (Telegram Live Style)
+    // Post HTML Generator with Realtime View Counter
     function buildPostHTML(post, isPinnedInComments = false) {
         let safeText = post.text || '';
 
@@ -2387,7 +2380,6 @@
             </button>
         `;
 
-        // Modern Realtime View Count display (calculated directly from Realtime DB)
         const totalViews = post.views || (post.viewsMap ? Object.keys(post.viewsMap).length : 1);
 
         return `
@@ -2419,14 +2411,12 @@
         `;
     }
 
-    // Render Feed View
-    function renderFeed() {
+    // High performance in-place Feed Sync (STOPS CONSTANT RELOADS & DOM DESTRUCTION)
+    function syncFeedDOM() {
         if (currentTab === 'settings') {
             renderSettingsTab();
             return;
         }
-
-        feedContainer.innerHTML = '';
 
         let filteredPosts = posts.filter(post => {
             return (post.text || '').toLowerCase().includes(searchQuery.toLowerCase());
@@ -2442,12 +2432,62 @@
             return;
         }
 
+        if (feedContainer.querySelector('.empty-state')) {
+            feedContainer.innerHTML = '';
+        }
+
         filteredPosts.forEach(post => {
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = buildPostHTML(post, false);
-            const postElement = wrapper.firstElementChild;
-            feedContainer.appendChild(postElement);
-            postViewObserver.observe(postElement);
+            let postEl = feedContainer.querySelector(`.post[data-post-id="${post.id}"]`);
+            if (!postEl) {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = buildPostHTML(post, false);
+                postEl = wrapper.firstElementChild;
+                feedContainer.appendChild(postEl);
+                postViewObserver.observe(postEl);
+            } else {
+                // Update in-place so observers & audio/video state do NOT trigger reloading loops
+                const totalViews = post.views || (post.viewsMap ? Object.keys(post.viewsMap).length : 1);
+                const viewCountEl = postEl.querySelector('.view-count-val');
+                if (viewCountEl && viewCountEl.textContent != totalViews) {
+                    viewCountEl.textContent = totalViews;
+                }
+
+                const commentCount = post.comments ? Object.keys(post.comments).length : 0;
+                const commentBtnSpan = postEl.querySelector('.comment-btn span');
+                if (commentBtnSpan && commentBtnSpan.textContent != commentCount) {
+                    commentBtnSpan.textContent = commentCount;
+                }
+
+                const reactionsBar = postEl.querySelector('.reactions-bar');
+                if (reactionsBar) {
+                    let reactionsObj = post.reactions || {};
+                    let updatedReactionsHtml = Object.keys(reactionsObj).map(key => {
+                        const r = reactionsObj[key];
+                        const users = r.users || {};
+                        const active = currentUser && users[currentUser.uid];
+                        let emojiDisplay = r.isCustom ? `<img class="reaction-emoji-img" src="${r.emoji}">` : `<span>${r.emoji}</span>`;
+                        return `
+                            <button class="reaction-btn ${active ? 'active' : ''}" onclick="toggleReaction('${post.id}', '${key}')">
+                                ${emojiDisplay}
+                                <span>${r.count || 0}</span>
+                            </button>
+                        `;
+                    }).join('');
+
+                    const commentBtn = reactionsBar.querySelector('.comment-btn');
+                    reactionsBar.innerHTML = updatedReactionsHtml;
+                    if (commentBtn) reactionsBar.appendChild(commentBtn);
+                }
+            }
+        });
+
+        // Clean up removed posts if any
+        const currentPostIds = new Set(filteredPosts.map(p => p.id));
+        feedContainer.querySelectorAll('.post[data-post-id]').forEach(el => {
+            const id = el.getAttribute('data-post-id');
+            if (!currentPostIds.has(id)) {
+                el.remove();
+            }
         });
     }
 
@@ -2779,8 +2819,9 @@
                 const now = new Date();
                 const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
                 
+                const commentRef = db.ref(`posts/${activePostForComments.id}/comments`).push();
                 const commentObj = {
-                    id: Date.now().toString(),
+                    id: commentRef.key,
                     name: userProfile.name,
                     avatar: userProfile.avatar,
                     text: '',
@@ -2790,7 +2831,7 @@
                     timestamp: Date.now()
                 };
 
-                db.ref(`posts/${activePostForComments.id}/comments/${commentObj.id}`).set(commentObj);
+                commentRef.set(commentObj);
                 commentsStickerPicker.classList.add('hidden');
             } else {
                 insertEmojiToEditable('tg-comment-input', emojiPack[idx]);
@@ -2842,7 +2883,7 @@
         pollRef.transaction((poll) => {
             if (!poll) return poll;
             if (!poll.votes) poll.votes = {};
-            if (poll.votes[currentUser.uid] !== undefined) return poll; // Already voted
+            if (poll.votes[currentUser.uid] !== undefined) return poll;
 
             poll.votes[currentUser.uid] = optionIndex;
             if (poll.options && poll.options[optionIndex]) {
@@ -2852,7 +2893,7 @@
         });
     };
 
-    // Open Comments Overlay
+    // Open Comments Overlay with INSTANT Direct Realtime Listener
     window.openTGCommentsScreen = function(postId) {
         activePostForComments = posts.find(p => p.id === postId);
         if (!activePostForComments) return;
@@ -2865,11 +2906,26 @@
             tgCommentUserAvatar.textContent = escapeHTML((userProfile.name || 'U').substring(0, 1).toUpperCase());
         }
 
-        renderTGCommentsFeed();
+        if (currentCommentsRef) {
+            currentCommentsRef.off();
+        }
+
+        // Direct WebSocket Realtime Listener for Instant Comments across devices
+        currentCommentsRef = db.ref(`posts/${postId}/comments`);
+        currentCommentsRef.on('value', (snap) => {
+            const commentsVal = snap.val() || {};
+            const commentsArr = Object.keys(commentsVal).map(k => ({ id: k, ...commentsVal[k] })).sort((a,b) => a.timestamp - b.timestamp);
+            renderTGCommentsFeedFromData(commentsArr);
+        });
+
         tgCommentsScreen.classList.add('active');
     };
 
     function closeTGCommentsScreen() {
+        if (currentCommentsRef) {
+            currentCommentsRef.off();
+            currentCommentsRef = null;
+        }
         tgCommentsScreen.classList.remove('active');
         activePostForComments = null;
         commentAttachedMediaList = [];
@@ -2878,11 +2934,7 @@
 
     closeCommentsBtn.addEventListener('click', closeTGCommentsScreen);
 
-    function renderTGCommentsFeed() {
-        if (!activePostForComments) return;
-        const commentsObj = activePostForComments.comments || {};
-        const commentsArr = Object.keys(commentsObj).map(k => commentsObj[k]).sort((a,b) => a.timestamp - b.timestamp);
-        
+    function renderTGCommentsFeedFromData(commentsArr) {
         tgCommentsSubtitle.textContent = `${commentsArr.length} комментариев`;
 
         if (commentsArr.length === 0) {
@@ -2918,7 +2970,7 @@
         }).join('');
     }
 
-    // Comment Multi-file Attachments (Instant processing)
+    // Comment Multi-file Attachments
     commentMultiFileInput.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
@@ -2964,17 +3016,18 @@
         renderCommentAttachmentsPreview();
     };
 
-    // Send Comment to RTDB
+    // Send Comment to RTDB (Instant WebSocket broadcast via push)
     tgSendCommentBtn.addEventListener('click', () => {
         const text = getCleanHTMLContent('tg-comment-input').trim();
         if ((!text && commentAttachedMediaList.length === 0) || !activePostForComments) return;
 
         const now = new Date();
         const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-        const commentId = Date.now().toString();
+        
+        const commentRef = db.ref(`posts/${activePostForComments.id}/comments`).push();
 
         const commentObj = {
-            id: commentId,
+            id: commentRef.key,
             name: userProfile.name,
             avatar: userProfile.avatar,
             text: text,
@@ -2983,7 +3036,7 @@
             timestamp: Date.now()
         };
 
-        db.ref(`posts/${activePostForComments.id}/comments/${commentId}`).set(commentObj).catch(err => {
+        commentRef.set(commentObj).catch(err => {
             alert('Ошибка отправки комментария: ' + err.message);
         });
 
@@ -2992,7 +3045,7 @@
         renderCommentAttachmentsPreview();
     });
 
-    // Create Post Attachments with Zero Artificial Delays
+    // Create Post Attachments
     tgMultiFileInput.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
@@ -3216,7 +3269,7 @@
             navItems.forEach(nav => nav.classList.remove('active'));
             item.classList.add('active');
             currentTab = item.getAttribute('data-tab');
-            renderFeed();
+            syncFeedDOM();
         });
     });
 
@@ -3227,13 +3280,13 @@
         } else {
             searchQuery = '';
             searchInput.value = '';
-            renderFeed();
+            syncFeedDOM();
         }
     });
 
     searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value;
-        renderFeed();
+        syncFeedDOM();
     });
 </script>
 
