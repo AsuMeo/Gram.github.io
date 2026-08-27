@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Tsuyu // Live Realtime Network</title>
+    <title>Tsuyu // Live Network</title>
 
     <!-- PWA Settings -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Tsuyu Live">
     <meta name="theme-color" content="#000000">
     <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlRzdXl1IiwKICAic2hvcnRfbmFtZSI6ICJUc3V5dSIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDAwMDAwIiwKICAidGhlbWVfY29sb3IiOiAiIzAwMDAwMCIKfQ==">
 
@@ -23,15 +24,16 @@
     <style>
         :root {
             --bg: #000000;
-            --surface: #0a0a0a;
-            --surface-hover: #141414;
-            --border: #1f1f1f;
-            --border-focus: #333333;
+            --surface: #0e0e10;
+            --surface-hover: #18181c;
+            --border: #1f1f24;
+            --border-focus: #33333e;
             --text: #ffffff;
-            --text-secondary: #8a8a8a;
-            --text-muted: #525252;
-            --accent: #ffffff;
-            --accent-invert: #000000;
+            --text-secondary: #8e8e93;
+            --text-muted: #545458;
+            --accent: #2AABEE;
+            --accent-hover: #229ED9;
+            --accent-invert: #ffffff;
             --danger: #ff453a;
             --success: #30d158;
             --radius-sm: 8px;
@@ -85,13 +87,110 @@
             }
         }
 
+        /* Telegram-Style Full Screen Auth Container */
+        .full-auth-screen {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, #090b10 0%, #000000 100%);
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .full-auth-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.96);
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .auth-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(42, 171, 238, 0.3);
+            margin-bottom: 8px;
+        }
+
+        .auth-logo svg {
+            width: 42px;
+            height: 42px;
+            fill: #ffffff;
+        }
+
+        .auth-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            text-align: center;
+        }
+
+        .auth-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: -12px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            width: 100%;
+            background-color: var(--surface);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            border: 1px solid var(--border);
+        }
+
+        .auth-tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13.5px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .auth-tab-btn.active {
+            background-color: var(--surface-hover);
+            color: var(--text);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        .auth-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
         /* Header */
         .header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: calc(var(--safe-top) + 12px) 16px 12px 16px;
-            background-color: var(--bg);
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
             z-index: 100;
             flex-shrink: 0;
@@ -115,9 +214,7 @@
             justify-content: center;
             font-weight: 700;
             font-size: 15px;
-            letter-spacing: -0.5px;
             overflow: hidden;
-            object-fit: cover;
             color: var(--text);
         }
 
@@ -132,7 +229,6 @@
             font-weight: 600;
             line-height: 1.2;
             color: var(--text);
-            letter-spacing: -0.2px;
         }
 
         .channel-info p {
@@ -141,22 +237,49 @@
             margin-top: 1px;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
         }
 
         .online-dot {
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
             background-color: var(--success);
             border-radius: 50%;
             display: inline-block;
             box-shadow: 0 0 8px var(--success);
+            animation: pulseDot 2s infinite;
+        }
+
+        @keyframes pulseDot {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
         }
 
         .header-actions {
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .logout-btn-header {
+            background-color: rgba(255, 69, 58, 0.12);
+            color: var(--danger);
+            border: 1px solid rgba(255, 69, 58, 0.3);
+            border-radius: var(--radius-full);
+            padding: 6px 14px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+
+        .logout-btn-header:active {
+            transform: scale(0.95);
+            background-color: rgba(255, 69, 58, 0.25);
         }
 
         .icon-btn {
@@ -170,13 +293,11 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background 0.15s, border-color 0.15s;
+            transition: background 0.15s;
         }
 
         .icon-btn:active {
             background-color: var(--surface-hover);
-            border-color: var(--border-focus);
-            transform: scale(0.95);
         }
 
         .icon-btn svg {
@@ -204,6 +325,39 @@
             border-radius: var(--radius-full);
         }
 
+        /* Telegram Spinner Indicator */
+        .tg-loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-bar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #2AABEE, #229ED9, #30d158);
+            background-size: 200% 100%;
+            animation: loadingGradient 1.2s ease infinite;
+            z-index: 2000;
+        }
+
+        @keyframes loadingGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         /* Post Card */
         .post {
             background-color: var(--surface);
@@ -215,10 +369,12 @@
             gap: 12px;
             position: relative;
             transition: border-color 0.2s;
+            animation: fadeInPost 0.25s ease-out;
         }
 
-        .post:hover {
-            border-color: var(--border-focus);
+        @keyframes fadeInPost {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .post-header {
@@ -234,14 +390,14 @@
         }
 
         .post-author-avatar {
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             border-radius: var(--radius-full);
             background-color: var(--border-focus);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
             overflow: hidden;
             flex-shrink: 0;
@@ -255,13 +411,13 @@
         }
 
         .post-author-name {
-            font-size: 13.5px;
+            font-size: 14px;
             font-weight: 600;
             color: var(--text);
         }
 
         .post-time {
-            font-size: 11px;
+            font-size: 11.5px;
             color: var(--text-muted);
         }
 
@@ -339,8 +495,8 @@
 
         .audio-cover {
             position: relative;
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: 6px;
             object-fit: cover;
             flex-shrink: 0;
@@ -409,7 +565,7 @@
         .audio-play-btn svg {
             width: 14px;
             height: 14px;
-            fill: var(--accent-invert);
+            fill: #ffffff;
         }
 
         .audio-progress-wrapper {
@@ -433,7 +589,7 @@
             top: 0;
             left: 0;
             height: 100%;
-            background-color: var(--text);
+            background-color: var(--accent);
             border-radius: var(--radius-full);
             width: 0%;
             transition: width 0.1s linear;
@@ -470,7 +626,7 @@
             position: fixed;
             inset: 0;
             background-color: rgba(0, 0, 0, 0.95);
-            z-index: 3000;
+            z-index: 6000;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -513,7 +669,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            z-index: 3010;
+            z-index: 6010;
         }
 
         /* Poll Widget */
@@ -605,7 +761,7 @@
 
         .reaction-btn:active, .reaction-btn.active, .comment-btn:active {
             background-color: var(--surface-hover);
-            border-color: var(--text);
+            border-color: var(--accent);
             color: var(--text);
             transform: scale(0.96);
         }
@@ -622,19 +778,30 @@
             object-fit: contain;
         }
 
+        /* Telegram-Style Realtime View Counter Badge */
         .post-views {
             display: flex;
             align-items: center;
-            gap: 4px;
-            font-size: 11px;
-            color: var(--text-muted);
+            gap: 5px;
+            font-size: 11.5px;
+            color: var(--text-secondary);
             margin-left: auto;
+            background-color: rgba(255,255,255,0.04);
+            padding: 4px 8px;
+            border-radius: var(--radius-full);
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .post-views.view-updated {
+            color: #2AABEE;
+            border-color: rgba(42, 171, 238, 0.4);
         }
 
         .post-views svg {
             width: 14px;
             height: 14px;
-            fill: var(--text-muted);
+            fill: currentColor;
         }
 
         /* Dedicated Comments Screen Overlay */
@@ -718,7 +885,7 @@
         }
 
         .original-post-pinned {
-            border-left: 3px solid var(--text);
+            border-left: 3px solid var(--accent);
         }
 
         .comments-divider {
@@ -796,7 +963,6 @@
             font-size: 13.5px;
             font-weight: 600;
             color: var(--text);
-            letter-spacing: -0.2px;
         }
 
         .comment-time {
@@ -889,7 +1055,7 @@
             height: 38px;
             border-radius: var(--radius-full);
             background-color: var(--accent);
-            color: var(--accent-invert);
+            color: #ffffff;
             border: none;
             display: flex;
             align-items: center;
@@ -938,7 +1104,7 @@
         }
 
         .nav-item.active {
-            color: var(--text);
+            color: var(--accent);
         }
 
         .nav-item svg {
@@ -1162,7 +1328,7 @@
 
         .picker-tab-btn.active {
             color: var(--text);
-            border-bottom-color: var(--text);
+            border-bottom-color: var(--accent);
         }
 
         .sticker-picker-popup {
@@ -1246,25 +1412,34 @@
         }
 
         .text-input:focus {
-            border-color: var(--text);
+            border-color: var(--accent);
         }
 
         .btn-primary {
             background-color: var(--accent);
-            color: var(--accent-invert);
+            color: #ffffff;
             border: none;
             border-radius: var(--radius-sm);
             padding: 14px;
-            font-size: 14px;
+            font-size: 14.5px;
             font-weight: 600;
             cursor: pointer;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             transition: opacity 0.15s, transform 0.1s;
         }
 
         .btn-primary:active {
-            opacity: 0.8;
+            opacity: 0.85;
             transform: scale(0.98);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         /* Search Bar View */
@@ -1442,41 +1617,84 @@
             display: none !important;
         }
 
-        /* Auth Screen Modal */
-        .auth-container-box {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            width: 100%;
-        }
-
-        .auth-tab-row {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 8px;
-        }
-
-        .auth-tab-btn {
-            flex: 1;
-            padding: 10px;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-        }
-
-        .auth-tab-btn.active {
+        /* Toast Popup Notification */
+        .toast-popup {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background-color: rgba(26, 26, 30, 0.95);
+            border: 1px solid var(--border-focus);
             color: var(--text);
-            border-bottom-color: var(--text);
+            padding: 10px 18px;
+            border-radius: var(--radius-full);
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 7000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast-popup.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
     </style>
 </head>
 <body>
 
 <div class="app-container">
+    <div id="top-loading-bar" class="loading-bar-overlay hidden"></div>
+
+    <!-- Toast Banner -->
+    <div id="toast-banner" class="toast-popup">
+        <span id="toast-icon">ℹ️</span>
+        <span id="toast-message">Уведомление</span>
+    </div>
+
+    <!-- Full Screen Telegram-Style Auth Gate Screen -->
+    <div class="full-auth-screen" id="full-auth-gate">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <div class="auth-title">Tsuyu Network</div>
+            <div class="auth-subtitle">Войдите в аккаунт для доступа к сети в реальном времени</div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" id="tab-gate-login" onclick="switchAuthGateMode('login')">Вход</button>
+                <button class="auth-tab-btn" id="tab-gate-reg" onclick="switchAuthGateMode('register')">Регистрация</button>
+            </div>
+
+            <form class="auth-form" id="gate-auth-form" onsubmit="handleGateAuthSubmit(event)">
+                <div class="input-group" id="gate-name-group" style="display: none;">
+                    <label class="input-label">Ваше имя</label>
+                    <input type="text" class="text-input" id="gate-name-input" placeholder="Алексей">
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Email адрес</label>
+                    <input type="email" class="text-input" id="gate-email-input" placeholder="user@example.com" required autocomplete="email">
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Пароль</label>
+                    <input type="password" class="text-input" id="gate-password-input" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn-primary" id="gate-auth-btn">
+                    <span id="gate-btn-text">Войти в сеть</span>
+                    <span id="gate-btn-loader" class="tg-loader hidden"></span>
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="header-left" id="header-channel-profile">
@@ -1487,11 +1705,12 @@
             </div>
         </div>
         <div class="header-actions">
-            <button class="icon-btn" id="auth-btn" title="Аккаунт">
-                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-            </button>
             <button class="icon-btn" id="search-toggle-btn" title="Поиск">
                 <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            </button>
+            <button class="logout-btn-header" id="header-logout-btn" title="Выйти из аккаунта">
+                <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: currentColor;"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+                <span>Выйти</span>
             </button>
         </div>
     </header>
@@ -1554,19 +1773,16 @@
         <!-- Sticky Comment Input Bar -->
         <div class="comments-input-bar-wrapper">
             <!-- Comment Attachments Preview Grid -->
-            <div class="attachments-preview-grid hidden" id="comment-attachments-preview" style="margin-bottom: 8px;">
-                <!-- Dynamic attachment thumbs -->
-            </div>
+            <div class="attachments-preview-grid hidden" id="comment-attachments-preview" style="margin-bottom: 8px;"></div>
 
             <div class="comments-input-bar">
                 <div class="comment-avatar" id="tg-comment-user-avatar" style="width: 32px; height: 32px; font-size: 13px;">U</div>
                 <div class="comments-input-box">
                     <div class="editable-editor" id="tg-comment-input" contenteditable="true" data-placeholder="Прокомментировать..."></div>
                     
-                    <!-- Paperclip for Comment Attachments -->
-                    <label class="paperclip-btn-icon" id="comment-paperclip-btn" title="Прикрепить фото, видео или аудио">
+                    <label class="paperclip-btn-icon" id="comment-paperclip-btn" title="Прикрепить фото, видео">
                         <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
-                        <input type="file" id="comment-multi-file-input" accept="image/*,video/*,audio/*" multiple style="display: none;">
+                        <input type="file" id="comment-multi-file-input" accept="image/*,video/*" multiple style="display: none;">
                     </label>
 
                     <button class="sticker-btn-icon" id="tg-comment-sticker-toggle" title="Стикеры и Премиум Эмодзи">
@@ -1639,40 +1855,10 @@
             <input type="text" class="text-input" id="new-post-poll" placeholder="Опрос (варианты через запятую)">
         </div>
 
-        <button class="btn-primary" id="publish-btn">Опубликовать</button>
-    </div>
-</div>
-
-<!-- Modal: Auth (Firebase Authentication) -->
-<div class="modal-overlay" id="auth-modal">
-    <div class="modal-sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-header-title">Авторизация Firebase</div>
-
-        <div class="auth-container-box">
-            <div class="auth-tab-row">
-                <button class="auth-tab-btn active" id="auth-tab-login" onclick="setAuthTab('login')">Вход</button>
-                <button class="auth-tab-btn" id="auth-tab-register" onclick="setAuthTab('register')">Регистрация</button>
-            </div>
-
-            <div class="input-group" id="reg-name-group" style="display: none;">
-                <label class="input-label">Имя пользователя</label>
-                <input type="text" class="text-input" id="auth-name-input" placeholder="Алексей">
-            </div>
-
-            <div class="input-group">
-                <label class="input-label">Email</label>
-                <input type="email" class="text-input" id="auth-email-input" placeholder="user@example.com">
-            </div>
-
-            <div class="input-group">
-                <label class="input-label">Пароль</label>
-                <input type="password" class="text-input" id="auth-password-input" placeholder="••••••••">
-            </div>
-
-            <button class="btn-primary" id="auth-submit-btn">Войти</button>
-            <button class="btn-primary" id="auth-logout-btn" style="background-color: var(--surface-hover); color: var(--danger); border: 1px solid var(--border); display: none;">Выйти из аккаунта</button>
-        </div>
+        <button class="btn-primary" id="publish-btn">
+            <span id="publish-btn-text">Опубликовать</span>
+            <span id="publish-btn-spinner" class="tg-loader hidden"></span>
+        </button>
     </div>
 </div>
 
@@ -1683,7 +1869,7 @@
 </div>
 
 <script>
-    // Initialize Firebase Config
+    // Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBm0mIvHVznIeF2PoFk6dtdaiT5r877wyA",
       authDomain: "meow-874ce.firebaseapp.com",
@@ -1698,6 +1884,25 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
+    // Enable Local Persistence so login stays saved automatically
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+    // Toast Notification Helper
+    function showToast(msg, icon = 'ℹ️') {
+        const toast = document.getElementById('toast-banner');
+        document.getElementById('toast-icon').textContent = icon;
+        document.getElementById('toast-message').textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Top Progress Bar Helper
+    function setGlobalLoading(isLoading) {
+        const bar = document.getElementById('top-loading-bar');
+        if (isLoading) bar.classList.remove('hidden');
+        else bar.classList.add('hidden');
+    }
+
     // Security HTML Escape
     function escapeHTML(str) {
         if (!str) return '';
@@ -1709,8 +1914,8 @@
             .replace(/'/g, "&#039;");
     }
 
-    // Canvas Downscaling Helper for Light payloads (CRITICAL FOR RTDB WRITE SUCCESS)
-    function compressImage(file, maxDim = 800, quality = 0.7) {
+    // Ultra-Fast Canvas Downscaling for Instant Uploads over Mobile Data
+    function compressImage(file, maxDim = 720, quality = 0.65) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -1742,7 +1947,34 @@
         });
     }
 
-    // Insert Custom Emoji Image directly into editable element
+    // Resize Stickers (Png transparency preservation)
+    function resizeStickerImage(dataUrl, maxW = 280, maxH = 280) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                let w = img.width;
+                let h = img.height;
+                if (w > maxW || h > maxH) {
+                    if (w > h) {
+                        h = Math.round((h * maxW) / w);
+                        w = maxW;
+                    } else {
+                        w = Math.round((w * maxH) / h);
+                        h = maxH;
+                    }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
+        });
+    }
+
     function insertEmojiToEditable(containerId, imgSrc) {
         const el = document.getElementById(containerId);
         el.focus();
@@ -1771,46 +2003,18 @@
         }
     }
 
-    // Clean html content to safely store and render text + inline emojis
     function getCleanHTMLContent(containerId) {
         const el = document.getElementById(containerId);
         if (!el) return '';
         return el.innerHTML;
     }
 
-    // Canvas Downscaling Helper (Preserves PNG/WebP transparency for stickers)
-    function resizeStickerImage(dataUrl, maxW = 300, maxH = 300) {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                let w = img.width;
-                let h = img.height;
-                if (w > maxW || h > maxH) {
-                    if (w > h) {
-                        h = Math.round((h * maxW) / w);
-                        w = maxW;
-                    } else {
-                        w = Math.round((w * maxH) / h);
-                        h = maxH;
-                    }
-                }
-                const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, w, h);
-                resolve(canvas.toDataURL('image/png'));
-            };
-            img.onerror = () => resolve(dataUrl);
-            img.src = dataUrl;
-        });
-    }
-
-    // State Variables
+    // App State
     let currentUser = null;
     let stickerPack = [];
     let emojiPack = [];
     let posts = [];
+    let gateAuthMode = 'login';
 
     let channelPermissions = {
         allowPhotos: true,
@@ -1823,8 +2027,7 @@
 
     let channelConfig = {
         name: "Tsuyu Stream",
-        avatar: null,
-        subscribers: "0 пользователей"
+        avatar: null
     };
 
     let userProfile = {
@@ -1838,22 +2041,20 @@
     let commentAttachedMediaList = [];
     let selectedStickerForPost = null;
     let activePostForComments = null;
-
     let currentPostPickerTab = 'stickers';
     let currentCommentPickerTab = 'stickers';
-    let authMode = 'login'; // 'login' | 'register'
 
     // DOM Elements
+    const fullAuthGate = document.getElementById('full-auth-gate');
     const feedContainer = document.getElementById('feed-container');
     const createModal = document.getElementById('create-modal');
-    const authModal = document.getElementById('auth-modal');
     const openCreateModalBtn = document.getElementById('open-create-modal');
     const publishBtn = document.getElementById('publish-btn');
-    const authBtn = document.getElementById('auth-btn');
     const searchToggleBtn = document.getElementById('search-toggle-btn');
     const searchBarWrapper = document.getElementById('search-bar-wrapper');
     const searchInput = document.getElementById('search-input');
     const navItems = document.querySelectorAll('.nav-item[data-tab]');
+    const headerLogoutBtn = document.getElementById('header-logout-btn');
 
     const tgMultiFileInput = document.getElementById('tg-multi-file-input');
     const tgFileStatus = document.getElementById('tg-file-status');
@@ -1883,12 +2084,11 @@
     const tgCommentsSubtitle = document.getElementById('tg-comments-subtitle');
     const tgCommentUserAvatar = document.getElementById('tg-comment-user-avatar');
 
-    // Realtime Online Presence System
-    const presenceRef = db.ref('.info/connected');
-    presenceRef.on('value', (snap) => {
-        if (snap.val() === true) {
-            const uid = currentUser ? currentUser.uid : 'anon_' + Math.random().toString(36).substr(2, 9);
-            const userPresenceRef = db.ref(`presence/${uid}`);
+    // Realtime Presence System & Online Users Tracker
+    let userPresenceRef = null;
+    db.ref('.info/connected').on('value', (snap) => {
+        if (snap.val() === true && currentUser) {
+            userPresenceRef = db.ref(`presence/${currentUser.uid}`);
             userPresenceRef.onDisconnect().remove();
             userPresenceRef.set({
                 online: true,
@@ -1909,33 +2109,106 @@
         return 'пользователей';
     }
 
-    // Authentication Listeners & Auto Anonymous Auth
+    // Telegram-Style Auth Screen Gate
+    window.switchAuthGateMode = function(mode) {
+        gateAuthMode = mode;
+        const loginBtn = document.getElementById('tab-gate-login');
+        const regBtn = document.getElementById('tab-gate-reg');
+        const nameGroup = document.getElementById('gate-name-group');
+        const btnText = document.getElementById('gate-btn-text');
+
+        if (mode === 'login') {
+            loginBtn.classList.add('active');
+            regBtn.classList.remove('active');
+            nameGroup.style.display = 'none';
+            btnText.textContent = 'Войти в сеть';
+        } else {
+            regBtn.classList.add('active');
+            loginBtn.classList.remove('active');
+            nameGroup.style.display = 'flex';
+            btnText.textContent = 'Зарегистрироваться';
+        }
+    };
+
+    window.handleGateAuthSubmit = async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('gate-email-input').value.trim();
+        const pass = document.getElementById('gate-password-input').value.trim();
+        const name = document.getElementById('gate-name-input').value.trim();
+        const loader = document.getElementById('gate-btn-loader');
+        const btnText = document.getElementById('gate-btn-text');
+        const btn = document.getElementById('gate-auth-btn');
+
+        if (!email || !pass) {
+            showToast('Заполните Email и Пароль', '⚠️');
+            return;
+        }
+
+        btn.disabled = true;
+        loader.classList.remove('hidden');
+        btnText.style.opacity = '0.5';
+
+        try {
+            if (gateAuthMode === 'register') {
+                const res = await auth.createUserWithEmailAndPassword(email, pass);
+                const uid = res.user.uid;
+                userProfile.name = name || email.split('@')[0];
+                await db.ref(`users/${uid}`).set(userProfile);
+                showToast('Добро пожаловать в сеть!', '🚀');
+            } else {
+                await auth.signInWithEmailAndPassword(email, pass);
+                showToast('Успешный вход!', '⚡');
+            }
+        } catch (err) {
+            showToast(err.message, '❌');
+        } finally {
+            btn.disabled = false;
+            loader.classList.add('hidden');
+            btnText.style.opacity = '1';
+        }
+    };
+
+    // Mandatory Authentication Listener (No Anonymous Login)
     auth.onAuthStateChanged((user) => {
         currentUser = user;
-        if (user) {
+        if (user && !user.isAnonymous) {
+            // User is logged in -> Hide full screen auth & activate RTDB presence
+            fullAuthGate.classList.add('hidden');
+            if (userPresenceRef) {
+                userPresenceRef.set({ online: true, ts: firebase.database.ServerValue.TIMESTAMP });
+            }
+
             db.ref(`users/${user.uid}`).on('value', (snap) => {
                 const val = snap.val();
                 if (val) {
-                    userProfile.name = val.name || (user.email ? user.email.split('@')[0] : "Пользователь");
+                    userProfile.name = val.name || user.email.split('@')[0];
                     userProfile.avatar = val.avatar || null;
                 } else {
-                    userProfile.name = user.isAnonymous ? "Гость_" + user.uid.substr(0, 4) : (user.email ? user.email.split('@')[0] : "Пользователь");
+                    userProfile.name = user.email.split('@')[0];
                     db.ref(`users/${user.uid}`).set(userProfile);
                 }
                 updateHeaderUI();
             });
-            document.getElementById('auth-logout-btn').style.display = user.isAnonymous ? 'none' : 'block';
         } else {
-            // Sign in anonymously automatically if not logged in, so all users can post & view in RTDB instantly!
-            auth.signInAnonymously().catch(err => {
-                console.warn("Anonymous login skipped/not enabled:", err.message);
-                userProfile = { name: "Гость", avatar: null };
-                updateHeaderUI();
+            // Not logged in -> Show Telegram-style Auth Gate screen
+            fullAuthGate.classList.remove('hidden');
+            userProfile = { name: "Гость", avatar: null };
+            updateHeaderUI();
+        }
+    });
+
+    headerLogoutBtn.addEventListener('click', () => {
+        if (confirm('Вы действительно хотите выйти из аккаунта?')) {
+            if (currentUser && userPresenceRef) {
+                userPresenceRef.remove();
+            }
+            auth.signOut().then(() => {
+                showToast('Вы вышли из профиля', '🔒');
             });
         }
     });
 
-    // Realtime Database Sync Listeners (INSTANT BROADCAST FOR EVERYONE)
+    // Realtime Sync Listeners from Firebase RTDB
     db.ref('channelConfig').on('value', (snap) => {
         const data = snap.val();
         if (data) {
@@ -1956,6 +2229,7 @@
         populateStickersInPickers();
     });
 
+    // Instant Post Feed Realtime Listener with Instant View Count Sync
     db.ref('posts').on('value', (snap) => {
         const val = snap.val();
         if (val) {
@@ -1964,6 +2238,7 @@
             posts = [];
         }
         renderFeed();
+        
         if (activePostForComments) {
             const updated = posts.find(p => p.id === activePostForComments.id);
             if (updated) {
@@ -1974,7 +2249,33 @@
         }
     });
 
-    // Header UI
+    // Telegram-Style Realtime Post View Counter System
+    const viewedPostsInSession = new Set();
+    const viewObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const postId = entry.target.getAttribute('data-post-id');
+                if (postId && !viewedPostsInSession.has(postId) && currentUser) {
+                    viewedPostsInSession.add(postId);
+                    recordRealtimeView(postId);
+                }
+            }
+        });
+    }, { threshold: 0.6 });
+
+    function recordRealtimeView(postId) {
+        if (!currentUser) return;
+        const postViewUserRef = db.ref(`posts/${postId}/seenUsers/${currentUser.uid}`);
+        postViewUserRef.get().then((snap) => {
+            if (!snap.exists()) {
+                postViewUserRef.set(true);
+                db.ref(`posts/${postId}/views`).transaction((currentViews) => {
+                    return (currentViews || 0) + 1;
+                });
+            }
+        }).catch(err => console.log('View track error:', err));
+    }
+
     function updateHeaderUI() {
         document.getElementById('header-title').textContent = channelConfig.name;
         const avatarEl = document.getElementById('header-avatar');
@@ -1985,50 +2286,7 @@
         }
     }
 
-    // Audio Tag Reader
-    function readAudioTags(file) {
-        return new Promise((resolve) => {
-            let defaultTitle = file.name.replace(/\.[^/.]+$/, "");
-            let defaultArtist = "Неизвестный исполнитель";
-
-            if (defaultTitle.includes(" - ")) {
-                const parts = defaultTitle.split(" - ");
-                defaultArtist = parts[0].trim();
-                defaultTitle = parts.slice(1).join(" - ").trim();
-            }
-
-            if (typeof jsmediatags === 'undefined') {
-                resolve({ title: defaultTitle, artist: defaultArtist, cover: null });
-                return;
-            }
-
-            jsmediatags.read(file, {
-                onSuccess: function(tag) {
-                    const tags = tag.tags;
-                    let title = tags.title ? tags.title.trim() : defaultTitle;
-                    let artist = tags.artist ? tags.artist.trim() : defaultArtist;
-                    let cover = null;
-
-                    if (tags.picture) {
-                        try {
-                            const { data, format } = tags.picture;
-                            let base64String = "";
-                            for (let i = 0; i < data.length; i++) {
-                                base64String += String.fromCharCode(data[i]);
-                            }
-                            cover = `data:${format};base64,${window.btoa(base64String)}`;
-                        } catch (e) {}
-                    }
-                    resolve({ title, artist, cover });
-                },
-                onError: function() {
-                    resolve({ title: defaultTitle, artist: defaultArtist, cover: null });
-                }
-            });
-        });
-    }
-
-    // Audio Controls
+    // Audio Player Engine
     let activeAudioElement = null;
 
     window.toggleAudio = function(postId, audioIndex) {
@@ -2118,7 +2376,7 @@
         }
     });
 
-    // Collage HTML Generator
+    // Collage HTML Builder
     function buildCollageHTML(mediaList) {
         if (!mediaList || mediaList.length === 0) return '';
         const count = mediaList.length;
@@ -2143,7 +2401,7 @@
         return `<div class="collage-grid ${gridClass}">${itemsHtml}</div>`;
     }
 
-    // Post HTML Generator
+    // Post HTML Card Generator
     function buildPostHTML(post, isPinnedInComments = false) {
         let safeText = post.text || '';
 
@@ -2241,8 +2499,10 @@
             </button>
         `;
 
+        const viewCount = post.views || 1;
+
         return `
-            <article class="post ${isPinnedInComments ? 'original-post-pinned' : ''}">
+            <article class="post ${isPinnedInComments ? 'original-post-pinned' : ''}" data-post-id="${post.id}">
                 <div class="post-header">
                     <div class="post-author">
                         <div class="post-author-avatar">${authorAvatarHtml}</div>
@@ -2260,9 +2520,9 @@
                         ${reactionsHtml}
                         ${!isPinnedInComments ? commentsBtnHtml : ''}
                     </div>
-                    <div class="post-views">
+                    <div class="post-views" title="Просмотры в реальном времени">
                         <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                        <span>${post.views || 1}</span>
+                        <span>${viewCount}</span>
                     </div>
                 </div>
             </article>
@@ -2295,7 +2555,9 @@
         filteredPosts.forEach(post => {
             const wrapper = document.createElement('div');
             wrapper.innerHTML = buildPostHTML(post, false);
-            feedContainer.appendChild(wrapper.firstElementChild);
+            const postEl = wrapper.firstElementChild;
+            feedContainer.appendChild(postEl);
+            viewObserver.observe(postEl);
         });
     }
 
@@ -2312,7 +2574,7 @@
             <div class="settings-card">
                 <div class="settings-card-title">
                     <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-                    <span>Настройки и разрешительный режим канала</span>
+                    <span>Настройки канала и разрешения</span>
                 </div>
                 
                 <div class="toggle-item">
@@ -2322,10 +2584,6 @@
                 <div class="toggle-item">
                     <label>Разрешить отправку Видео</label>
                     <input type="checkbox" id="perm-videos" ${channelPermissions.allowVideos ? 'checked' : ''}>
-                </div>
-                <div class="toggle-item">
-                    <label>Разрешить отправку Аудио</label>
-                    <input type="checkbox" id="perm-audio" ${channelPermissions.allowAudio ? 'checked' : ''}>
                 </div>
                 <div class="toggle-item">
                     <label>Разрешить Стикеры</label>
@@ -2349,7 +2607,7 @@
                     </div>
                     <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
                         <label class="file-upload-btn-minimal">
-                            <span>Логотип канала</span>
+                            <span>Изменить логотип канала</span>
                             <input type="file" id="channel-avatar-input" accept="image/*" style="display: none;">
                         </label>
                     </div>
@@ -2367,7 +2625,6 @@
                     <span>Стикерпак Tsuyu (.zip)</span>
                 </div>
                 <div class="input-group">
-                    <label class="input-label">Загрузить ZIP архив со стикерами</label>
                     <label class="file-upload-btn-minimal">
                         <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
                         <span id="zip-file-text">Выбрать ZIP архив стикеров</span>
@@ -2377,31 +2634,12 @@
                 <div id="sticker-status-info" style="font-size: 12px; color: var(--text-secondary);">
                     Загружено стикеров: ${stickerPack.length} шт.
                 </div>
-                <button class="btn-primary" id="reset-stickers-btn" style="padding: 10px; background-color: var(--surface-hover); color: var(--danger); border: 1px solid var(--border);">Сбросить стикерпак</button>
-            </div>
-
-            <div class="settings-card">
-                <div class="settings-card-title">
-                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                    <span>Премиум Эмодзи Tsuyu (.zip)</span>
-                </div>
-                <div class="input-group">
-                    <label class="input-label">Загрузить ZIP архив со статичными премиум эмодзи</label>
-                    <label class="file-upload-btn-minimal">
-                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
-                        <span id="zip-emoji-text">Выбрать ZIP эмодзи</span>
-                        <input type="file" id="zip-emoji-input" accept=".zip" style="display: none;">
-                    </label>
-                </div>
-                <div id="emoji-status-info" style="font-size: 12px; color: var(--text-secondary);">
-                    Загружено эмодзи: ${emojiPack.length} шт.
-                </div>
             </div>
 
             <div class="settings-card">
                 <div class="settings-card-title">
                     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                    <span>Мой онлайн профиль</span>
+                    <span>Мой профиль</span>
                 </div>
                 <div class="avatar-edit-box">
                     <div class="avatar-preview-lg" id="user-avatar-display">
@@ -2436,7 +2674,6 @@
         document.getElementById('save-channel-btn').addEventListener('click', () => {
             channelPermissions.allowPhotos = document.getElementById('perm-photos').checked;
             channelPermissions.allowVideos = document.getElementById('perm-videos').checked;
-            channelPermissions.allowAudio = document.getElementById('perm-audio').checked;
             channelPermissions.allowStickers = document.getElementById('perm-stickers').checked;
             channelPermissions.allowPremiumEmoji = document.getElementById('perm-emojis').checked;
 
@@ -2448,7 +2685,7 @@
                 avatar: channelConfig.avatar,
                 permissions: channelPermissions
             });
-            alert('Настройки канала сохранена в Firebase RTDB!');
+            showToast('Настройки канала сохранены!', '✅');
         });
 
         document.getElementById('zip-sticker-input').addEventListener('change', async (e) => {
@@ -2456,7 +2693,8 @@
             if (!file) return;
 
             const btnText = document.getElementById('zip-file-text');
-            btnText.textContent = "Загрузка...";
+            btnText.textContent = "Загрузка и сжатие...";
+            setGlobalLoading(true);
 
             try {
                 const zip = await JSZip.loadAsync(file);
@@ -2473,64 +2711,27 @@
                         r.onload = () => res(r.result);
                         r.readAsDataURL(blob);
                     });
-                    const resized = await resizeStickerImage(rawDataUrl, 300, 300);
+                    const resized = await resizeStickerImage(rawDataUrl, 280, 280);
                     extracted.push(resized);
                 }
 
                 if (extracted.length > 0) {
                     await db.ref('stickerPack').set(extracted);
-                    alert(`Загружено ${extracted.length} стикеров в Firebase!`);
+                    showToast(`Загружено ${extracted.length} стикеров в RTDB`, '🎨');
                 }
             } catch (err) {
-                alert("Ошибка распаковки ZIP: " + err.message);
+                showToast("Ошибка ZIP: " + err.message, '❌');
+            } finally {
+                setGlobalLoading(false);
+                btnText.textContent = "Выбрать ZIP архив стикеров";
             }
-        });
-
-        document.getElementById('zip-emoji-input').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const btnText = document.getElementById('zip-emoji-text');
-            btnText.textContent = "Загрузка...";
-
-            try {
-                const zip = await JSZip.loadAsync(file);
-                let extracted = [];
-                const validFiles = Object.keys(zip.files).filter(filename => {
-                    const f = zip.files[filename];
-                    return !f.dir && !filename.includes('__MACOSX') && !filename.split('/').pop().startsWith('.') && filename.match(/\.(png|webp|jpg|jpeg)$/i);
-                });
-
-                for (let i = 0; i < validFiles.length; i++) {
-                    const blob = await zip.files[validFiles[i]].async("blob");
-                    const rawDataUrl = await new Promise(res => {
-                        const r = new FileReader();
-                        r.onload = () => res(r.result);
-                        r.readAsDataURL(blob);
-                    });
-                    const resized = await resizeStickerImage(rawDataUrl, 120, 120);
-                    extracted.push(resized);
-                }
-
-                if (extracted.length > 0) {
-                    await db.ref('emojiPack').set(extracted);
-                    alert(`Загружено ${extracted.length} премиум эмодзи в Firebase!`);
-                }
-            } catch (err) {
-                alert("Ошибка распаковки ZIP: " + err.message);
-            }
-        });
-
-        document.getElementById('reset-stickers-btn').addEventListener('click', async () => {
-            await db.ref('stickerPack').remove();
-            alert('Стикерпак очищен!');
         });
 
         document.getElementById('user-avatar-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file) {
                 try {
-                    const comp = await compressImage(file, 200, 0.8);
+                    const comp = await compressImage(file, 200, 0.75);
                     userProfile.avatar = comp;
                     document.getElementById('user-avatar-display').innerHTML = `<img src="${userProfile.avatar}">`;
                 } catch(e) {}
@@ -2543,14 +2744,14 @@
             if (nameVal) userProfile.name = nameVal;
 
             db.ref(`users/${currentUser.uid}`).set(userProfile);
-            alert('Профиль сохранён в сети!');
+            showToast('Профиль сохранен в RTDB!', '👤');
         });
 
         document.getElementById('channel-avatar-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file) {
                 try {
-                    const comp = await compressImage(file, 300, 0.8);
+                    const comp = await compressImage(file, 250, 0.75);
                     channelConfig.avatar = comp;
                     document.getElementById('channel-avatar-display').innerHTML = `<img src="${channelConfig.avatar}">`;
                 } catch(e) {}
@@ -2558,7 +2759,6 @@
         });
     }
 
-    // Populate Pickers
     function populateStickersInPickers() {
         window.switchPickerTab = (context, tab) => {
             if (context === 'post') {
@@ -2604,11 +2804,7 @@
 
     window.selectItem = function(context, type, idx) {
         if (type === 'sticker' && !channelPermissions.allowStickers) {
-            alert("Стикеры запрещены владельцем канала.");
-            return;
-        }
-        if (type === 'emoji' && !channelPermissions.allowPremiumEmoji) {
-            alert("Премиум эмодзи запрещены владельцем канала.");
+            showToast("Стикеры отключены владельцем", "⚠️");
             return;
         }
 
@@ -2655,7 +2851,7 @@
         commentsStickerPicker.classList.toggle('hidden');
     });
 
-    // Realtime Reactions Toggle
+    // Realtime Reactions Engine
     window.toggleReaction = function(postId, reactionKey) {
         if (!currentUser) return;
         const post = posts.find(p => p.id === postId);
@@ -2690,7 +2886,7 @@
         pollRef.transaction((poll) => {
             if (!poll) return poll;
             if (!poll.votes) poll.votes = {};
-            if (poll.votes[currentUser.uid] !== undefined) return poll; // Already voted
+            if (poll.votes[currentUser.uid] !== undefined) return poll;
 
             poll.votes[currentUser.uid] = optionIndex;
             if (poll.options && poll.options[optionIndex]) {
@@ -2700,7 +2896,7 @@
         });
     };
 
-    // Open Comments Overlay
+    // Open Comments Screen Overlay
     window.openTGCommentsScreen = function(postId) {
         activePostForComments = posts.find(p => p.id === postId);
         if (!activePostForComments) return;
@@ -2771,22 +2967,16 @@
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        for (let file of files) {
-            if (file.type.startsWith('image/') && !channelPermissions.allowPhotos) continue;
-            if (file.type.startsWith('video/') && !channelPermissions.allowVideos) continue;
-            if ((file.type.startsWith('audio/') || file.name.match(/\.(mp3|m4a|flac|wav|ogg)$/i)) && !channelPermissions.allowAudio) continue;
+        setGlobalLoading(true);
 
+        for (let file of files) {
             if (file.type.startsWith('image/')) {
-                const comp = await compressImage(file, 600, 0.75);
+                const comp = await compressImage(file, 600, 0.7);
                 commentAttachedMediaList.push({ type: 'image', src: comp });
-            } else if (file.type.startsWith('video/')) {
-                const dataUrl = await new Promise(res => {
-                    const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file);
-                });
-                commentAttachedMediaList.push({ type: 'video', src: dataUrl });
             }
         }
 
+        setGlobalLoading(false);
         renderCommentAttachmentsPreview();
     });
 
@@ -2799,7 +2989,7 @@
 
         commentAttachmentsPreview.innerHTML = commentAttachedMediaList.map((item, idx) => `
             <div class="attachment-thumb-item">
-                ${item.type === 'video' ? `<video src="${item.src}"></video>` : `<img src="${item.src}">`}
+                <img src="${item.src}">
                 <button type="button" class="remove-thumb-btn" onclick="removeCommentAttachmentItem(${idx})">✕</button>
             </div>
         `).join('');
@@ -2832,7 +3022,7 @@
         };
 
         db.ref(`posts/${activePostForComments.id}/comments/${commentId}`).set(commentObj).catch(err => {
-            alert('Ошибка отправки комментария: ' + err.message);
+            showToast('Ошибка: ' + err.message, '❌');
         });
 
         document.getElementById('tg-comment-input').innerHTML = '';
@@ -2840,48 +3030,23 @@
         renderCommentAttachmentsPreview();
     });
 
-    // Create Post Attachments with Compression
+    // Create Post Attachments
     tgMultiFileInput.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        for (let file of files) {
-            if (file.type.startsWith('image/') && !channelPermissions.allowPhotos) continue;
-            if (file.type.startsWith('video/') && !channelPermissions.allowVideos) continue;
-            if ((file.type.startsWith('audio/') || file.name.match(/\.(mp3|m4a|flac|wav|ogg)$/i)) && !channelPermissions.allowAudio) continue;
+        setGlobalLoading(true);
+        tgFileStatus.textContent = 'Обработка файлов...';
 
+        for (let file of files) {
             if (file.type.startsWith('image/')) {
-                const comp = await compressImage(file, 800, 0.7);
+                const comp = await compressImage(file, 720, 0.65);
                 attachedMediaList.push({ type: 'image', src: comp });
-            } else if (file.type.startsWith('video/')) {
-                if (file.size > 15 * 1024 * 1024) {
-                    alert('Видео слишком большое для RTDB (макс 15 МБ).');
-                    continue;
-                }
-                const dataUrl = await new Promise(res => {
-                    const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file);
-                });
-                attachedMediaList.push({ type: 'video', src: dataUrl });
-            } else if (file.type.startsWith('audio/') || file.name.match(/\.(mp3|m4a|flac|wav|ogg)$/i)) {
-                if (file.size > 15 * 1024 * 1024) {
-                    alert('Аудиофайл слишком большой (макс 15 МБ).');
-                    continue;
-                }
-                const dataUrl = await new Promise(res => {
-                    const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file);
-                });
-                const tags = await readAudioTags(file);
-                attachedMediaList.push({
-                    type: 'audio',
-                    src: dataUrl,
-                    title: tags.title,
-                    artist: tags.artist,
-                    cover: tags.cover,
-                    userProvidedCover: null
-                });
             }
         }
 
+        setGlobalLoading(false);
+        tgFileStatus.textContent = `Прикреплено файлов: ${attachedMediaList.length}`;
         renderAttachmentsPreviewInModal();
     });
 
@@ -2893,37 +3058,12 @@
             return;
         }
 
-        modalAttachmentsPreview.innerHTML = attachedMediaList.map((item, idx) => {
-            if (item.type === 'image') {
-                return `
-                    <div class="attachment-thumb-item">
-                        <img src="${item.src}">
-                        <button type="button" class="remove-thumb-btn" onclick="removeAttachmentItem(${idx})">✕</button>
-                    </div>
-                `;
-            } else if (item.type === 'video') {
-                return `
-                    <div class="attachment-thumb-item">
-                        <video src="${item.src}"></video>
-                        <button type="button" class="remove-thumb-btn" onclick="removeAttachmentItem(${idx})">✕</button>
-                    </div>
-                `;
-            } else {
-                const currentCover = item.userProvidedCover || item.cover;
-                return `
-                    <div class="attachment-thumb-item audio-thumb">
-                        <div class="audio-thumb-cover">
-                            ${currentCover ? `<img src="${currentCover}">` : `🎵`}
-                        </div>
-                        <div class="audio-thumb-info">
-                            <div>${escapeHTML(item.title)}</div>
-                            <div>${escapeHTML(item.artist)}</div>
-                        </div>
-                        <button type="button" class="remove-thumb-btn" onclick="removeAttachmentItem(${idx})">✕</button>
-                    </div>
-                `;
-            }
-        }).join('');
+        modalAttachmentsPreview.innerHTML = attachedMediaList.map((item, idx) => `
+            <div class="attachment-thumb-item">
+                <img src="${item.src}">
+                <button type="button" class="remove-thumb-btn" onclick="removeAttachmentItem(${idx})">✕</button>
+            </div>
+        `).join('');
 
         modalAttachmentsPreview.classList.remove('hidden');
     }
@@ -2940,7 +3080,7 @@
         renderAttachmentsPreviewInModal();
     }
 
-    // Modal & Auth Sheet Controls
+    // Modal Sheet Controls
     openCreateModalBtn.addEventListener('click', () => {
         createModal.classList.add('open');
     });
@@ -2949,73 +3089,23 @@
         if (e.target === createModal) createModal.classList.remove('open');
     });
 
-    authBtn.addEventListener('click', () => {
-        authModal.classList.add('open');
-    });
-
-    authModal.addEventListener('click', (e) => {
-        if (e.target === authModal) authModal.classList.remove('open');
-    });
-
-    // Auth Tabs
-    window.setAuthTab = function(mode) {
-        authMode = mode;
-        if (mode === 'login') {
-            document.getElementById('auth-tab-login').classList.add('active');
-            document.getElementById('auth-tab-register').classList.remove('active');
-            document.getElementById('reg-name-group').style.display = 'none';
-            document.getElementById('auth-submit-btn').textContent = 'Войти';
-        } else {
-            document.getElementById('auth-tab-register').classList.add('active');
-            document.getElementById('auth-tab-login').classList.remove('active');
-            document.getElementById('reg-name-group').style.display = 'flex';
-            document.getElementById('auth-submit-btn').textContent = 'Зарегистрироваться';
-        }
-    };
-
-    // Submit Authentication
-    document.getElementById('auth-submit-btn').addEventListener('click', async () => {
-        const email = document.getElementById('auth-email-input').value.trim();
-        const pass = document.getElementById('auth-password-input').value.trim();
-        const name = document.getElementById('auth-name-input').value.trim();
-
-        if (!email || !pass) {
-            alert('Заполните email и пароль');
-            return;
-        }
-
-        try {
-            if (authMode === 'register') {
-                const res = await auth.createUserWithEmailAndPassword(email, pass);
-                if (name) userProfile.name = name;
-                await db.ref(`users/${res.user.uid}`).set(userProfile);
-                alert('Успешная регистрация!');
-            } else {
-                await auth.signInWithEmailAndPassword(email, pass);
-                alert('Вы вошли в сеть!');
-            }
-            authModal.classList.remove('open');
-        } catch (err) {
-            alert('Ошибка авторизации: ' + err.message);
-        }
-    });
-
-    document.getElementById('auth-logout-btn').addEventListener('click', () => {
-        auth.signOut().then(() => {
-            alert('Вы вышли из профиля.');
-            authModal.classList.remove('open');
-        });
-    });
-
-    // Publish Post to Firebase RTDB (INSTANT REALTIME PUBLISHING FOR ALL USERS)
+    // Instant Post Publishing with Animated Feedback
     publishBtn.addEventListener('click', () => {
         const text = getCleanHTMLContent('new-post-text').trim();
         const pollInput = document.getElementById('new-post-poll').value.trim();
 
         if (!text && attachedMediaList.length === 0 && !selectedStickerForPost) {
-            alert('Введите текст сообщения, прикрепите файлы или выберите стикер!');
+            showToast('Введите текст или прикрепите медиафайлы!', '⚠️');
             return;
         }
+
+        const publishSpinner = document.getElementById('publish-btn-spinner');
+        const publishText = document.getElementById('publish-btn-text');
+
+        publishBtn.disabled = true;
+        publishSpinner.classList.remove('hidden');
+        publishText.textContent = 'Публикация...';
+        setGlobalLoading(true);
 
         let pollObj = null;
         if (pollInput) {
@@ -3030,8 +3120,6 @@
         }
 
         const mediaList = attachedMediaList.filter(m => m.type === 'image' || m.type === 'video');
-        const audioList = attachedMediaList.filter(m => m.type === 'audio');
-
         const now = new Date();
         const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
         const newPostRef = db.ref('posts').push();
@@ -3048,7 +3136,7 @@
             timestamp: Date.now(),
             text: text,
             mediaList: mediaList,
-            audioList: audioList,
+            audioList: [],
             sticker: selectedStickerForPost,
             poll: pollObj,
             reactions: defaultReactions,
@@ -3060,12 +3148,18 @@
             document.getElementById('new-post-poll').value = '';
             clearModalAttachments();
             createModal.classList.remove('open');
+            showToast('Опубликовано в реальном времени!', '⚡');
         }).catch(err => {
-            alert('Ошибка публикации в Firebase RTDB: ' + err.message);
+            showToast('Ошибка публикации: ' + err.message, '❌');
+        }).finally(() => {
+            publishBtn.disabled = false;
+            publishSpinner.classList.add('hidden');
+            publishText.textContent = 'Опубликовать';
+            setGlobalLoading(false);
         });
     });
 
-    // Navigation Tabs
+    // Navigation Tabs Switcher
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             navItems.forEach(nav => nav.classList.remove('active'));
@@ -3090,6 +3184,20 @@
         searchQuery = e.target.value;
         renderFeed();
     });
+
+    // PWA Service Worker Inline Registration for instant caching
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const swCode = `
+                self.addEventListener('install', e => self.skipWaiting());
+                self.addEventListener('activate', e => self.clients.claim());
+                self.addEventListener('fetch', e => {});
+            `;
+            const blob = new Blob([swCode], { type: 'text/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch(() => {});
+        });
+    }
 </script>
 
 </body>
