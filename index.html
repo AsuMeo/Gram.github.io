@@ -3,15 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Tsuyu // Feed</title>
-    <!-- Firebase SDKs -->
+    <title>Tsuyu // Live Network</title>
+
+    <!-- PWA Settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlRzdXl1IiwKICAic2hvcnRfbmFtZSI6ICJUc3V5dSIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDAwMDAwIiwKICAidGhlbWVfY29sb3IiOiAiIzAwMDAwMCIKfQ==">
+
+    <!-- Firebase v9 Compat Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <!-- jsmediatags for ID3 audio tags -->
+
+    <!-- External Helpers -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
-    <!-- JSZip for ZIP Unpacking -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <style>
         :root {
             --bg: #000000;
@@ -458,6 +466,7 @@
             vertical-align: middle;
             display: inline-block;
             margin: 0 2px;
+            pointer-events: none;
         }
 
         /* Lightbox Fullscreen Viewer */
@@ -834,7 +843,8 @@
             padding: 6px 12px;
         }
 
-        .comments-input-box .contenteditable {
+        /* Rich Contenteditable Editors */
+        .editable-editor {
             flex: 1;
             background: none;
             border: none;
@@ -842,17 +852,17 @@
             font-family: var(--font);
             font-size: 14px;
             outline: none;
-            resize: none;
             min-height: 24px;
             max-height: 90px;
             line-height: 24px;
             overflow-y: auto;
-            -webkit-user-modify: read-write; /* Enable contenteditable for Safari */
+            word-break: break-word;
+            white-space: pre-wrap;
         }
-        
-        .comments-input-box .contenteditable:empty::before {
+
+        .editable-editor[data-placeholder]:empty:before {
             content: attr(data-placeholder);
-            color: var(--text-secondary);
+            color: var(--text-muted);
         }
 
         .sticker-btn-icon, .paperclip-btn-icon {
@@ -1226,7 +1236,7 @@
             font-weight: 500;
         }
 
-        .text-input, .textarea-input {
+        .text-input {
             width: 100%;
             background-color: var(--bg);
             border: 1px solid var(--border);
@@ -1236,35 +1246,12 @@
             font-family: var(--font);
             font-size: 14px;
             outline: none;
-            resize: none;
             transition: border-color 0.2s;
         }
 
-        .text-input:focus, .textarea-input:focus {
+        .text-input:focus {
             border-color: var(--text);
         }
-
-        .textarea-input {
-            min-height: 90px;
-        }
-        .contenteditable {
-            width: 100%;
-            background-color: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 12px;
-            color: var(--text);
-            font-family: var(--font);
-            font-size: 14px;
-            outline: none;
-            min-height: 90px;
-            line-height: 1.5;
-            overflow-y: auto;
-        }
-        .contenteditable:focus {
-            border-color: var(--text);
-        }
-
 
         .btn-primary {
             background-color: var(--accent);
@@ -1459,49 +1446,35 @@
             display: none !important;
         }
 
-        /* Login/Register Modal */
-        #auth-modal .modal-sheet {
-            align-items: center;
-            text-align: center;
-        }
-        #auth-modal .input-group {
+        /* Auth Screen Modal */
+        .auth-container-box {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
             width: 100%;
-            max-width: 300px;
         }
-        #auth-modal .btn-primary {
-            width: 100%;
-            max-width: 300px;
+
+        .auth-tab-row {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
         }
-        #auth-modal .toggle-auth-mode {
+
+        .auth-tab-btn {
+            flex: 1;
+            padding: 10px;
             background: none;
             border: none;
             color: var(--text-secondary);
-            font-size: 12px;
-            margin-top: 10px;
+            font-weight: 600;
+            font-size: 14px;
             cursor: pointer;
+            border-bottom: 2px solid transparent;
         }
-        #auth-modal h2 {
-            font-size: 18px;
-            margin-bottom: 15px;
-        }
-        .auth-loader {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-size: 13px;
-            margin-top: 10px;
-        }
-        .auth-loader.hidden {
-            display: none;
-        }
-        .auth-loader svg {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .auth-tab-btn.active {
+            color: var(--text);
+            border-bottom-color: var(--text);
         }
     </style>
 </head>
@@ -1514,15 +1487,15 @@
             <div class="channel-avatar" id="header-avatar">TS</div>
             <div class="channel-info">
                 <h1 id="header-title">Tsuyu Stream</h1>
-                <p id="subscribers-count">18.4K подписчиков</p>
+                <p id="subscribers-count">0 пользователей онлайн</p>
             </div>
         </div>
         <div class="header-actions">
+            <button class="icon-btn" id="auth-btn" title="Аккаунт">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+            </button>
             <button class="icon-btn" id="search-toggle-btn" title="Поиск">
                 <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-            </button>
-            <button class="icon-btn" id="logout-btn" title="Выйти" style="display: none;">
-                <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
             </button>
         </div>
     </header>
@@ -1538,19 +1511,15 @@
     <!-- Main Feed Container -->
     <main class="feed" id="feed-container">
         <!-- Dynamic posts injected here -->
-        <div class="empty-state" id="feed-loading-state">
-            <svg style="width: 32px; height: 32px;" viewBox="0 0 24 24"><path d="M12 4V2.21c0-.45-.39-.8-.85-.76C7.54 2.45 4 6.27 4 11c0 4.42 3.58 8 8 8s8-3.58 8-8c0-3.09-1.77-5.83-4.37-7.14-.4-.2-.84-.13-1.07.17-.24.31-.13.75.21.92 2.11 1.05 3.57 3.31 3.57 5.95 0 3.31-2.69 6-6 6s-6-2.69-6-6c0-3.15 2.4-5.74 5.48-5.96.4-.03.73-.37.73-.78z"/></svg>
-            <p>Загрузка ленты...</p>
-        </div>
     </main>
 
     <!-- Bottom Navigation Bar -->
-    <nav class="nav-bar" id="bottom-nav">
+    <nav class="nav-bar">
         <button class="nav-item active" data-tab="feed">
             <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
             <span>Лента</span>
         </button>
-        <button class="nav-item" id="open-create-modal" style="display: none;">
+        <button class="nav-item" id="open-create-modal">
             <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
             <span>Создать</span>
         </button>
@@ -1587,7 +1556,7 @@
         </div>
 
         <!-- Sticky Comment Input Bar -->
-        <div class="comments-input-bar-wrapper" id="comment-input-area" style="display: none;">
+        <div class="comments-input-bar-wrapper">
             <!-- Comment Attachments Preview Grid -->
             <div class="attachments-preview-grid hidden" id="comment-attachments-preview" style="margin-bottom: 8px;">
                 <!-- Dynamic attachment thumbs -->
@@ -1596,7 +1565,7 @@
             <div class="comments-input-bar">
                 <div class="comment-avatar" id="tg-comment-user-avatar" style="width: 32px; height: 32px; font-size: 13px;">U</div>
                 <div class="comments-input-box">
-                    <div class="contenteditable" id="tg-comment-input" contenteditable="true" data-placeholder="Прокомментировать..."></div>
+                    <div class="editable-editor" id="tg-comment-input" contenteditable="true" data-placeholder="Прокомментировать..."></div>
                     
                     <!-- Paperclip for Comment Attachments -->
                     <label class="paperclip-btn-icon" id="comment-paperclip-btn" title="Прикрепить фото, видео или аудио">
@@ -1636,7 +1605,7 @@
         <div class="sheet-header-title">Новая публикация</div>
 
         <div class="input-group">
-            <div class="contenteditable" id="new-post-text" contenteditable="true" data-placeholder="Сообщение..."></div>
+            <div class="editable-editor" id="new-post-text" contenteditable="true" data-placeholder="Сообщение..."></div>
         </div>
 
         <!-- Attachment Bar with Paperclip 📎 & Sticker Button -->
@@ -1678,54 +1647,62 @@
     </div>
 </div>
 
+<!-- Modal: Auth (Firebase Authentication) -->
+<div class="modal-overlay" id="auth-modal">
+    <div class="modal-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header-title">Авторизация Firebase</div>
+
+        <div class="auth-container-box">
+            <div class="auth-tab-row">
+                <button class="auth-tab-btn active" id="auth-tab-login" onclick="setAuthTab('login')">Вход</button>
+                <button class="auth-tab-btn" id="auth-tab-register" onclick="setAuthTab('register')">Регистрация</button>
+            </div>
+
+            <div class="input-group" id="reg-name-group" style="display: none;">
+                <label class="input-label">Имя пользователя</label>
+                <input type="text" class="text-input" id="auth-name-input" placeholder="Алексей">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Email</label>
+                <input type="email" class="text-input" id="auth-email-input" placeholder="user@example.com">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Пароль</label>
+                <input type="password" class="text-input" id="auth-password-input" placeholder="••••••••">
+            </div>
+
+            <button class="btn-primary" id="auth-submit-btn">Войти</button>
+            <button class="btn-primary" id="auth-logout-btn" style="background-color: var(--surface-hover); color: var(--danger); border: 1px solid var(--border); display: none;">Выйти из аккаунта</button>
+        </div>
+    </div>
+</div>
+
 <!-- Fullscreen Lightbox Modal -->
 <div class="lightbox-modal" id="lightbox-modal">
     <button class="lightbox-close-btn" id="lightbox-close-btn" title="Закрыть">✕</button>
     <div class="lightbox-content" id="lightbox-content"></div>
 </div>
 
-<!-- Authentication Modal -->
-<div class="modal-overlay" id="auth-modal">
-    <div class="modal-sheet">
-        <div class="sheet-handle"></div>
-        <h2 id="auth-modal-title">Вход</h2>
-        <div class="input-group">
-            <input type="email" class="text-input" id="auth-email" placeholder="Email">
-        </div>
-        <div class="input-group">
-            <input type="password" class="text-input" id="auth-password" placeholder="Пароль">
-        </div>
-        <button class="btn-primary" id="auth-submit-btn">Войти</button>
-        <div class="auth-loader hidden" id="auth-loader">
-            <svg viewBox="0 0 24 24" width="20px" height="20px"><path fill="currentColor" d="M12 4V2.21c0-.45-.39-.8-.85-.76C7.54 2.45 4 6.27 4 11c0 4.42 3.58 8 8 8s8-3.58 8-8c0-3.09-1.77-5.83-4.37-7.14-.4-.2-.84-.13-1.07.17-.24.31-.13.75.21.92 2.11 1.05 3.57 3.31 3.57 5.95 0 3.31-2.69 6-6 6s-6-2.69-6-6c0-3.15 2.4-5.74 5.48-5.96.4-.03.73-.37.73-.78z"/></svg>
-            <span>Загрузка...</span>
-        </div>
-        <button class="toggle-auth-mode" id="toggle-auth-mode-btn">Нет аккаунта? Зарегистрироваться</button>
-    </div>
-</div>
-
 <script>
-    // Firebase Initialization
+    // Initialize Firebase Config
     const firebaseConfig = {
-        apiKey: "AIzaSyBm0mIvHVznIeF2PoFk6dtdaiT5r877wyA",
-        authDomain: "meow-874ce.firebaseapp.com",
-        databaseURL: "https://meow-874ce-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "meow-874ce",
-        storageBucket: "meow-874ce.firebasestorage.app",
-        messagingSenderId: "471541334599",
-        appId: "1:471541334599:web:567af3e7dbe70a37572762"
+      apiKey: "AIzaSyBm0mIvHVznIeF2PoFk6dtdaiT5r877wyA",
+      authDomain: "meow-874ce.firebaseapp.com",
+      databaseURL: "https://meow-874ce-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "meow-874ce",
+      storageBucket: "meow-874ce.firebasestorage.app",
+      messagingSenderId: "471541334599",
+      appId: "1:471541334599:web:567af3e7dbe70a37572762"
     };
 
     firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
     const auth = firebase.auth();
-    const database = firebase.database();
-    const postsRef = database.ref('posts');
-    const usersRef = database.ref('users');
-    const channelConfigRef = database.ref('channelConfig');
-    const stickerPacksRef = database.ref('stickerPacks');
-    const emojiPacksRef = database.ref('emojiPacks');
 
-    // XSS Protection & Script Execution Prevention
+    // Security HTML Escape
     function escapeHTML(str) {
         if (!str) return '';
         return String(str)
@@ -1736,121 +1713,40 @@
             .replace(/'/g, "&#039;");
     }
 
-    // Convert HTML content of contenteditable div to plain text with :[idx]: markers
-    function contentEditableToText(editableDiv) {
-        let text = '';
-        editableDiv.childNodes.forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE) {
-                text += node.textContent;
-            } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'IMG' && node.classList.contains('inline-emoji-img')) {
-                const alt = node.getAttribute('alt');
-                const emojiIdx = alt ? alt.replace('emoji-', '') : '';
-                text += `:[${emojiIdx}]:`;
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-                // For other HTML elements, like strong or code, keep original markdown format
-                if (node.tagName === 'STRONG') {
-                    text += `**${node.textContent}**`;
-                } else if (node.tagName === 'CODE') {
-                    text += ``${node.textContent}``;
-                } else {
-                    text += node.textContent; // Fallback for other tags, might need more specific handling
-                }
+    // Insert Custom Emoji Image directly into editable element (Telegram style)
+    function insertEmojiToEditable(containerId, imgSrc) {
+        const el = document.getElementById(containerId);
+        el.focus();
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            let range = sel.getRangeAt(0);
+            if (!el.contains(range.commonAncestorContainer)) {
+                range = document.createRange();
+                range.selectNodeContents(el);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
             }
-        });
-        return text.trim();
-    }
-
-    // Insert HTML (like emoji <img>) into contenteditable at caret position
-    function insertHtmlAtCaret(html, editableDiv) {
-        editableDiv.focus();
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
             range.deleteContents();
-            const el = document.createElement('div');
-            el.innerHTML = html;
-            const frag = document.createDocumentFragment();
-            let node, lastNode;
-            while ( (node = el.firstChild) ) {
-                lastNode = frag.appendChild(node);
-            }
-            range.insertNode(frag);
-
-            // Set caret after the inserted element
-            if (lastNode) {
-                range.setStartAfter(lastNode);
-                range.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.className = 'inline-emoji-img';
+            range.insertNode(img);
+            range.setStartAfter(img);
+            range.setEndAfter(img);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
         } else {
-            editableDiv.innerHTML += html;
+            el.innerHTML += `<img class="inline-emoji-img" src="${imgSrc}">`;
         }
     }
 
-    // Render formatted text with markdown & custom premium emojis
-    function renderFormattedText(str) {
-        if (!str) return '';
-        let safe = escapeHTML(str)
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/`([^`]+)`/g, '<code>$1</code>');
-
-        // Replace :[idx]: custom emoji markers
-        safe = safe.replace(/:\\[(\\d+)\\]:/g, (match, idxStr) => {
-            const idx = parseInt(idxStr, 10);
-            if (emojiPack && emojiPack[idx]) {
-                return `<img class="inline-emoji-img" src="${emojiPack[idx]}" alt="emoji-${idx}">`;
-            }
-            return match;
-        });
-
-        return safe;
-    }
-
-    // IndexedDB for Stickers & Custom Premium Emojis (Still used as a cache, RTDB is primary)
-    const dbName = "TsuyuAppDB";
-    const storeStickers = "StickersStore";
-    const storeEmojis = "EmojisStore";
-
-    function initDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(dbName, 2);
-            request.onupgradeneeded = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains(storeStickers)) {
-                    db.createObjectStore(storeStickers);
-                }
-                if (!db.objectStoreNames.contains(storeEmojis)) {
-                    db.createObjectStore(storeEmojis);
-                }
-            };
-            request.onsuccess = (e) => resolve(e.target.result);
-            request.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    function saveToDB(storeName, key, data) {
-        return initDB().then(db => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, "readwrite");
-                const store = tx.objectStore(storeName);
-                const request = store.put(data, key);
-                request.onsuccess = () => resolve();
-                request.onerror = (e) => reject(e.target.error);
-            });
-        });
-    }
-
-    function loadFromDB(storeName, key) {
-        return initDB().then(db => {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, "readonly");
-                const store = tx.objectStore(storeName);
-                const request = store.get(key);
-                request.onsuccess = () => resolve(request.result || null);
-                request.onerror = (e) => reject(e.target.error);
-            });
-        });
+    // Clean html content to safely store and render text + inline emojis
+    function getCleanHTMLContent(containerId) {
+        const el = document.getElementById(containerId);
+        if (!el) return '';
+        return el.innerHTML;
     }
 
     // Canvas Downscaling Helper (Preserves PNG/WebP transparency)
@@ -1881,70 +1777,12 @@
         });
     }
 
-    // Custom Font Loader
-    function applyCustomFont(fontDataUrl, fontName) {
-        let fontStyle = document.getElementById('dynamic-font-style');
-        if (!fontStyle) {
-            fontStyle = document.createElement('style');
-            fontStyle.id = 'dynamic-font-style';
-            document.head.appendChild(fontStyle);
-        }
-        fontStyle.textContent = `
-            @font-face {
-                font-family: 'UserCustomFont';
-                src: url('${fontDataUrl}');
-                font-display: swap;
-            }
-            :root {
-                --font: 'UserCustomFont', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            }
-        `;
-        const fontStatus = document.getElementById('font-status-info');
-        if (fontStatus) {
-            fontStatus.textContent = `Текущий шрифт: ${escapeHTML(fontName || 'Пользовательский')}`;
-        }
-    }
-
-    const savedFont = localStorage.getItem('nexus_custom_font');
-    const savedFontName = localStorage.getItem('nexus_custom_font_name');
-    if (savedFont) {
-        applyCustomFont(savedFont, savedFontName);
-    }
-
-    // User Packs
+    // State Variables
+    let currentUser = null;
     let stickerPack = [];
     let emojiPack = [];
+    let posts = [];
 
-    async function loadPacks() {
-        try {
-            const stickerSnapshot = await stickerPacksRef.child('current_pack').once('value');
-            stickerPack = stickerSnapshot.val() || [];
-
-            const emojiSnapshot = await emojiPacksRef.child('current_pack').once('value');
-            emojiPack = emojiSnapshot.val() || [];
-        } catch (err) {
-            console.error("Firebase Packs Load Error", err);
-        }
-        populateStickersInPickers();
-    }
-
-    async function savePacks(type, packData) {
-        try {
-            if (type === 'stickers') {
-                await stickerPacksRef.child('current_pack').set(packData);
-                stickerPack = packData;
-            } else if (type === 'emojis') {
-                await emojiPacksRef.child('current_pack').set(packData);
-                emojiPack = packData;
-            }
-        } catch (err) {
-            console.error("Firebase Packs Save Error", err);
-            alert("Ошибка сохранения паков: " + err.message);
-        }
-    }
-
-
-    // Channel Permissions State (Firebase controlled)
     let channelPermissions = {
         allowPhotos: true,
         allowVideos: true,
@@ -1954,46 +1792,39 @@
         enabledReactionEmojis: []
     };
 
-    // State & Channel Config (Firebase controlled)
     let channelConfig = {
         name: "Tsuyu Stream",
         avatar: null,
-        subscribers: "18.4K подписчиков"
+        subscribers: "0 пользователей"
     };
 
     let userProfile = {
-        name: "Аноним",
-        avatar: null,
-        uid: null
+        name: "Алексей",
+        avatar: null
     };
-
-    let posts = {}; // Object to store posts fetched from Firebase
-    let currentUser = null; // Firebase Auth user object
 
     let currentTab = 'feed';
     let searchQuery = '';
-    let attachedMediaList = []; // Post attachments
-    let commentAttachedMediaList = []; // Comment attachments
+    let attachedMediaList = [];
+    let commentAttachedMediaList = [];
     let selectedStickerForPost = null;
-    let activePostForComments = null; // Stores post object for current comments screen
-    let activePostIdForComments = null; // Stores post ID for current comments screen
+    let activePostForComments = null;
 
-    // Active Tab in Pickers ('stickers' | 'emojis')
     let currentPostPickerTab = 'stickers';
     let currentCommentPickerTab = 'stickers';
+    let authMode = 'login'; // 'login' | 'register'
 
     // DOM Elements
     const feedContainer = document.getElementById('feed-container');
     const createModal = document.getElementById('create-modal');
+    const authModal = document.getElementById('auth-modal');
     const openCreateModalBtn = document.getElementById('open-create-modal');
     const publishBtn = document.getElementById('publish-btn');
+    const authBtn = document.getElementById('auth-btn');
     const searchToggleBtn = document.getElementById('search-toggle-btn');
     const searchBarWrapper = document.getElementById('search-bar-wrapper');
     const searchInput = document.getElementById('search-input');
     const navItems = document.querySelectorAll('.nav-item[data-tab]');
-    const logoutBtn = document.getElementById('logout-btn');
-    const feedLoadingState = document.getElementById('feed-loading-state');
-    const commentInputArea = document.getElementById('comment-input-area');
 
     const tgMultiFileInput = document.getElementById('tg-multi-file-input');
     const tgFileStatus = document.getElementById('tg-file-status');
@@ -2014,7 +1845,6 @@
     const lightboxContent = document.getElementById('lightbox-content');
     const lightboxCloseBtn = document.getElementById('lightbox-close-btn');
 
-    // Comments Screen DOM
     const tgCommentsScreen = document.getElementById('tg-comments-screen');
     const closeCommentsBtn = document.getElementById('close-comments-btn');
     const originalPostContainer = document.getElementById('original-post-container');
@@ -2024,176 +1854,76 @@
     const tgCommentsSubtitle = document.getElementById('tg-comments-subtitle');
     const tgCommentUserAvatar = document.getElementById('tg-comment-user-avatar');
 
-    // Auth Modal DOM
-    const authModal = document.getElementById('auth-modal');
-    const authModalTitle = document.getElementById('auth-modal-title');
-    const authEmailInput = document.getElementById('auth-email');
-    const authPasswordInput = document.getElementById('auth-password');
-    const authSubmitBtn = document.getElementById('auth-submit-btn');
-    const authLoader = document.getElementById('auth-loader');
-    const toggleAuthModeBtn = document.getElementById('toggle-auth-mode-btn');
-    let isRegisterMode = false;
-
-    // --- Firebase Auth & Data Loading ---
-    auth.onAuthStateChanged(user => {
+    // Authentication Listeners
+    auth.onAuthStateChanged((user) => {
         currentUser = user;
-        updateAuthUI();
         if (user) {
-            userProfile.uid = user.uid;
-            loadUserProfile(user.uid);
-            loadChannelConfig();
-            loadPacks();
-            loadPosts();
-            authModal.classList.remove('open');
+            db.ref(`users/${user.uid}`).on('value', (snap) => {
+                const val = snap.val();
+                if (val) {
+                    userProfile.name = val.name || user.email.split('@')[0];
+                    userProfile.avatar = val.avatar || null;
+                } else {
+                    userProfile.name = user.displayName || user.email.split('@')[0];
+                    db.ref(`users/${user.uid}`).set(userProfile);
+                }
+                updateHeaderUI();
+            });
+            document.getElementById('auth-logout-btn').style.display = 'block';
         } else {
-            userProfile = { name: "Аноним", avatar: null, uid: null };
-            posts = {}; // Clear local posts
-            renderFeed(); // Re-render feed, possibly showing login prompt
-            updateHeaderUI(); // Update header
-            loadPacks(); // Load default (empty) packs for anonymous
-            openAuthModal(); // Prompt for login
+            userProfile = { name: "Гость", avatar: null };
+            document.getElementById('auth-logout-btn').style.display = 'none';
+            updateHeaderUI();
         }
     });
 
-    async function loadUserProfile(uid) {
-        try {
-            const snapshot = await usersRef.child(uid).once('value');
-            const data = snapshot.val();
-            if (data) {
-                userProfile.name = data.name || "Пользователь";
-                userProfile.avatar = data.avatar || null;
-            } else {
-                // Create a default profile if none exists
-                const defaultName = currentUser.email ? currentUser.email.split('@')[0] : "Пользователь";
-                userProfile.name = defaultName.charAt(0).toUpperCase() + defaultName.slice(1);
-                userProfile.avatar = null;
-                await usersRef.child(uid).set(userProfile);
-            }
-        } catch (err) {
-            console.error("Error loading user profile:", err);
-        }
-        updateHeaderUI();
-    }
-
-    async function saveUserProfileToDB() {
-        if (!currentUser) return;
-        try {
-            await usersRef.child(currentUser.uid).update(userProfile);
-            alert('Профиль сохранен!');
-        } catch (err) {
-            console.error("Error saving user profile:", err);
-            alert('Ошибка сохранения профиля: ' + err.message);
-        }
-        updateHeaderUI();
-    }
-
-    async function loadChannelConfig() {
-        try {
-            const snapshot = await channelConfigRef.once('value');
-            const data = snapshot.val();
-            if (data) {
-                channelConfig = data;
-            } else {
-                // Set default config if none exists (only if first time)
-                await channelConfigRef.set(channelConfig);
-            }
+    // Realtime Database Sync Listeners
+    db.ref('channelConfig').on('value', (snap) => {
+        const data = snap.val();
+        if (data) {
+            channelConfig = { ...channelConfig, ...data };
+            if (data.permissions) channelPermissions = { ...channelPermissions, ...data.permissions };
             updateHeaderUI();
-            updateChannelPostReactions();
-        } catch (err) {
-            console.error("Error loading channel config:", err);
-        }
-    }
-
-    async function saveChannelConfigToDB() {
-        try {
-            await channelConfigRef.set(channelConfig);
-            updateChannelPostReactions();
-            alert('Настройки канала сохранены!');
-        } catch (err) {
-            console.error("Error saving channel config:", err);
-            alert('Ошибка сохранения настроек канала: ' + err.message);
-        }
-        updateHeaderUI();
-    }
-
-    function loadPosts() {
-        feedLoadingState.classList.remove('hidden');
-        postsRef.on('value', (snapshot) => {
-            const fetchedPosts = snapshot.val();
-            if (fetchedPosts) {
-                posts = Object.values(fetchedPosts).sort((a, b) => b.timestamp - a.timestamp); // Sort by newest
-            } else {
-                // Add initial post if database is empty
-                posts = [{
-                    id: 'initial_post',
-                    author: channelConfig.name,
-                    authorAvatar: channelConfig.avatar,
-                    time: "10:45",
-                    timestamp: Date.now() - 1800000,
-                    text: "🔥 Добро пожаловать в мессенджер **Tsuyu**! Публикуйте посты, фотографии, музыку и видео без ограничений.",
-                    mediaList: [
-                        { type: 'image', src: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800' }
-                    ],
-                    audioList: [
-                        {
-                            title: "Starboy (Lofi Rain)",
-                            artist: "The Weeknd & Chillhop",
-                            cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=800",
-                            userProvidedCover: null,
-                            src: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3"
-                        }
-                    ],
-                    poll: null,
-                    sticker: null,
-                    reactions: {
-                        heart: { count: 342, emoji: "❤️", isCustom: false, active: true },
-                        cupid: { count: 189, emoji: "💘", isCustom: false, active: false }
-                    },
-                    comments: {}, // Firebase stores comments as object, not array
-                    views: 3410
-                }];
-                postsRef.child('initial_post').set(posts[0]);
-            }
-            updateChannelPostReactions(); // Reapply reactions based on loaded channel config
             renderFeed();
-            feedLoadingState.classList.add('hidden');
-        });
-    }
-
-
-    // --- UI Update Functions ---
-    function updateAuthUI() {
-        if (currentUser) {
-            openCreateModalBtn.style.display = 'flex';
-            logoutBtn.style.display = 'flex';
-            commentInputArea.style.display = 'flex';
-        } else {
-            openCreateModalBtn.style.display = 'none';
-            logoutBtn.style.display = 'none';
-            commentInputArea.style.display = 'none';
         }
-        updateHeaderUI();
-    }
+    });
 
-    // Update Header UI
+    db.ref('stickerPack').on('value', (snap) => {
+        stickerPack = snap.val() || [];
+        populateStickersInPickers();
+    });
+
+    db.ref('emojiPack').on('value', (snap) => {
+        emojiPack = snap.val() || [];
+        populateStickersInPickers();
+    });
+
+    db.ref('posts').on('value', (snap) => {
+        const val = snap.val();
+        if (val) {
+            posts = Object.keys(val).map(key => ({ id: key, ...val[key] })).sort((a,b) => b.timestamp - a.timestamp);
+        } else {
+            posts = [];
+        }
+        renderFeed();
+        if (activePostForComments) {
+            const updated = posts.find(p => p.id === activePostForComments.id);
+            if (updated) {
+                activePostForComments = updated;
+                originalPostContainer.innerHTML = buildPostHTML(activePostForComments, true);
+                renderTGCommentsFeed();
+            }
+        }
+    });
+
+    // Header UI
     function updateHeaderUI() {
         document.getElementById('header-title').textContent = channelConfig.name;
         const avatarEl = document.getElementById('header-avatar');
         if (channelConfig.avatar) {
-            avatarEl.innerHTML = `<img src="${channelConfig.avatar}" alt="Avatar">`;
+            avatarEl.innerHTML = `<img src="${channelConfig.avatar}">`;
         } else {
             avatarEl.innerHTML = escapeHTML(channelConfig.name.substring(0, 2).toUpperCase()) || "TS";
-        }
-
-        // Update comment user avatar
-        if (userProfile.uid) { // Only if logged in
-            if (userProfile.avatar) {
-                tgCommentUserAvatar.innerHTML = `<img src="${userProfile.avatar}" alt="Avatar">`;
-            } else {
-                tgCommentUserAvatar.textContent = escapeHTML(userProfile.name.substring(0, 1).toUpperCase());
-            }
-        } else {
-            tgCommentUserAvatar.innerHTML = 'U'; // Default for anonymous
         }
     }
 
@@ -2240,7 +1970,7 @@
         });
     }
 
-    // Audio Playback Manager
+    // Audio Controls
     let activeAudioElement = null;
 
     window.toggleAudio = function(postId, audioIndex) {
@@ -2301,7 +2031,7 @@
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
 
-    // Lightbox Fullscreen Viewer
+    // Lightbox Modal
     window.openLightbox = function(src, type) {
         lightboxContent.innerHTML = '';
         if (type === 'video') {
@@ -2330,7 +2060,7 @@
         }
     });
 
-    // Render Media Collage Grid HTML safely
+    // Collage HTML Generator
     function buildCollageHTML(mediaList) {
         if (!mediaList || mediaList.length === 0) return '';
         const count = mediaList.length;
@@ -2355,23 +2085,22 @@
         return `<div class="collage-grid ${gridClass}">${itemsHtml}</div>`;
     }
 
-    // Build Post Card HTML (Sanitized against XSS)
+    // Post HTML Generator
     function buildPostHTML(post, isPinnedInComments = false) {
-        let safeText = renderFormattedText(post.text);
+        let safeText = post.text || '';
 
         let authorAvatarHtml = post.authorAvatar ? 
-            `<img src="${post.authorAvatar}" alt="Avatar">` : 
-            escapeHTML(post.author.substring(0, 2).toUpperCase() || 'TS');
+            `<img src="${post.authorAvatar}">` : 
+            escapeHTML((post.author || 'TS').substring(0, 2).toUpperCase());
 
         let collageHtml = buildCollageHTML(post.mediaList);
 
-        // Render Audio Track List
         let audioListHtml = '';
         if (post.audioList && post.audioList.length > 0) {
             let tracksHtml = post.audioList.map((audio, idx) => {
                 const currentCover = audio.userProvidedCover || audio.cover;
                 let coverContent = currentCover ? 
-                    `<img src="${currentCover}" alt="Cover">` : 
+                    `<img src="${currentCover}">` : 
                     `<svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`;
 
                 return `
@@ -2407,15 +2136,16 @@
 
         let stickerHtml = post.sticker ? `<img class="post-sticker-img" src="${post.sticker}">` : '';
 
-        // Poll Widget
         let pollHtml = '';
         if (post.poll) {
-            const totalVotes = post.poll.options.reduce((sum, opt) => sum + opt.votes, 0);
-            let optionsHtml = post.poll.options.map((opt, idx) => {
-                const percent = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
-                const isVoted = post.poll.userVoted === idx; // Assuming userVoted stores index for the current user
+            const options = post.poll.options || [];
+            const totalVotes = options.reduce((sum, opt) => sum + (opt.votes || 0), 0);
+            let optionsHtml = options.map((opt, idx) => {
+                const votes = opt.votes || 0;
+                const percent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+                const isVoted = post.poll.votes && currentUser && post.poll.votes[currentUser.uid] === idx;
                 return `
-                    <div class="poll-option" onclick="votePoll('${post.id}', ${idx})" ${currentUser ? '' : 'style="pointer-events: none; opacity: 0.6;"'}>
+                    <div class="poll-option" onclick="votePoll('${post.id}', ${idx})">
                         <div class="poll-progress" style="width: ${percent}%"></div>
                         <span>${escapeHTML(opt.text)} ${isVoted ? '✓' : ''}</span>
                         <span class="poll-percent">${percent}%</span>
@@ -2431,14 +2161,16 @@
             `;
         }
 
-        // Reactions (Includes custom reactions enabled by channel owner)
-        let reactionsHtml = Object.keys(post.reactions || {}).map(key => {
-            const r = post.reactions[key];
+        let reactionsObj = post.reactions || {};
+        let reactionsHtml = Object.keys(reactionsObj).map(key => {
+            const r = reactionsObj[key];
+            const users = r.users || {};
+            const active = currentUser && users[currentUser.uid];
             let emojiDisplay = r.isCustom ? `<img class="reaction-emoji-img" src="${r.emoji}">` : `<span>${r.emoji}</span>`;
             return `
-                <button class="reaction-btn ${r.active ? 'active' : ''}" onclick="toggleReaction('${post.id}', '${key}')" ${currentUser ? '' : 'style="pointer-events: none; opacity: 0.6;"'}>
+                <button class="reaction-btn ${active ? 'active' : ''}" onclick="toggleReaction('${post.id}', '${key}')">
                     ${emojiDisplay}
-                    <span>${r.count}</span>
+                    <span>${r.count || 0}</span>
                 </button>
             `;
         }).join('');
@@ -2456,9 +2188,9 @@
                 <div class="post-header">
                     <div class="post-author">
                         <div class="post-author-avatar">${authorAvatarHtml}</div>
-                        <span class="post-author-name">${escapeHTML(post.author)}</span>
+                        <span class="post-author-name">${escapeHTML(post.author || 'Tsuyu')}</span>
                     </div>
-                    <span class="post-time">${escapeHTML(post.time)}</span>
+                    <span class="post-time">${escapeHTML(post.time || '')}</span>
                 </div>
                 <div class="post-content">${safeText}</div>
                 ${collageHtml}
@@ -2472,14 +2204,14 @@
                     </div>
                     <div class="post-views">
                         <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                        <span>${post.views}</span>
+                        <span>${post.views || 1}</span>
                     </div>
                 </div>
             </article>
         `;
     }
 
-    // Render Feed Views
+    // Render Feed View
     function renderFeed() {
         if (currentTab === 'settings') {
             renderSettingsTab();
@@ -2488,17 +2220,15 @@
 
         feedContainer.innerHTML = '';
 
-        let postArray = Object.values(posts);
-        let filteredPosts = postArray.filter(post => {
-            return (post.text && post.text.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                   (post.author && post.author.toLowerCase().includes(searchQuery.toLowerCase()));
+        let filteredPosts = posts.filter(post => {
+            return (post.text || '').toLowerCase().includes(searchQuery.toLowerCase());
         });
 
         if (filteredPosts.length === 0) {
             feedContainer.innerHTML = `
                 <div class="empty-state">
                     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                    <p>Ничего не найдено</p>
+                    <p>Пока нет публикаций в сети</p>
                 </div>
             `;
             return;
@@ -2511,10 +2241,8 @@
         });
     }
 
-    // Render Settings Screen
+    // Render Settings Tab
     function renderSettingsTab() {
-        const curFontName = localStorage.getItem('nexus_custom_font_name');
-
         let emojiSelectHtml = emojiPack.map((emojiSrc, idx) => {
             const isSelected = channelPermissions.enabledReactionEmojis.includes(idx);
             return `
@@ -2526,34 +2254,34 @@
             <div class="settings-card">
                 <div class="settings-card-title">
                     <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-                    <span>Настройки и запреты канала</span>
+                    <span>Настройки и разрешительный режим канала</span>
                 </div>
                 
                 <div class="toggle-item">
                     <label>Разрешить отправку Фото</label>
-                    <input type="checkbox" id="perm-photos" ${channelPermissions.allowPhotos ? 'checked' : ''} ${currentUser ? '' : 'disabled'}>
+                    <input type="checkbox" id="perm-photos" ${channelPermissions.allowPhotos ? 'checked' : ''}>
                 </div>
                 <div class="toggle-item">
                     <label>Разрешить отправку Видео</label>
-                    <input type="checkbox" id="perm-videos" ${channelPermissions.allowVideos ? 'checked' : ''} ${currentUser ? '' : 'disabled'}>
+                    <input type="checkbox" id="perm-videos" ${channelPermissions.allowVideos ? 'checked' : ''}>
                 </div>
                 <div class="toggle-item">
                     <label>Разрешить отправку Аудио</label>
-                    <input type="checkbox" id="perm-audio" ${channelPermissions.allowAudio ? 'checked' : ''} ${currentUser ? '' : 'disabled'}>
+                    <input type="checkbox" id="perm-audio" ${channelPermissions.allowAudio ? 'checked' : ''}>
                 </div>
                 <div class="toggle-item">
                     <label>Разрешить Стикеры</label>
-                    <input type="checkbox" id="perm-stickers" ${channelPermissions.allowStickers ? 'checked' : ''} ${currentUser ? '' : 'disabled'}>
+                    <input type="checkbox" id="perm-stickers" ${channelPermissions.allowStickers ? 'checked' : ''}>
                 </div>
                 <div class="toggle-item">
                     <label>Разрешить Премиум Эмодзи</label>
-                    <input type="checkbox" id="perm-emojis" ${channelPermissions.allowPremiumEmoji ? 'checked' : ''} ${currentUser ? '' : 'disabled'}>
+                    <input type="checkbox" id="perm-emojis" ${channelPermissions.allowPremiumEmoji ? 'checked' : ''}>
                 </div>
 
                 <div class="input-group" style="margin-top: 8px;">
                     <label class="input-label">Доступные Премиум-эмодзи для реакций у постов:</label>
-                    <div class="emoji-select-grid" ${currentUser ? '' : 'style="pointer-events: none; opacity: 0.6;"'}>
-                        ${emojiSelectHtml || '<span style="font-size:11px;color:var(--text-secondary);grid-column:span 6;">Нет премиум эмодзи. Загрузите ниже.</span>'}
+                    <div class="emoji-select-grid">
+                        ${emojiSelectHtml || '<span style="font-size:11px;color:var(--text-secondary);grid-column:span 6;">Загрузите ZIP с премиум эмодзи ниже.</span>'}
                     </div>
                 </div>
 
@@ -2562,17 +2290,17 @@
                         ${channelConfig.avatar ? `<img src="${channelConfig.avatar}">` : escapeHTML(channelConfig.name.substring(0, 2).toUpperCase())}
                     </div>
                     <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
-                        <label class="file-upload-btn-minimal" ${currentUser ? '' : 'style="pointer-events: none; opacity: 0.6;"'}>
+                        <label class="file-upload-btn-minimal">
                             <span>Логотип канала</span>
-                            <input type="file" id="channel-avatar-input" accept="image/*" style="display: none;" ${currentUser ? '' : 'disabled'}>
+                            <input type="file" id="channel-avatar-input" accept="image/*" style="display: none;">
                         </label>
                     </div>
                 </div>
                 <div class="input-group">
                     <label class="input-label">Название канала</label>
-                    <input type="text" class="text-input" id="channel-name-input" value="${escapeHTML(channelConfig.name)}" ${currentUser ? '' : 'disabled'}>
+                    <input type="text" class="text-input" id="channel-name-input" value="${escapeHTML(channelConfig.name)}">
                 </div>
-                <button class="btn-primary" id="save-channel-btn" style="padding: 10px;" ${currentUser ? '' : 'disabled'}>Сохранить настройки канала</button>
+                <button class="btn-primary" id="save-channel-btn" style="padding: 10px;">Сохранить в Firebase RTDB</button>
             </div>
 
             <div class="settings-card">
@@ -2581,17 +2309,17 @@
                     <span>Стикерпак Tsuyu (.zip)</span>
                 </div>
                 <div class="input-group">
-                    <label class="input-label">Загрузить ZIP архив со стикерами из проводника</label>
-                    <label class="file-upload-btn-minimal" ${currentUser ? '' : 'style="pointer-events: none; opacity: 0.6;"'}>
+                    <label class="input-label">Загрузить ZIP архив со стикерами</label>
+                    <label class="file-upload-btn-minimal">
                         <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
                         <span id="zip-file-text">Выбрать ZIP архив стикеров</span>
-                        <input type="file" id="zip-sticker-input" accept=".zip" style="display: none;" ${currentUser ? '' : 'disabled'}>
+                        <input type="file" id="zip-sticker-input" accept=".zip" style="display: none;">
                     </label>
                 </div>
                 <div id="sticker-status-info" style="font-size: 12px; color: var(--text-secondary);">
                     Загружено стикеров: ${stickerPack.length} шт.
                 </div>
-                <button class="btn-primary" id="reset-stickers-btn" style="padding: 10px; background-color: var(--surface-hover); color: var(--danger); border: 1px solid var(--border);" ${currentUser ? '' : 'disabled'}>Сбросить стикерпак</button>
+                <button class="btn-primary" id="reset-stickers-btn" style="padding: 10px; background-color: var(--surface-hover); color: var(--danger); border: 1px solid var(--border);">Сбросить стикерпак</button>
             </div>
 
             <div class="settings-card">
@@ -2601,97 +2329,76 @@
                 </div>
                 <div class="input-group">
                     <label class="input-label">Загрузить ZIP архив со статичными премиум эмодзи</label>
-                    <label class="file-upload-btn-minimal" ${currentUser ? '' : 'style="pointer-events: none; opacity: 0.6;"'}>
+                    <label class="file-upload-btn-minimal">
                         <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
                         <span id="zip-emoji-text">Выбрать ZIP эмодзи</span>
-                        <input type="file" id="zip-emoji-input" accept=".zip" style="display: none;" ${currentUser ? '' : 'disabled'}>
+                        <input type="file" id="zip-emoji-input" accept=".zip" style="display: none;">
                     </label>
                 </div>
                 <div id="emoji-status-info" style="font-size: 12px; color: var(--text-secondary);">
                     Загружено эмодзи: ${emojiPack.length} шт.
                 </div>
-                <button class="btn-primary" id="reset-emojis-btn" style="padding: 10px; background-color: var(--surface-hover); color: var(--danger); border: 1px solid var(--border);" ${currentUser ? '' : 'disabled'}>Сбросить эмодзи</button>
-            </div>
-
-            <div class="settings-card">
-                <div class="settings-card-title">
-                    <svg viewBox="0 0 24 24"><path d="M9.93 13.5h4.14L12 7.98zM20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-4.05 16.5-1.14-3H9.17l-1.12 3H5.96l5.11-13h1.86l5.11 13h-2.09z"/></svg>
-                    <span>Шрифт приложения</span>
-                </div>
-                <div class="input-group">
-                    <label class="input-label">Загрузить шрифт из проводника (.ttf, .otf, .woff)</label>
-                    <label class="file-upload-btn-minimal" ${currentUser ? '' : 'style="pointer-events: none; opacity: 0.6;"'}>
-                        <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
-                        <span id="font-file-text">${curFontName ? escapeHTML(curFontName) : 'Выбрать файл шрифта'}</span>
-                        <input type="file" id="custom-font-input" accept=".ttf,.otf,.woff,.woff2" style="display: none;" ${currentUser ? '' : 'disabled'}>
-                    </label>
-                </div>
-                <button class="btn-primary" id="reset-font-btn" style="padding: 10px; background-color: var(--surface-hover); color: var(--danger); border: 1px solid var(--border);" ${currentUser ? '' : 'disabled'}>Сбросить шрифт</button>
             </div>
 
             <div class="settings-card">
                 <div class="settings-card-title">
                     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                    <span>Профиль пользователя</span>
+                    <span>Мой онлайн профиль</span>
                 </div>
                 <div class="avatar-edit-box">
                     <div class="avatar-preview-lg" id="user-avatar-display">
                         ${userProfile.avatar ? `<img src="${userProfile.avatar}">` : escapeHTML(userProfile.name.substring(0, 1).toUpperCase())}
                     </div>
                     <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
-                        <label class="file-upload-btn-minimal" ${currentUser ? '' : 'style="pointer-events: none; opacity: 0.6;"'}>
+                        <label class="file-upload-btn-minimal">
                             <span>Изменить аватар</span>
-                            <input type="file" id="user-avatar-input" accept="image/*" style="display: none;" ${currentUser ? '' : 'disabled'}>
+                            <input type="file" id="user-avatar-input" accept="image/*" style="display: none;">
                         </label>
                     </div>
                 </div>
                 <div class="input-group">
-                    <label class="input-label">Имя в комментариях</label>
-                    <input type="text" class="text-input" id="user-name-input" value="${escapeHTML(userProfile.name)}" ${currentUser ? '' : 'disabled'}>
+                    <label class="input-label">Имя пользователя</label>
+                    <input type="text" class="text-input" id="user-name-input" value="${escapeHTML(userProfile.name)}">
                 </div>
-                <button class="btn-primary" id="save-user-profile-btn" style="padding: 10px;" ${currentUser ? '' : 'disabled'}>Сохранить профиль</button>
+                <button class="btn-primary" id="save-user-profile-btn" style="padding: 10px;">Сохранить профиль</button>
             </div>
         `;
 
-        // Toggle Reaction Emojis
         window.toggleReactionEmojiPermission = function(idx) {
-            if (!currentUser) { alert("Войдите, чтобы изменить настройки."); return; }
             const pos = channelPermissions.enabledReactionEmojis.indexOf(idx);
             if (pos > -1) {
                 channelPermissions.enabledReactionEmojis.splice(pos, 1);
             } else {
                 channelPermissions.enabledReactionEmojis.push(idx);
             }
-            saveChannelConfigToDB(); // Save updated permissions
+            db.ref('channelConfig/permissions').set(channelPermissions);
             renderSettingsTab();
         };
 
-        // Save Channel Settings & Restrictions
-        document.getElementById('save-channel-btn').addEventListener('click', async () => {
-            if (!currentUser) { alert("Войдите, чтобы изменить настройки."); return; }
-            channelConfig.permissions = {
-                allowPhotos: document.getElementById('perm-photos').checked,
-                allowVideos: document.getElementById('perm-videos').checked,
-                allowAudio: document.getElementById('perm-audio').checked,
-                allowStickers: document.getElementById('perm-stickers').checked,
-                allowPremiumEmoji: document.getElementById('perm-emojis').checked,
-                enabledReactionEmojis: channelPermissions.enabledReactionEmojis
-            };
-            const channelNameVal = document.getElementById('channel-name-input').value.trim();
-            if (channelNameVal) {
-                channelConfig.name = channelNameVal;
-            }
-            await saveChannelConfigToDB();
+        document.getElementById('save-channel-btn').addEventListener('click', () => {
+            channelPermissions.allowPhotos = document.getElementById('perm-photos').checked;
+            channelPermissions.allowVideos = document.getElementById('perm-videos').checked;
+            channelPermissions.allowAudio = document.getElementById('perm-audio').checked;
+            channelPermissions.allowStickers = document.getElementById('perm-stickers').checked;
+            channelPermissions.allowPremiumEmoji = document.getElementById('perm-emojis').checked;
+
+            const nameVal = document.getElementById('channel-name-input').value.trim();
+            if (nameVal) channelConfig.name = nameVal;
+
+            db.ref('channelConfig').set({
+                name: channelConfig.name,
+                avatar: channelConfig.avatar,
+                permissions: channelPermissions
+            });
+            alert('Настройки канала сохранены в Firebase RTDB!');
         });
 
-        // Sticker ZIP Unzipper
         document.getElementById('zip-sticker-input').addEventListener('change', async (e) => {
-            if (!currentUser) { alert("Войдите, чтобы загрузить стикеры."); return; }
             const file = e.target.files[0];
             if (!file) return;
 
             const btnText = document.getElementById('zip-file-text');
-            btnText.textContent = "Распаковка...";
+            btnText.textContent = "Загрузка...";
 
             try {
                 const zip = await JSZip.loadAsync(file);
@@ -2713,26 +2420,20 @@
                 }
 
                 if (extracted.length > 0) {
-                    await savePacks('stickers', extracted);
-                    document.getElementById('sticker-status-info').textContent = `Загружено стикеров: ${stickerPack.length} шт.`;
-                    btnText.textContent = file.name;
-                    populateStickersInPickers();
-                    alert(`Успешно распаковано ${stickerPack.length} стикеров!`);
+                    await db.ref('stickerPack').set(extracted);
+                    alert(`Загружено ${extracted.length} стикеров в Firebase!`);
                 }
             } catch (err) {
-                alert("Ошибка распаковки: " + err.message);
-                btnText.textContent = "Выбрать ZIP архив";
+                alert("Ошибка распаковки ZIP: " + err.message);
             }
         });
 
-        // Premium Emoji ZIP Unzipper
         document.getElementById('zip-emoji-input').addEventListener('change', async (e) => {
-            if (!currentUser) { alert("Войдите, чтобы загрузить эмодзи."); return; }
             const file = e.target.files[0];
             if (!file) return;
 
             const btnText = document.getElementById('zip-emoji-text');
-            btnText.textContent = "Распаковка...";
+            btnText.textContent = "Загрузка...";
 
             try {
                 const zip = await JSZip.loadAsync(file);
@@ -2754,141 +2455,58 @@
                 }
 
                 if (extracted.length > 0) {
-                    await savePacks('emojis', extracted);
-                    document.getElementById('emoji-status-info').textContent = `Загружено эмодзи: ${emojiPack.length} шт.`;
-                    btnText.textContent = file.name;
-                    populateStickersInPickers();
-                    renderSettingsTab();
-                    alert(`Успешно распаковано ${emojiPack.length} премиум эмодзи!`);
+                    await db.ref('emojiPack').set(extracted);
+                    alert(`Загружено ${extracted.length} премиум эмодзи в Firebase!`);
                 }
             } catch (err) {
-                alert("Ошибка распаковки: " + err.message);
-                btnText.textContent = "Выбрать ZIP эмодзи";
+                alert("Ошибка распаковки ZIP: " + err.message);
             }
         });
 
         document.getElementById('reset-stickers-btn').addEventListener('click', async () => {
-            if (!currentUser) { alert("Войдите, чтобы сбросить стикеры."); return; }
-            await savePacks('stickers', []);
-            document.getElementById('sticker-status-info').textContent = `Загружено стикеров: ${stickerPack.length} шт.`;
-            populateStickersInPickers();
-            alert('Стикерпак сброшен.');
+            await db.ref('stickerPack').remove();
+            alert('Стикерпак очищен!');
         });
 
-        document.getElementById('reset-emojis-btn').addEventListener('click', async () => {
-            if (!currentUser) { alert("Войдите, чтобы сбросить эмодзи."); return; }
-            await savePacks('emojis', []);
-            document.getElementById('emoji-status-info').textContent = `Загружено эмодзи: ${emojiPack.length} шт.`;
-            populateStickersInPickers();
-            alert('Премиум эмодзи сброшены.');
-        });
-
-        // Font & Profile Listeners
-        document.getElementById('custom-font-input').addEventListener('change', (e) => {
-            if (!currentUser) { alert("Войдите, чтобы загрузить шрифт."); return; }
+        document.getElementById('user-avatar-input').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (evt) => {
-                    localStorage.setItem('nexus_custom_font', evt.target.result);
-                    localStorage.setItem('nexus_custom_font_name', file.name);
-                    applyCustomFont(evt.target.result, file.name);
-                    document.getElementById('font-file-text').textContent = file.name;
-                    alert('Шрифт применён!');
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        document.getElementById('reset-font-btn').addEventListener('click', () => {
-            if (!currentUser) { alert("Войдите, чтобы сбросить шрифт."); return; }
-            localStorage.removeItem('nexus_custom_font');
-            localStorage.removeItem('nexus_custom_font_name');
-            const fontStyle = document.getElementById('dynamic-font-style');
-            if (fontStyle) fontStyle.remove();
-            alert('Шрифт сброшен.');
-        });
-
-        document.getElementById('user-avatar-input').addEventListener('change', (e) => {
-            if (!currentUser) { alert("Войдите, чтобы изменить аватар."); return; }
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = async (evt) => {
                     userProfile.avatar = evt.target.result;
                     document.getElementById('user-avatar-display').innerHTML = `<img src="${userProfile.avatar}">`;
-                    await saveUserProfileToDB();
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        document.getElementById('save-user-profile-btn').addEventListener('click', async () => {
-            if (!currentUser) { alert("Войдите, чтобы сохранить профиль."); return; }
-            const nameVal = document.getElementById('user-name-input').value.trim();
-            if (nameVal) {
-                userProfile.name = nameVal;
-                await saveUserProfileToDB();
+        document.getElementById('save-user-profile-btn').addEventListener('click', () => {
+            if (!currentUser) {
+                alert('Сначала войдите в аккаунт!');
+                authModal.classList.add('open');
+                return;
             }
+            const nameVal = document.getElementById('user-name-input').value.trim();
+            if (nameVal) userProfile.name = nameVal;
+
+            db.ref(`users/${currentUser.uid}`).set(userProfile);
+            alert('Профиль сохранён в сети!');
         });
 
         document.getElementById('channel-avatar-input').addEventListener('change', (e) => {
-            if (!currentUser) { alert("Войдите, чтобы изменить логотип."); return; }
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = async (evt) => {
+                reader.onload = (evt) => {
                     channelConfig.avatar = evt.target.result;
                     document.getElementById('channel-avatar-display').innerHTML = `<img src="${channelConfig.avatar}">`;
-                    await saveChannelConfigToDB();
                 };
                 reader.readAsDataURL(file);
             }
         });
     }
 
-    // Update Post Reactions with Custom Emojis enabled by Channel Owner
-    function updateChannelPostReactions() {
-        // Create a temporary reactions object to apply to all posts
-        const baseReactions = {
-            heart: { count: 0, emoji: "❤️", isCustom: false, active: false },
-            cupid: { count: 0, emoji: "💘", isCustom: false, active: false }
-        };
-
-        (channelConfig.permissions?.enabledReactionEmojis || []).forEach(idx => {
-            if (emojiPack[idx]) {
-                baseReactions[`custom_${idx}`] = {
-                    count: 0,
-                    emoji: emojiPack[idx],
-                    isCustom: true,
-                    active: false
-                };
-            }
-        });
-
-        // Apply these reactions to all posts, preserving active state and existing counts if possible
-        let updatedPosts = {};
-        for (const postId in posts) {
-            if (posts.hasOwnProperty(postId)) {
-                let currentPost = { ...posts[postId] };
-                let newReactions = { ...baseReactions }; // Start with configured reactions
-
-                // Merge existing reaction counts and active state
-                for (const key in newReactions) {
-                    if (currentPost.reactions && currentPost.reactions[key]) {
-                        newReactions[key].count = currentPost.reactions[key].count;
-                        newReactions[key].active = currentPost.reactions[key].active;
-                    }
-                }
-                currentPost.reactions = newReactions;
-                updatedPosts[postId] = currentPost;
-            }
-        }
-        posts = updatedPosts; // Update the global posts object
-        renderFeed();
-    }
-
-    // Populate Sticker/Emoji Pickers
+    // Populate Pickers
     function populateStickersInPickers() {
         window.switchPickerTab = (context, tab) => {
             if (context === 'post') {
@@ -2915,7 +2533,7 @@
 
         if (currentTab === 'stickers') {
             if (!stickerPack || stickerPack.length === 0) {
-                gridEl.innerHTML = `<div style="font-size: 11px; color: var(--text-secondary); grid-column: span 4; text-align: center; padding: 20px 0;">Нет стикеров. Загрузите ZIP архив в настройках.</div>`;
+                gridEl.innerHTML = `<div style="font-size:11px;color:var(--text-secondary);grid-column:span 4;text-align:center;padding:15px 0;">Загрузите ZIP архив со стикерами в настройках профиля.</div>`;
             } else {
                 gridEl.innerHTML = stickerPack.map((st, idx) => `
                     <img class="sticker-item" src="${st}" onclick="selectItem('${context}', 'sticker', ${idx})">
@@ -2923,23 +2541,21 @@
             }
         } else {
             if (!emojiPack || emojiPack.length === 0) {
-                gridEl.innerHTML = `<div style="font-size: 11px; color: var(--text-secondary); grid-column: span 4; text-align: center; padding: 20px 0;">Нет премиум эмодзи. Загрузите ZIP архив в настройках.</div>`;
+                gridEl.innerHTML = `<div style="font-size:11px;color:var(--text-secondary);grid-column:span 4;text-align:center;padding:15px 0;">Загрузите ZIP архив с эмодзи в настройках профиля.</div>`;
             } else {
                 gridEl.innerHTML = emojiPack.map((em, idx) => `
-                    <img class="sticker-item" src="${em}" onclick="selectItem('${context}', 'emoji', ${idx})" alt="emoji-${idx}">
+                    <img class="sticker-item" src="${em}" onclick="selectItem('${context}', 'emoji', ${idx})">
                 `).join('');
             }
         }
     }
 
     window.selectItem = function(context, type, idx) {
-        if (!currentUser) { alert("Войдите, чтобы использовать стикеры или эмодзи."); return; }
-
-        if (type === 'sticker' && !channelConfig.permissions.allowStickers) {
+        if (type === 'sticker' && !channelPermissions.allowStickers) {
             alert("Стикеры запрещены владельцем канала.");
             return;
         }
-        if (type === 'emoji' && !channelConfig.permissions.allowPremiumEmoji) {
+        if (type === 'emoji' && !channelPermissions.allowPremiumEmoji) {
             alert("Премиум эмодзи запрещены владельцем канала.");
             return;
         }
@@ -2950,146 +2566,153 @@
                 postStickerPicker.classList.add('hidden');
                 tgFileStatus.textContent = "Выбран стикер!";
             } else {
-                const emojiSrc = emojiPack[idx];
-                const editableDiv = document.getElementById('new-post-text');
-                insertHtmlAtCaret(`<img class="inline-emoji-img" src="${emojiSrc}" alt="emoji-${idx}">`, editableDiv);
+                insertEmojiToEditable('new-post-text', emojiPack[idx]);
                 postStickerPicker.classList.add('hidden');
             }
         } else {
-            // Comment context
-            if (!activePostIdForComments) return;
-            const emojiSrc = emojiPack[idx];
-            const editableDiv = document.getElementById('tg-comment-input');
-            insertHtmlAtCaret(`<img class="inline-emoji-img" src="${emojiSrc}" alt="emoji-${idx}">`, editableDiv);
-            commentsStickerPicker.classList.add('hidden');
+            if (type === 'sticker') {
+                if (!activePostForComments) return;
+                const now = new Date();
+                const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                
+                const commentObj = {
+                    id: Date.now().toString(),
+                    name: userProfile.name,
+                    avatar: userProfile.avatar,
+                    text: '',
+                    sticker: stickerPack[idx],
+                    mediaList: [],
+                    time: timeStr,
+                    timestamp: Date.now()
+                };
+
+                db.ref(`posts/${activePostForComments.id}/comments/${commentObj.id}`).set(commentObj);
+                commentsStickerPicker.classList.add('hidden');
+            } else {
+                insertEmojiToEditable('tg-comment-input', emojiPack[idx]);
+                commentsStickerPicker.classList.add('hidden');
+            }
         }
     };
 
     postStickerToggle.addEventListener('click', () => {
-        if (!currentUser) { alert("Войдите, чтобы использовать стикеры или эмодзи."); return; }
-        if (!channelConfig.permissions.allowStickers && !channelConfig.permissions.allowPremiumEmoji) {
-            alert("Стикеры и Премиум Эмодзи запрещены владельцем канала.");
-            return;
-        }
         postStickerPicker.classList.toggle('hidden');
     });
 
     tgCommentStickerToggle.addEventListener('click', () => {
-        if (!currentUser) { alert("Войдите, чтобы использовать стикеры или эмодзи."); return; }
-        if (!channelConfig.permissions.allowStickers && !channelConfig.permissions.allowPremiumEmoji) {
-            alert("Стикеры и Премиум Эмодзи запрещены владельцем канала.");
-            return;
-        }
         commentsStickerPicker.classList.toggle('hidden');
     });
 
-    // Reactions & Poll Interactions
-    window.toggleReaction = async function(postId, reactionKey) {
-        if (!currentUser) { openAuthModal(); return; }
-        const post = posts[Object.keys(posts).find(key => posts[key].id === postId)];
+    // Realtime Reactions Toggle
+    window.toggleReaction = function(postId, reactionKey) {
+        if (!currentUser) {
+            authModal.classList.add('open');
+            return;
+        }
+        const post = posts.find(p => p.id === postId);
         if (!post) return;
 
-        // Ensure post.reactions exists and has the reactionKey
-        if (!post.reactions) post.reactions = {};
-        if (!post.reactions[reactionKey]) {
-            post.reactions[reactionKey] = { count: 0, emoji: emojiPack[reactionKey.replace('custom_', '')], isCustom: true, active: false };
-        }
-
-        const r = post.reactions[reactionKey];
-        if (r.active) {
-            r.active = false;
-            r.count--;
-        } else {
-            r.active = true;
-            r.count++;
-        }
-        await postsRef.child(postId).update({ reactions: post.reactions });
+        const postRef = db.ref(`posts/${postId}/reactions/${reactionKey}`);
+        postRef.transaction((r) => {
+            if (!r) {
+                return {
+                    count: 1,
+                    emoji: reactionKey === 'heart' ? '❤️' : (reactionKey === 'cupid' ? '💘' : ''),
+                    isCustom: reactionKey.startsWith('custom_'),
+                    users: { [currentUser.uid]: true }
+                };
+            }
+            if (!r.users) r.users = {};
+            if (r.users[currentUser.uid]) {
+                delete r.users[currentUser.uid];
+                r.count = Math.max(0, (r.count || 1) - 1);
+            } else {
+                r.users[currentUser.uid] = true;
+                r.count = (r.count || 0) + 1;
+            }
+            return r;
+        });
     };
 
-    window.votePoll = async function(postId, optionIndex) {
-        if (!currentUser) { openAuthModal(); return; }
-        const post = posts[Object.keys(posts).find(key => posts[key].id === postId)];
-        if (!post || !post.poll) return;
-        if (post.poll.userVoted !== null) return; // Only allow one vote
+    // Realtime Poll Voting
+    window.votePoll = function(postId, optionIndex) {
+        if (!currentUser) {
+            authModal.classList.add('open');
+            return;
+        }
+        const pollRef = db.ref(`posts/${postId}/poll`);
+        pollRef.transaction((poll) => {
+            if (!poll) return poll;
+            if (!poll.votes) poll.votes = {};
+            if (poll.votes[currentUser.uid] !== undefined) return poll; // Already voted
 
-        post.poll.userVoted = optionIndex; // Mark that current user voted
-        post.poll.options[optionIndex].votes++;
-        await postsRef.child(postId).update({ poll: post.poll });
+            poll.votes[currentUser.uid] = optionIndex;
+            if (poll.options && poll.options[optionIndex]) {
+                poll.options[optionIndex].votes = (poll.options[optionIndex].votes || 0) + 1;
+            }
+            return poll;
+        });
     };
 
-    // Dedicated Comments Screen
+    // Open Comments Overlay
     window.openTGCommentsScreen = function(postId) {
-        activePostForComments = posts[Object.keys(posts).find(key => posts[key].id === postId)];
-        activePostIdForComments = postId;
+        activePostForComments = posts.find(p => p.id === postId);
         if (!activePostForComments) return;
 
         originalPostContainer.innerHTML = buildPostHTML(activePostForComments, true);
 
-        if (currentUser) {
-            if (userProfile.avatar) {
-                tgCommentUserAvatar.innerHTML = `<img src="${userProfile.avatar}" alt="Avatar">`;
-            } else {
-                tgCommentUserAvatar.textContent = escapeHTML(userProfile.name.substring(0, 1).toUpperCase());
-            }
+        if (userProfile.avatar) {
+            tgCommentUserAvatar.innerHTML = `<img src="${userProfile.avatar}">`;
         } else {
-            tgCommentUserAvatar.innerHTML = 'U'; // Default for anonymous
+            tgCommentUserAvatar.textContent = escapeHTML((userProfile.name || 'U').substring(0, 1).toUpperCase());
         }
-        
-        // Listen for comments changes on this specific post
-        postsRef.child(postId).child('comments').on('value', (snapshot) => {
-            activePostForComments.comments = snapshot.val() || {};
-            renderTGCommentsFeed();
-        });
 
+        renderTGCommentsFeed();
         tgCommentsScreen.classList.add('active');
     };
 
     function closeTGCommentsScreen() {
-        if (activePostIdForComments) {
-            postsRef.child(activePostIdForComments).child('comments').off(); // Detach listener
-        }
         tgCommentsScreen.classList.remove('active');
         activePostForComments = null;
-        activePostIdForComments = null;
         commentAttachedMediaList = [];
         renderCommentAttachmentsPreview();
-        tgCommentInput.innerHTML = '';
     }
 
     closeCommentsBtn.addEventListener('click', closeTGCommentsScreen);
 
     function renderTGCommentsFeed() {
         if (!activePostForComments) return;
-        const commentArray = Object.values(activePostForComments.comments || {});
-        const count = commentArray.length;
-        tgCommentsSubtitle.textContent = `${count} ${pluralizeComments(count)}`;
+        const commentsObj = activePostForComments.comments || {};
+        const commentsArr = Object.keys(commentsObj).map(k => commentsObj[k]).sort((a,b) => a.timestamp - b.timestamp);
+        
+        tgCommentsSubtitle.textContent = `${commentsArr.length} комментариев`;
 
-        if (count === 0) {
+        if (commentsArr.length === 0) {
             commentsFeedContainer.innerHTML = `
                 <div class="empty-state" style="padding: 30px 0;">
                     <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
-                    <p>Пока нет комментариев. Напишите первым!</p>
+                    <p>Будьте первым, кто оставит комментарий!</p>
                 </div>
             `;
             return;
         }
 
-        commentsFeedContainer.innerHTML = commentArray.map(c => {
-            const avatarHtml = c.avatar ? `<img src="${c.avatar}">` : escapeHTML(c.name.substring(0, 1).toUpperCase());
+        commentsFeedContainer.innerHTML = commentsArr.map(c => {
+            const avatarHtml = c.avatar ? `<img src="${c.avatar}">` : escapeHTML((c.name || 'U').substring(0, 1).toUpperCase());
             const commentMediaHtml = buildCollageHTML(c.mediaList);
-            let safeCommentText = renderFormattedText(c.text);
-            let commentStickerHtml = c.sticker ? `<img class="post-sticker-img" src="${c.sticker}">` : '';
+            let safeCommentText = c.text || '';
+            let stickerHtml = c.sticker ? `<img class="post-sticker-img" src="${c.sticker}">` : '';
 
             return `
                 <div class="comment-item">
                     <div class="comment-avatar">${avatarHtml}</div>
                     <div class="comment-body">
                         <div class="comment-header">
-                            <span class="comment-name">${escapeHTML(c.name)}</span>
-                            <span class="comment-time">${escapeHTML(c.time)}</span>
+                            <span class="comment-name">${escapeHTML(c.name || 'Пользователь')}</span>
+                            <span class="comment-time">${escapeHTML(c.time || '')}</span>
                         </div>
-                        ${safeCommentText ? `<div class="comment-text">${safeCommentText}</div>` : ''}
-                        ${commentStickerHtml}
+                        <div class="comment-text">${safeCommentText}</div>
+                        ${stickerHtml}
                         ${commentMediaHtml}
                     </div>
                 </div>
@@ -3097,31 +2720,15 @@
         }).join('');
     }
 
-    function pluralizeComments(n) {
-        if (n % 10 === 1 && n % 100 !== 11) return 'комментарий';
-        if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'комментария';
-        return 'комментариев';
-    }
-
-    // Comment Input & Attachments Handling (📎 Paperclip in Comments)
+    // Comment Multi-file Attachments
     commentMultiFileInput.addEventListener('change', async (e) => {
-        if (!currentUser) { alert("Войдите, чтобы прикреплять файлы."); return; }
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
         for (let file of files) {
-            if (file.type.startsWith('image/') && !channelConfig.permissions.allowPhotos) {
-                alert("Отправка фото запрещена владельцем канала.");
-                continue;
-            }
-            if (file.type.startsWith('video/') && !channelConfig.permissions.allowVideos) {
-                alert("Отправка видео запрещена владельцем канала.");
-                continue;
-            }
-            if ((file.type.startsWith('audio/') || file.name.match(/\.(mp3|m4a|flac|wav|ogg)$/i)) && !channelConfig.permissions.allowAudio) {
-                alert("Отправка аудио запрещена владельцем канала.");
-                continue;
-            }
+            if (file.type.startsWith('image/') && !channelPermissions.allowPhotos) continue;
+            if (file.type.startsWith('video/') && !channelPermissions.allowVideos) continue;
+            if ((file.type.startsWith('audio/') || file.name.match(/\.(mp3|m4a|flac|wav|ogg)$/i)) && !channelPermissions.allowAudio) continue;
 
             const dataUrl = await new Promise(res => {
                 const r = new FileReader();
@@ -3129,14 +2736,11 @@
                 r.readAsDataURL(file);
             });
 
-            if (file.type.startsWith('image/')) {
-                commentAttachedMediaList.push({ type: 'image', src: dataUrl });
-            } else if (file.type.startsWith('video/')) {
-                commentAttachedMediaList.push({ type: 'video', src: dataUrl });
-            } else if (file.type.startsWith('audio/')) {
-                commentAttachedMediaList.push({ type: 'audio', src: dataUrl });
-            }
+            if (file.type.startsWith('image/')) commentAttachedMediaList.push({ type: 'image', src: dataUrl });
+            else if (file.type.startsWith('video/')) commentAttachedMediaList.push({ type: 'video', src: dataUrl });
+            else if (file.type.startsWith('audio/')) commentAttachedMediaList.push({ type: 'audio', src: dataUrl });
         }
+
         renderCommentAttachmentsPreview();
     });
 
@@ -3162,69 +2766,45 @@
         renderCommentAttachmentsPreview();
     };
 
-    // Auto-expand comment input (for contenteditable div)
-    tgCommentInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 90) + 'px';
-    });
-
-    tgSendCommentBtn.addEventListener('click', async () => {
-        if (!currentUser) { openAuthModal(); return; }
-        const textContent = contentEditableToText(tgCommentInput); // Get text content with emoji markers
-        const sticker = selectedStickerForPost; // Check if a sticker was selected
-
-        if ((!textContent && commentAttachedMediaList.length === 0 && !sticker) || !activePostIdForComments) {
-            alert("Введите текст, выберите файлы или стикер!");
+    // Send Comment to RTDB
+    tgSendCommentBtn.addEventListener('click', () => {
+        if (!currentUser) {
+            authModal.classList.add('open');
             return;
         }
+        const text = getCleanHTMLContent('tg-comment-input').trim();
+        if ((!text && commentAttachedMediaList.length === 0) || !activePostForComments) return;
 
         const now = new Date();
         const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        const commentId = Date.now().toString();
 
-        const newComment = {
-            id: database.ref().push().key, // Generate unique ID for comment
+        const commentObj = {
+            id: commentId,
             name: userProfile.name,
             avatar: userProfile.avatar,
-            text: textContent,
-            sticker: sticker,
+            text: text,
             mediaList: [...commentAttachedMediaList],
             time: timeStr,
             timestamp: Date.now()
         };
 
-        try {
-            await postsRef.child(activePostIdForComments).child('comments').child(newComment.id).set(newComment);
-            tgCommentInput.innerHTML = '';
-            tgCommentInput.style.height = '24px';
-            commentAttachedMediaList = [];
-            selectedStickerForPost = null; // Clear selected sticker after sending
-            renderCommentAttachmentsPreview();
-            // renderTGCommentsFeed will be called by the Firebase listener
-        } catch (error) {
-            console.error("Error sending comment:", error);
-            alert("Ошибка при отправке комментария: " + error.message);
-        }
+        db.ref(`posts/${activePostForComments.id}/comments/${commentId}`).set(commentObj);
+
+        document.getElementById('tg-comment-input').innerHTML = '';
+        commentAttachedMediaList = [];
+        renderCommentAttachmentsPreview();
     });
 
-    // Multi-File Post Creation Selection & Restrictions Check
+    // Create Post Attachments
     tgMultiFileInput.addEventListener('change', async (e) => {
-        if (!currentUser) { alert("Войдите, чтобы прикреплять файлы."); return; }
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
         for (let file of files) {
-            if (file.type.startsWith('image/') && !channelConfig.permissions.allowPhotos) {
-                alert("Отправка фото запрещена владельцем канала.");
-                continue;
-            }
-            if (file.type.startsWith('video/') && !channelConfig.permissions.allowVideos) {
-                alert("Отправка видео запрещена владельцем канала.");
-                continue;
-            }
-            if ((file.type.startsWith('audio/') || file.name.match(/\.(mp3|m4a|flac|wav|ogg)$/i)) && !channelConfig.permissions.allowAudio) {
-                alert("Отправка аудио запрещена владельцем канала.");
-                continue;
-            }
+            if (file.type.startsWith('image/') && !channelPermissions.allowPhotos) continue;
+            if (file.type.startsWith('video/') && !channelPermissions.allowVideos) continue;
+            if ((file.type.startsWith('audio/') || file.name.match(/\.(mp3|m4a|flac|wav|ogg)$/i)) && !channelPermissions.allowAudio) continue;
 
             const dataUrl = await new Promise(res => {
                 const r = new FileReader();
@@ -3304,37 +2884,91 @@
         attachedMediaList = [];
         selectedStickerForPost = null;
         tgMultiFileInput.value = '';
-        document.getElementById('new-post-text').innerHTML = ''; // Clear contenteditable
         renderAttachmentsPreviewInModal();
     }
 
-    // Modal Controls
+    // Modal & Auth Sheet Controls
     openCreateModalBtn.addEventListener('click', () => {
-        if (!currentUser) { openAuthModal(); return; }
+        if (!currentUser) {
+            authModal.classList.add('open');
+            return;
+        }
         createModal.classList.add('open');
     });
+
     createModal.addEventListener('click', (e) => {
         if (e.target === createModal) createModal.classList.remove('open');
     });
 
-    // Header channel click -> Settings (Profile)
-    document.getElementById('header-channel-profile').addEventListener('click', () => {
-        navItems.forEach(nav => nav.classList.remove('active'));
-        const settingsNav = document.querySelector('.nav-item[data-tab="settings"]');
-        if (settingsNav) settingsNav.classList.add('active');
-        currentTab = 'settings';
-        renderFeed();
+    authBtn.addEventListener('click', () => {
+        authModal.classList.add('open');
     });
 
-    // Publish New Post
-    publishBtn.addEventListener('click', async () => {
-        if (!currentUser) { openAuthModal(); return; }
-        const textContent = contentEditableToText(document.getElementById('new-post-text')); // Get text content with emoji markers
-        const pollInput = document.getElementById('new-post-poll').value.trim();
-        const sticker = selectedStickerForPost;
+    authModal.addEventListener('click', (e) => {
+        if (e.target === authModal) authModal.classList.remove('open');
+    });
 
-        if (!textContent && attachedMediaList.length === 0 && !sticker) {
-            alert('Введите текст сообщения, выберите файлы через скрепку 📎 или стикер!');
+    // Auth Tabs
+    window.setAuthTab = function(mode) {
+        authMode = mode;
+        if (mode === 'login') {
+            document.getElementById('auth-tab-login').classList.add('active');
+            document.getElementById('auth-tab-register').classList.remove('active');
+            document.getElementById('reg-name-group').style.display = 'none';
+            document.getElementById('auth-submit-btn').textContent = 'Войти';
+        } else {
+            document.getElementById('auth-tab-register').classList.add('active');
+            document.getElementById('auth-tab-login').classList.remove('active');
+            document.getElementById('reg-name-group').style.display = 'flex';
+            document.getElementById('auth-submit-btn').textContent = 'Зарегистрироваться';
+        }
+    };
+
+    // Submit Authentication
+    document.getElementById('auth-submit-btn').addEventListener('click', async () => {
+        const email = document.getElementById('auth-email-input').value.trim();
+        const pass = document.getElementById('auth-password-input').value.trim();
+        const name = document.getElementById('auth-name-input').value.trim();
+
+        if (!email || !pass) {
+            alert('Заполните email и пароль');
+            return;
+        }
+
+        try {
+            if (authMode === 'register') {
+                const res = await auth.createUserWithEmailAndPassword(email, pass);
+                if (name) userProfile.name = name;
+                await db.ref(`users/${res.user.uid}`).set(userProfile);
+                alert('Успешная регистрация!');
+            } else {
+                await auth.signInWithEmailAndPassword(email, pass);
+                alert('Вы вошли в сеть!');
+            }
+            authModal.classList.remove('open');
+        } catch (err) {
+            alert('Ошибка авторизации: ' + err.message);
+        }
+    });
+
+    document.getElementById('auth-logout-btn').addEventListener('click', () => {
+        auth.signOut();
+        alert('Вы вышли из профиля.');
+        authModal.classList.remove('open');
+    });
+
+    // Publish Post to Firebase RTDB
+    publishBtn.addEventListener('click', () => {
+        if (!currentUser) {
+            authModal.classList.add('open');
+            return;
+        }
+
+        const text = getCleanHTMLContent('new-post-text').trim();
+        const pollInput = document.getElementById('new-post-poll').value.trim();
+
+        if (!text && attachedMediaList.length === 0 && !selectedStickerForPost) {
+            alert('Введите текст сообщения, прикрепите файлы или выберите стикер!');
             return;
         }
 
@@ -3345,7 +2979,7 @@
                 pollObj = {
                     question: "Опрос:",
                     options: optionsArr.map(opt => ({ text: opt, votes: 0 })),
-                    userVoted: null // Will be updated per user in RTDB if needed
+                    votes: {}
                 };
             }
         }
@@ -3353,53 +2987,47 @@
         const mediaList = attachedMediaList.filter(m => m.type === 'image' || m.type === 'video');
         const audioList = attachedMediaList.filter(m => m.type === 'audio');
 
-        const newPostId = postsRef.push().key; // Generate unique ID for post
-        const newPost = {
-            id: newPostId,
-            author: userProfile.name, // Use user's name for post author
-            authorAvatar: userProfile.avatar,
-            time: "Только что",
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        const newPostRef = db.ref('posts').push();
+
+        const defaultReactions = {
+            heart: { count: 0, emoji: "❤️", isCustom: false },
+            cupid: { count: 0, emoji: "💘", isCustom: false }
+        };
+
+        const newPostData = {
+            author: userProfile.name || channelConfig.name,
+            authorAvatar: userProfile.avatar || channelConfig.avatar,
+            time: timeStr,
             timestamp: Date.now(),
-            text: textContent,
+            text: text,
             mediaList: mediaList,
             audioList: audioList,
-            sticker: sticker,
+            sticker: selectedStickerForPost,
             poll: pollObj,
-            reactions: { // Default reactions
-                heart: { count: 0, emoji: "❤️", isCustom: false, active: false },
-                cupid: { count: 0, emoji: "💘", isCustom: false, active: false }
-            },
-            comments: {},
+            reactions: defaultReactions,
             views: 1
         };
 
-        // Initialize custom reactions based on channel permissions
-        (channelConfig.permissions?.enabledReactionEmojis || []).forEach(idx => {
-            if (emojiPack[idx]) {
-                newPost.reactions[`custom_${idx}`] = {
-                    count: 0,
-                    emoji: emojiPack[idx],
-                    isCustom: true,
-                    active: false
-                };
-            }
-        });
+        newPostRef.set(newPostData);
 
-        try {
-            await postsRef.child(newPostId).set(newPost);
-            // Reset modal after successful publish
-            document.getElementById('new-post-text').innerHTML = '';
-            document.getElementById('new-post-poll').value = '';
-            clearModalAttachments();
-            createModal.classList.remove('open');
-            // Data will be reloaded by Firebase listener
-        } catch (error) {
-            console.error("Error publishing post:", error);
-            alert("Ошибка при публикации поста: " + error.message);
-        }
+        document.getElementById('new-post-text').innerHTML = '';
+        document.getElementById('new-post-poll').value = '';
+        clearModalAttachments();
+        createModal.classList.remove('open');
     });
 
-    // Search Bar
+    // Navigation Tabs
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            navItems.forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+            currentTab = item.getAttribute('data-tab');
+            renderFeed();
+        });
+    });
+
     searchToggleBtn.addEventListener('click', () => {
         searchBarWrapper.classList.toggle('hidden');
         if (!searchBarWrapper.classList.contains('hidden')) {
@@ -3415,81 +3043,6 @@
         searchQuery = e.target.value;
         renderFeed();
     });
-
-    // Navigation Tabs
-    navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            navItems.forEach(nav => nav.classList.remove('active'));
-            item.classList.add('active');
-            currentTab = item.getAttribute('data-tab');
-            renderFeed();
-        });
-    });
-
-    // --- Authentication Logic ---
-    function openAuthModal() {
-        authModal.classList.add('open');
-    }
-
-    authModal.addEventListener('click', (e) => {
-        if (e.target === authModal) authModal.classList.remove('open');
-    });
-
-    toggleAuthModeBtn.addEventListener('click', () => {
-        isRegisterMode = !isRegisterMode;
-        authModalTitle.textContent = isRegisterMode ? 'Регистрация' : 'Вход';
-        authSubmitBtn.textContent = isRegisterMode ? 'Зарегистрироваться' : 'Войти';
-        toggleAuthModeBtn.textContent = isRegisterMode ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться';
-    });
-
-    authSubmitBtn.addEventListener('click', async () => {
-        const email = authEmailInput.value;
-        const password = authPasswordInput.value;
-
-        if (!email || !password) {
-            alert("Пожалуйста, введите email и пароль.");
-            return;
-        }
-
-        authLoader.classList.remove('hidden');
-        authSubmitBtn.disabled = true;
-
-        try {
-            if (isRegisterMode) {
-                await auth.createUserWithEmailAndPassword(email, password);
-                alert("Регистрация успешна! Вы вошли в аккаунт.");
-            } else {
-                await auth.signInWithEmailAndPassword(email, password);
-                alert("Вход выполнен успешно!");
-            }
-            authModal.classList.remove('open');
-            authEmailInput.value = '';
-            authPasswordInput.value = '';
-        } catch (error) {
-            console.error("Auth error:", error);
-            alert("Ошибка авторизации: " + error.message);
-        } finally {
-            authLoader.classList.add('hidden');
-            authSubmitBtn.disabled = false;
-        }
-    });
-
-    logoutBtn.addEventListener('click', async () => {
-        try {
-            await auth.signOut();
-            alert("Вы вышли из аккаунта.");
-            // onAuthStateChanged will handle UI updates
-        } catch (error) {
-            console.error("Logout error:", error);
-            alert("Ошибка выхода: " + error.message);
-        }
-    });
-
-    // Initial setup - will be triggered by onAuthStateChanged
-    // updateHeaderUI();
-    // initPacks();
-    // updateChannelPostReactions();
-    // renderFeed();
 </script>
 
 </body>
