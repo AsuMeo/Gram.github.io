@@ -4768,8 +4768,7 @@
 
     function convertGoogleDriveUrl(url) {
       if (!url) return '';
-      // Прямые ссылки с поддержкой HTTP Range (Railway, собственные серверы и т.д.)
-      // Оставляем как есть - браузер сам обработает Range заголовки
+      // Прямые ссылки с поддержкой HTTP Range (Railway, собственные серверы, HLS плейлисты)
       if (url.includes('railway.app') || url.includes('localhost') || url.includes('127.0.0.1')) {
         return url;
       }
@@ -4790,7 +4789,7 @@
 
       playerWrap.classList.add('active');
       pTitle.textContent = fullTitle;
-      sourceTag.textContent = rawUrl.startsWith('data:') ? 'BASE64' : (rawUrl.includes('drive.google.com') ? 'GDRIVE' : 'STREAM');
+      sourceTag.textContent = rawUrl.startsWith('data:') ? 'BASE64' : (rawUrl.includes('.m3u8') ? 'HLS' : (rawUrl.includes('drive.google.com') ? 'GDRIVE' : 'RANGE STREAM'));
 
       if (!watchHistory.includes(id)) {
         watchHistory.push(id);
@@ -4802,13 +4801,46 @@
 
       if (hls) { hls.destroy(); hls = null; }
 
-      // HLS потоки (.m3u8) обрабатываем через hls.js
+      // HLS (.m3u8) — hls.js плеер с поддержкой перемотки
       if (finalUrl.includes('.m3u8')) {
         if (Hls.isSupported()) {
-          hls = new Hls();
+          if (hls) { hls.destroy(); hls = null; }
+          hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: false,
+            backBufferLength: 90,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 600,
+            fragLoadingTimeOut: 20000,
+            manifestLoadingTimeOut: 10000,
+            levelLoadingTimeOut: 10000
+          });
           hls.loadSource(finalUrl);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            showSpin(false);
+            video.play().catch(()=>{});
+            updatePlayState(true);
+          });
+          hls.on(Hls.Events.ERROR, (event, data) => {
+            if (data.fatal) {
+              switch(data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  hls.startLoad();
+                  break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  hls.recoverMediaError();
+                  break;
+                default:
+                  showToast('Ошибка HLS потока', 'danger');
+                  break;
+              }
+            }
+          });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          // Нативная поддержка HLS в Safari
+          video.src = finalUrl;
+          video.addEventListener('loadedmetadata', () => {
             showSpin(false);
             video.play().catch(()=>{});
             updatePlayState(true);
@@ -4818,8 +4850,7 @@
           video.play().catch(()=>{});
         }
       } else {
-        // Прямые MP4/WebM и другие файлы — нативная поддержка HTTP Range
-        // Перемотка работает через стандартный Range: bytes=... заголовок
+        // Прямые MP4/WebM — нативная поддержка HTTP Range (перемотка через Range: bytes=...)
         video.src = finalUrl;
         video.play().then(() => {
           showSpin(false);
@@ -5193,7 +5224,9 @@
 
         return `
           <div class="clip-item" data-clip-id="${clip.id}" data-clip-url="${escapeAttr(clip.url)}">
-            <video class="clip-video" src="${escapeAttr(convertGoogleDriveUrl(clip.url))}" loop playsinline webkit-playsinline preload="auto"></video>
+            <video class="clip-video" 
+              ${clip.url.includes('.m3u8') ? `data-hls-src="${escapeAttr(convertGoogleDriveUrl(clip.url))}"` : `src="${escapeAttr(convertGoogleDriveUrl(clip.url))}"`}
+              loop playsinline webkit-playsinline preload="auto" crossorigin="anonymous"></video>
             
             <button class="clip-sound-toggle-btn" onclick="toggleClipSoundGlobal()" title="Включить/выключить звук">
               <svg class="svg-icon" viewBox="0 0 24 24" style="width:16px; height:16px;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
@@ -5278,8 +5311,24 @@
       });
     }
 
-    function setupClipIntersectionObserver() {
+        function setupClipIntersectionObserver() {
       if (clipsIntersectionObserver) clipsIntersectionObserver.disconnect();
+
+      // Инициализируем HLS для клипов с .m3u8
+      clipVideos.forEach(videoEl => {
+        const hlsSrc = videoEl.getAttribute('data-hls-src');
+        if (hlsSrc && Hls.isSupported()) {
+          if (videoEl._hls) { videoEl._hls.destroy(); }
+          const hls = new Hls({
+            enableWorker: true,
+            maxBufferLength: 10,
+            fragLoadingTimeOut: 15000
+          });
+          hls.loadSource(hlsSrc);
+          hls.attachMedia(videoEl);
+          videoEl._hls = hls;
+        }
+      });
 
       clipsIntersectionObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -5316,7 +5365,7 @@
             progBar.style.width = (this.currentTime / this.duration * 100) + '%';
           }
         });
-        
+
         videoEl.addEventListener('click', function(e) {
           e.stopPropagation();
           isClipMuted = !isClipMuted;
@@ -5328,16 +5377,6 @@
           if (this.paused) this.play();
         });
       });
-    }
-
-    function stopClipVideos() {
-      clipVideos.forEach(videoEl => {
-        videoEl.pause();
-        videoEl.currentTime = 0;
-      });
-      if (clipsIntersectionObserver) {
-        clipsIntersectionObserver.disconnect();
-      }
     }
 
     async function toggleClipLike(clipId) {
