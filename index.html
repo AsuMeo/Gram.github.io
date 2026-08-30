@@ -95,7 +95,7 @@
 
     /* GLOBAL ANNOUNCEMENT BANNER - STRICTLY NO GRADIENTS */
     .global-announcement-banner {
-      background-color: var(--accent-color);
+      background-color: #595959;
       color: #ffffff;
       padding: 10px 14px;
       font-size: 0.78rem;
@@ -134,7 +134,7 @@
       padding: 20px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s ease;
+      
     }
 
     .admin-announcement-modal.show {
@@ -150,13 +150,10 @@
       width: 100%;
       overflow: hidden;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
-      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      
     }
 
-    @keyframes modalPop {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
+    
 
     .admin-announcement-img {
       width: 100%;
@@ -178,7 +175,7 @@
       font-weight: 900;
       letter-spacing: 1px;
       text-transform: uppercase;
-      color: var(--accent-color);
+      color: var(--text-dim);
       align-self: flex-start;
     }
 
@@ -190,8 +187,8 @@
     }
 
     .admin-announcement-close {
-      background-color: var(--card);
-      border: 1px solid var(--border);
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
       padding: 10px;
       border-radius: var(--radius-xs);
@@ -213,7 +210,7 @@
       left: 14px;
       right: 14px;
       background-color: rgba(18, 18, 26, 0.98);
-      border: 1px solid var(--accent-color);
+      border: 1px solid var(--border-bright);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
       border-radius: var(--radius-md);
       padding: 14px;
@@ -224,13 +221,10 @@
       gap: 12px;
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      
     }
 
-    @keyframes slideUp {
-      from { transform: translateY(100%); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
+    
 
     .pwa-info {
       display: flex;
@@ -242,7 +236,7 @@
       width: 42px;
       height: 42px;
       border-radius: 12px;
-      background-color: var(--accent-color);
+      background-color: #595959;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -576,24 +570,7 @@
     }
 
     .player-spin {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 40px;
-      height: 40px;
-      margin-top: -20px;
-      margin-left: -20px;
-      border: 3px solid rgba(255, 255, 255, 0.15);
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      display: none;
-      z-index: 5;
-      pointer-events: none;
-    }
-
-    @keyframes spin {
-      100% { transform: rotate(360deg); }
+      display: none !important;
     }
 
     .lock-shield {
@@ -628,9 +605,9 @@
     }
 
     .lock-btn.is-locked {
-      background-color: var(--accent-green);
-      color: #000000;
-      border-color: var(--accent-green);
+      background-color: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.3);
     }
 
     .player-overlay {
@@ -644,7 +621,7 @@
       flex-direction: column;
       justify-content: space-between;
       opacity: 1;
-      transition: opacity 0.15s ease;
+      
       z-index: 10;
     }
 
@@ -668,7 +645,7 @@
       padding: 2px 5px;
       border-radius: 3px;
       background-color: var(--card);
-      color: var(--accent-blue);
+      color: rgba(255, 255, 255, 0.5);
       border: 1px solid var(--border);
       text-transform: uppercase;
       margin-right: 6px;
@@ -696,14 +673,15 @@
       width: 52px;
       height: 52px;
       border-radius: 50%;
-      background-color: #ffffff;
-      border: none;
-      color: #000000;
+      background-color: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       z-index: 2;
+      backdrop-filter: blur(8px);
     }
 
     .center-play-btn:active {
@@ -714,7 +692,7 @@
       width: 22px;
       height: 22px;
       stroke: none;
-      fill: #000;
+      fill: #fff;
     }
 
     .tap-zone {
@@ -728,7 +706,7 @@
       color: rgba(255, 255, 255, 0);
       font-weight: 700;
       font-size: 0.8rem;
-      transition: background-color 0.1s, color 0.1s;
+      
     }
     .tap-l { left: 0; width: 35%; }
     .tap-c { left: 35%; width: 30%; }
@@ -768,7 +746,7 @@
     .timeline-fill {
       height: 100%;
       width: 0%;
-      background-color: var(--accent-color);
+      background-color: #595959;
       position: absolute;
       left: 0;
       top: 0;
@@ -778,7 +756,7 @@
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background-color: var(--accent-color);
+      background-color: #595959;
       position: absolute;
       top: 50%;
       transform: translate(-50%, -50%);
@@ -821,7 +799,7 @@
       background-color: var(--card);
       padding: 2px 6px;
       border-radius: var(--radius-xs);
-      color: var(--text);
+      color: rgba(255, 255, 255, 0.7);
       border: 1px solid var(--border);
     }
 
@@ -863,7 +841,7 @@
       font-weight: 800;
       letter-spacing: 0.8px;
       padding: 2px 6px;
-      background-color: var(--accent-color);
+      background-color: #595959;
       color: #ffffff;
       border-radius: 4px;
       text-transform: uppercase;
@@ -889,9 +867,9 @@
 
     .hero-btn {
       align-self: flex-start;
-      background-color: #ffffff;
-      color: #000000;
-      border: none;
+      background-color: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       padding: 6px 14px;
       border-radius: var(--radius-xs);
       font-weight: 800;
@@ -935,6 +913,22 @@
       background-color: rgba(10, 10, 15, 0.6);
       border-bottom: 1px solid var(--border);
       cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .yt-mobile-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .yt-mobile-card:active {
+      background-color: rgba(18, 18, 26, 0.8);
     }
 
     .yt-mobile-thumb-box {
@@ -1027,7 +1021,7 @@
     }
     .card-progress-fill {
       height: 100%;
-      background-color: var(--accent-color);
+      background-color: #595959;
       width: 0%;
     }
 
@@ -1095,16 +1089,16 @@
     }
 
     .mobile-act-btn.sync-btn {
-      background-color: #ffffff;
-      color: var(--surface);
+      background-color: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
       font-weight: 800;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .mobile-act-btn.danger {
-      background-color: rgba(255, 51, 85, 0.15);
-      border-color: rgba(255, 51, 85, 0.4);
-      color: #ff4d6d;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.6);
     }
 
     .episodes-mobile-box {
@@ -1144,9 +1138,9 @@
     }
 
     .season-tab.active {
-      background-color: #ffffff;
-      color: #000000;
-      border-color: #ffffff;
+      background-color: var(--accent-color);
+      color: #ffffff;
+      border-color: var(--accent-color);
     }
 
     .mobile-ep-list {
@@ -1165,11 +1159,29 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-xs);
       cursor: pointer;
+      position: relative;
+      overflow: hidden;
     }
 
     .mobile-ep-item.now-playing {
       border-left: 3px solid var(--accent-color);
       background-color: var(--card);
+    }
+
+    .mobile-ep-item.now-playing::after {
+      content: '▶';
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent-color);
+      font-size: 0.7rem;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
 
     .mobile-ep-left {
@@ -1231,8 +1243,8 @@
     }
 
     .ep-delete-btn:hover, .ep-delete-btn:active {
-      color: #ff4d6d;
-      background-color: rgba(255, 77, 109, 0.15);
+      color: rgba(255, 255, 255, 0.8);
+      background-color: rgba(255, 255, 255, 0.1);
     }
 
     /* COMMENTS SECTION FOR REGULAR VIDEOS */
@@ -1253,9 +1265,9 @@
     }
 
     .comment-disabled-banner {
-      background-color: rgba(255, 51, 85, 0.1);
-      border: 1px solid rgba(255, 51, 85, 0.3);
-      color: #ff4d6d;
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.5);
       padding: 12px;
       border-radius: var(--radius-xs);
       font-size: 0.8rem;
@@ -1420,7 +1432,7 @@
     }
 
     .timestamp-link:active {
-      background-color: var(--accent-color);
+      background-color: #595959;
       border-color: var(--accent-color);
       color: #ffffff;
     }
@@ -1441,8 +1453,9 @@
       overflow-y: scroll;
       scroll-snap-type: y mandatory;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: contain;
+      overscroll-behavior-y: none;
       scrollbar-width: none;
+      scroll-behavior: auto;
     }
 
     .clips-view::-webkit-scrollbar {
@@ -1452,8 +1465,10 @@
     .clip-item {
       width: 100%;
       height: 100vh;
+      height: 100dvh;
       flex-shrink: 0;
       scroll-snap-align: start;
+      scroll-snap-stop: always;
       position: relative;
       display: flex;
       align-items: center;
@@ -1467,6 +1482,7 @@
       height: 100%;
       object-fit: contain;
       display: block;
+      pointer-events: none;
     }
 
     .clip-progress-bar {
@@ -1474,10 +1490,10 @@
       bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
       left: 0;
       height: 3px;
-      background-color: var(--accent-color);
+      background-color: #595959;
       z-index: 20;
       width: 0%;
-      transition: width 0.1s linear;
+      
     }
 
     .clip-overlay {
@@ -1486,13 +1502,37 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.4) 100%);
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.3) 100%);
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
       padding: 20px 14px calc(var(--bottom-nav-height) + 24px);
       color: #fff;
       pointer-events: none;
+    }
+
+    .clip-sound-wave {
+      position: absolute;
+      bottom: calc(var(--bottom-nav-height) + 60px);
+      left: 14px;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 20px;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .clip-sound-bar {
+      width: 2px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 1px;
+      animation: soundWave 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes soundWave {
+      0% { height: 4px; }
+      100% { height: 16px; }
     }
 
     .clip-info {
@@ -1552,11 +1592,11 @@
     }
 
     .clip-action-btn.liked {
-      color: var(--accent-color);
+      color: #ffffff;
     }
 
     .clip-action-btn.delete-btn-clip {
-      color: #ff4d6d;
+      color: rgba(255, 255, 255, 0.5);
     }
 
     .clip-action-btn .svg-icon {
@@ -1564,7 +1604,7 @@
       height: 30px;
       stroke-width: 2.2;
       filter: drop-shadow(0 2px 8px rgba(0,0,0,0.8));
-      transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      
     }
 
     .clip-action-btn:active .svg-icon {
@@ -1610,7 +1650,7 @@
       justify-content: flex-end;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.25s ease;
+      
     }
 
     .clip-comments-drawer-backdrop.show {
@@ -1631,7 +1671,7 @@
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      
       box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
       padding-bottom: env(safe-area-inset-bottom, 10px);
     }
@@ -1735,7 +1775,7 @@
       cursor: pointer;
       background-color: var(--card);
       border: 1px solid var(--border);
-      transition: transform 0.15s ease;
+      
     }
 
     .arts-masonry .art-card:active {
@@ -1779,7 +1819,7 @@
       width: 52px;
       height: 52px;
       border-radius: 50%;
-      background-color: var(--accent-color);
+      background-color: #595959;
       color: #fff;
       border: none;
       display: flex;
@@ -1787,8 +1827,8 @@
       justify-content: center;
       cursor: pointer;
       z-index: 140;
-      box-shadow: 0 4px 20px rgba(255, 51, 85, 0.5);
-      transition: transform 0.15s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+      
     }
 
     .art-upload-float:active {
@@ -1810,7 +1850,7 @@
       justify-content: center;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s ease;
+      
       padding: 20px;
     }
 
@@ -2028,8 +2068,8 @@
       font-weight: 900;
       padding: 2px 6px;
       border-radius: 4px;
-      background-color: var(--accent-green);
-      color: #000;
+      background-color: rgba(255, 255, 255, 0.15);
+      color: #fff;
       text-transform: uppercase;
     }
 
@@ -2064,11 +2104,11 @@
       height: 100%;
       background-color: var(--accent-green);
       width: 0%;
-      transition: width 0.3s ease;
+      
     }
 
-    .rtdb-progress-fill.warn { background-color: #f59e0b; }
-    .rtdb-progress-fill.danger { background-color: #ff3355; }
+    .rtdb-progress-fill.warn { background-color: rgba(255, 255, 255, 0.3); }
+    .rtdb-progress-fill.danger { background-color: rgba(255, 255, 255, 0.15); }
 
     .admin-stats-grid {
       display: grid;
@@ -2091,11 +2131,11 @@
     .admin-stat-num {
       font-size: 1.4rem;
       font-weight: 900;
-      color: var(--accent-blue);
+      color: rgba(255, 255, 255, 0.8);
     }
 
     .admin-stat-num.highlight {
-      color: var(--accent-green);
+      color: #ffffff;
     }
 
     .admin-stat-lbl {
@@ -2140,7 +2180,7 @@
       cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
       background-color: #334;
-      transition: .2s;
+      
       border-radius: 24px;
       border: 1px solid var(--border);
     }
@@ -2153,12 +2193,12 @@
       left: 2px;
       bottom: 2px;
       background-color: white;
-      transition: .2s;
+      
       border-radius: 50%;
     }
 
     input:checked + .switch-slider {
-      background-color: var(--accent-color);
+      background-color: #595959;
     }
 
     input:checked + .switch-slider:before {
@@ -2171,10 +2211,10 @@
       align-items: center;
       justify-content: space-between;
       padding: 8px 12px;
-      background-color: rgba(0, 230, 118, 0.15);
-      border: 1px solid var(--accent-green);
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: var(--radius-xs);
-      color: var(--accent-green);
+      color: rgba(255, 255, 255, 0.7);
       font-size: 0.75rem;
       font-weight: 800;
       margin-top: 4px;
@@ -2220,7 +2260,10 @@
 
     .b-nav-item.active .svg-icon {
       stroke: var(--accent-color);
+      filter: drop-shadow(0 0 6px rgba(255, 51, 85, 0.5));
     }
+
+
 
     .b-nav-add-wrap {
       display: flex;
@@ -2280,7 +2323,7 @@
       justify-content: center;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.15s ease;
+      
     }
 
     .modal-backdrop.show {
@@ -2427,6 +2470,28 @@
       filter: brightness(1.1);
     }
 
+    /* ===== RIPPLE EFFECT ===== */
+    .ripple {
+      position: relative;
+      overflow: hidden;
+    }
+    .ripple::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s, height 0.3s;
+    }
+    .ripple:active::after {
+      width: 200%;
+      height: 200%;
+    }
+
     /* IMAGE CROPPER CANVAS BOX */
     .cropper-preview-container {
       width: 100%;
@@ -2495,8 +2560,9 @@
     }
 
     .speed-opt.active {
-      border-color: var(--accent-color);
-      color: var(--accent-color);
+      border-color: rgba(255, 255, 255, 0.4);
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.1);
     }
 
     /* SLEEK TOAST */
@@ -2530,7 +2596,7 @@
       gap: 10px;
       opacity: 0;
       transform: translateY(-10px);
-      transition: all 0.2s ease;
+      
     }
 
     .toast-msg.show {
@@ -2539,8 +2605,8 @@
     }
 
     .toast-msg.danger {
-      border-color: rgba(255, 51, 85, 0.6);
-      background-color: rgba(30, 10, 15, 0.96);
+      border-color: rgba(255, 255, 255, 0.2);
+      background-color: rgba(20, 20, 30, 0.96);
     }
 
     .confirm-dialog-backdrop {
@@ -2557,7 +2623,7 @@
       padding: 20px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.15s ease;
+      
     }
 
     .confirm-dialog-backdrop.show {
@@ -2613,7 +2679,7 @@
     }
 
     .confirm-btn.danger {
-      background-color: var(--accent-color);
+      background-color: #595959;
       color: #fff;
     }
 
@@ -2640,21 +2706,72 @@
     }
 
     .action-sheet-btn.danger {
-      background-color: rgba(255, 51, 85, 0.15);
-      border-color: rgba(255, 51, 85, 0.4);
-      color: #ff4d6d;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.6);
     }
 
     #sub-file-input, #cover-file-input, #ep-thumb-file-input, #avatar-file-input, #wallpaper-file-input, #font-file-input, #art-file-input, #base64-media-input { display: none; }
+    /* ===== SHIMMER LOADING (Netflix style) ===== */
+    .shimmer-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 0 14px 16px;
+    }
+    .shimmer-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: linear-gradient(90deg, var(--card) 25%, var(--card-hover) 50%, var(--card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: var(--radius-sm);
+    }
+    .shimmer-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 0 52px;
+    }
+    .shimmer-line {
+      height: 14px;
+      background: linear-gradient(90deg, var(--card) 25%, var(--card-hover) 50%, var(--card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 4px;
+    }
+    .shimmer-line.short { width: 60%; }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ===== RESPONSIVE ADAPTIVE ===== */
+    @media (min-width: 768px) {
+      .app-main { max-width: 600px; margin: 0 auto; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+      .bottom-nav { max-width: 600px; left: 50%; transform: translateX(-50%); border-radius: 14px 14px 0 0; }
+      .modal-backdrop { align-items: center; padding: 20px; }
+      .modal-box { border-radius: 20px !important; }
+    }
+    @media (min-width: 1200px) {
+      .app-main { max-width: 700px; }
+      .bottom-nav { max-width: 700px; }
+    }
+    @media (max-height: 500px) and (orientation: landscape) {
+      .mobile-header { height: 44px; }
+      .bottom-nav { height: 48px; }
+      .hero-banner { height: 120px; }
+    }
+
+    /* ===== WEBVIEW HIDING ===== */
+    ::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+    * { -webkit-tap-highlight-color: transparent !important; -webkit-touch-callout: none !important; -webkit-text-size-adjust: none !important; }
+    img, video { -webkit-user-drag: none !important; }
   </style>
 </head>
 <body>
   <!-- PULL TO REFRESH INDICATOR -->
-  <div id="pullRefreshIndicator" style="position:fixed; top:-50px; left:50%; transform:translateX(-50%); z-index:200; display:flex; align-items:center; justify-content:center; transition:top 0.2s ease;">
-    <div style="width:36px; height:36px; border-radius:50%; background-color:var(--card); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.5);">
-      <svg class="svg-icon" id="pullRefreshIcon" viewBox="0 0 24 24" style="width:18px; height:18px; transition:transform 0.2s;"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-    </div>
-  </div>
+  
 
   <!-- GLOBAL ANNOUNCEMENT BANNER -->
   <div class="global-announcement-banner" id="globalAnnouncementBanner" onclick="openAnnouncementModal()">
@@ -2775,10 +2892,10 @@
     <!-- VIEW 2: WATCH SCREEN -->
     <div id="detailsView" style="display: none;">
       <div class="player-wrap" id="playerWrap">
-        <video class="video-node" id="videoNode" playsinline webkit-playsinline></video>
-        <div class="player-spin" id="playerSpin"></div>
+        <video class="video-node" id="videoNode" playsinline webkit-playsinline crossorigin="anonymous"></video>
+        
         <div class="lock-shield" id="lockShield"></div>
-        <div class="double-tap-heart" id="doubleTapHeart">❤</div>
+        
 
         <div class="lock-pin">
           <button class="lock-btn" id="lockBtn" title="Заблокировать сенсор">
@@ -3189,9 +3306,19 @@
       <div class="form-group" style="margin-top:6px;">
         <label class="form-label">Объявление от админа</label>
         <input type="text" class="form-input" id="adminAnnouncementInput" placeholder="Текст объявления..." style="margin-bottom:8px;">
-        <input type="url" class="form-input" id="adminAnnouncementImageInput" placeholder="Ссылка на картинку (опционально)..." style="margin-bottom:8px;">
+        <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
+          <input type="url" class="form-input" id="adminAnnouncementImageInput" placeholder="Ссылка на картинку (опционально)..." style="flex:1; margin:0;">
+          <input type="file" id="admin-announce-image-input" accept="image/*" style="display:none;">
+          <button class="h-icon-btn" onclick="document.getElementById('admin-announce-image-input').click()" title="Выбрать файл" style="width:38px;height:38px;flex-shrink:0;">
+            <svg class="svg-icon" viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+          </button>
+        </div>
+        <div class="base64-file-badge" id="adminAnnounceImageBadge" style="display:none;">
+          <span>✓ Фото выбрано</span>
+          <button onclick="clearAdminAnnounceImage()" style="background:none; border:none; color:#ff4d6d; font-weight:800; cursor:pointer;">✕</button>
+        </div>
         <div style="display:flex; gap:6px;">
-          <button class="file-btn" onclick="saveAdminAnnouncement()" style="flex:1; background:var(--accent-color); color:#fff; border:none; font-weight:800;">Отправить</button>
+          <button class="file-btn" onclick="saveAdminAnnouncement()" style="flex:1; background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.15); font-weight:800;">Отправить</button>
           <button class="file-btn" onclick="deleteAdminAnnouncement()" style="padding:0 12px; background:rgba(255,51,85,0.2); color:#ff4d6d; border:1px solid rgba(255,51,85,0.4); font-weight:800;">Удалить</button>
         </div>
       </div>
@@ -3518,17 +3645,39 @@
   </div>
 
   <!-- HIDDEN FILE INPUTS -->
-  <input type="file" id="art-file-input" accept="image/*">
-  <input type="file" id="base64-media-input" accept="video/*">
-  <input type="file" id="sub-file-input" accept=".vtt,.srt">
-  <input type="file" id="cover-file-input" accept="image/*">
-  <input type="file" id="ep-thumb-file-input" accept="image/*">
-  <input type="file" id="avatar-file-input" accept="image/*">
-  <input type="file" id="wallpaper-file-input" accept="image/*">
-  <input type="file" id="font-file-input" accept=".ttf,.woff,.woff2">
+  <input type="file" id="art-file-input" accept="image/*" style="display:none;">
+  <input type="file" id="admin-announce-image-input" accept="image/*" style="display:none;">
+  <input type="file" id="base64-media-input" accept="video/*" style="display:none;">
+  <input type="file" id="sub-file-input" accept=".vtt,.srt" style="display:none;">
+  <input type="file" id="cover-file-input" accept="image/*" style="display:none;">
+  <input type="file" id="ep-thumb-file-input" accept="image/*" style="display:none;">
+  <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
+  <input type="file" id="wallpaper-file-input" accept="image/*" style="display:none;">
+  <input type="file" id="font-file-input" accept=".ttf,.woff,.woff2" style="display:none;">
 
   <!-- JAVASCRIPT ENTERPRISE ENGINE -->
   <script>
+    // ===== WEBVIEW DETECTION =====
+    const isWebView = () => {
+      const ua = navigator.userAgent.toLowerCase();
+      return ua.includes('wv') || ua.includes('webview') || window.Android !== undefined ||
+        (window.webkit && window.webkit.messageHandlers) ||
+        /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(navigator.userAgent);
+    };
+    const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true || localStorage.getItem('tsuyu_app_mode') === 'standalone';
+
+    if (isWebView() || isStandalone()) {
+      document.addEventListener('contextmenu', e => e.preventDefault());
+      localStorage.setItem('pwa_prompt_dismissed', 'true');
+      localStorage.setItem('tsuyu_app_mode', 'standalone');
+    }
+
+    // Android bridge
+    window.TsuyuApp = { isWebView, isStandalone };
+    window.addEventListener('load', () => {
+      if (window.Android && window.Android.onPageLoaded) window.Android.onPageLoaded(document.title);
+    });
     // ==========================================================================
     // 0. SECURITY & UTILITY FUNCTIONS
     // ==========================================================================
@@ -3565,14 +3714,11 @@
       `;
       container.appendChild(toast);
       
-      requestAnimationFrame(() => {
-        toast.classList.add('show');
-      });
-
+      toast.classList.add('show');
       setTimeout(() => {
         toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 250);
-      }, 3200);
+        toast.remove();
+      }, 2000);
     }
 
     let confirmCallback = null;
@@ -3594,15 +3740,14 @@
 
     document.addEventListener('focusin', (e) => {
       if (e.target && e.target.classList.contains('form-input')) {
-        setTimeout(() => {
-          e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 200);
+        e.target.scrollIntoView({ block: 'center' });
       }
     });
 
     // PWA INSTALLATION LOGIC
     let deferredPwaPrompt = null;
     window.addEventListener('beforeinstallprompt', (e) => {
+      if (isWebView()) { e.preventDefault(); return; }
       e.preventDefault();
       deferredPwaPrompt = e;
       if (!localStorage.getItem('pwa_prompt_dismissed')) {
@@ -3626,6 +3771,28 @@
       document.getElementById('pwaInstallCard').style.display = 'none';
       localStorage.setItem('pwa_prompt_dismissed', 'true');
     }
+
+    // ==========================================================================
+    // 0.5. ULTRA-FAST RTDB LOCAL CACHE
+    // ==========================================================================
+    const RTDB_CACHE = {
+      anime: JSON.parse(localStorage.getItem('tsuyu_cache_anime') || 'null'),
+      covers: JSON.parse(localStorage.getItem('tsuyu_cache_covers') || 'null'),
+      arts: JSON.parse(localStorage.getItem('tsuyu_cache_arts') || 'null'),
+      clips: JSON.parse(localStorage.getItem('tsuyu_cache_clips') || 'null'),
+      timestamp: parseInt(localStorage.getItem('tsuyu_cache_time') || '0'),
+
+      isFresh() { return Date.now() - this.timestamp < 300000; }, // 5 min
+
+      save(key, data) {
+        try {
+          localStorage.setItem('tsuyu_cache_' + key, JSON.stringify(data));
+          localStorage.setItem('tsuyu_cache_time', Date.now().toString());
+        } catch(e) {}
+      },
+
+      get(key) { return this[key] || null; }
+    };
 
     // ==========================================================================
     // 1. FIREBASE REALTIME DATABASE & ACCURATE PRESENCE ENGINE
@@ -3903,6 +4070,12 @@
       return null;
     }
 
+    // INSTANT render from cache first
+    if (RTDB_CACHE.get('anime') && RTDB_CACHE.isFresh()) {
+      allAnimeItems = RTDB_CACHE.get('anime');
+      refreshUI();
+    }
+
     animeLibRef.on('value', (snap) => {
       const data = snap.val() || {};
       const parsedItems = [];
@@ -3926,9 +4099,15 @@
         }
       });
       allAnimeItems = parsedItems;
+      RTDB_CACHE.save('anime', parsedItems);
       refreshUI();
       calculateExactRtdbStats();
     });
+
+    if (RTDB_CACHE.get('covers') && RTDB_CACHE.isFresh()) {
+      allCoversData = RTDB_CACHE.get('covers');
+      refreshUI();
+    }
 
     coversRef.on('value', (snap) => {
       const data = snap.val() || {};
@@ -3938,12 +4117,19 @@
           allCoversData[k] = { coverUrl: data[k].coverUrl || data[k].cover, path: `anime_covers/${k}` };
         }
       });
+      RTDB_CACHE.save('covers', allCoversData);
       refreshUI();
     });
+
+    if (RTDB_CACHE.get('arts') && RTDB_CACHE.isFresh()) {
+      allArtsItems = RTDB_CACHE.get('arts');
+      if (showingArtsOnly) renderArtsGallery();
+    }
 
     artsRef.on('value', (snap) => {
       const data = snap.val() || {};
       allArtsItems = Object.keys(data).map(k => ({ id: k, ...data[k] })).sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+      RTDB_CACHE.save('arts', allArtsItems);
       if (showingArtsOnly) renderArtsGallery();
     });
 
@@ -3963,6 +4149,8 @@
       document.getElementById('statAnimeCount').textContent = allAnimeItems.filter(i=>!i.isClip).length;
       document.getElementById('statClipsCount').textContent = allAnimeItems.filter(i=>i.isClip).length;
       document.getElementById('statArtsCount').textContent = allArtsItems.length;
+
+
     }
 
     // CONTINUE WATCHING ROW
@@ -4135,7 +4323,11 @@
       const animeItems = allAnimeItems.filter(item => !item.isClip);
 
       if (animeItems.length === 0) {
-        grid.innerHTML = '<div style="text-align:center; padding:40px; font-size:0.8rem; color:var(--text-dim);"><div style="width:32px; height:32px; margin:0 auto 16px; border:3px solid rgba(255,255,255,0.15); border-top-color:#fff; border-radius:50%; animation:spin 0.6s linear infinite;"></div>Загрузка каталога...</div>';
+        grid.innerHTML = `
+          <div class="shimmer-card"><div class="shimmer-thumb"></div><div class="shimmer-lines"><div class="shimmer-line"></div><div class="shimmer-line short"></div></div></div>
+          <div class="shimmer-card"><div class="shimmer-thumb"></div><div class="shimmer-lines"><div class="shimmer-line"></div><div class="shimmer-line short"></div></div></div>
+          <div class="shimmer-card"><div class="shimmer-thumb"></div><div class="shimmer-lines"><div class="shimmer-line"></div><div class="shimmer-line short"></div></div></div>
+        `;
         countText.textContent = '0 тайтлов';
         return;
       }
@@ -4330,13 +4522,16 @@
     function saveAdminAnnouncement() {
       const text = document.getElementById('adminAnnouncementInput').value.trim();
       const imageUrl = document.getElementById('adminAnnouncementImageInput').value.trim();
+      const finalImage = adminAnnounceImageBase64 || imageUrl || null;
       const updates = {};
       if (text) updates.announcement = text;
       else updates.announcement = null;
-      if (imageUrl) updates.announcement_image = imageUrl;
+      if (finalImage) updates.announcement_image = finalImage;
       else updates.announcement_image = null;
 
       settingsRef.update(updates).then(() => {
+        adminAnnounceImageBase64 = null;
+        document.getElementById('adminAnnounceImageBadge').style.display = 'none';
         showToast(text ? 'Объявление опубликовано!' : 'Объявление убрано');
       });
     }
@@ -4344,10 +4539,37 @@
     function deleteAdminAnnouncement() {
       document.getElementById('adminAnnouncementInput').value = '';
       document.getElementById('adminAnnouncementImageInput').value = '';
+      adminAnnounceImageBase64 = null;
+      document.getElementById('adminAnnounceImageBadge').style.display = 'none';
       settingsRef.child('announcement').remove();
       settingsRef.child('announcement_image').remove().then(() => {
         showToast('Объявление удалено');
       });
+    }
+
+    let adminAnnounceImageBase64 = null;
+
+    document.getElementById('admin-announce-image-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Фото слишком большое (>5MB)!', 'danger');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          adminAnnounceImageBase64 = ev.target.result;
+          document.getElementById('adminAnnounceImageBadge').style.display = 'flex';
+          showToast('Фото выбрано');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function clearAdminAnnounceImage() {
+      adminAnnounceImageBase64 = null;
+      document.getElementById('adminAnnounceImageBadge').style.display = 'none';
+      document.getElementById('admin-announce-image-input').value = '';
     }
 
     // ==========================================================================
@@ -4546,6 +4768,11 @@
 
     function convertGoogleDriveUrl(url) {
       if (!url) return '';
+      // Прямые ссылки с поддержкой HTTP Range (Railway, собственные серверы и т.д.)
+      // Оставляем как есть - браузер сам обработает Range заголовки
+      if (url.includes('railway.app') || url.includes('localhost') || url.includes('127.0.0.1')) {
+        return url;
+      }
       if (url.includes('drive.google.com')) {
         const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
         if (match && match[1]) {
@@ -4562,7 +4789,6 @@
       const fullTitle = `${category} — S${season}E${episode}: ${epName}`;
 
       playerWrap.classList.add('active');
-      showSpin(true);
       pTitle.textContent = fullTitle;
       sourceTag.textContent = rawUrl.startsWith('data:') ? 'BASE64' : (rawUrl.includes('drive.google.com') ? 'GDRIVE' : 'STREAM');
 
@@ -4576,6 +4802,7 @@
 
       if (hls) { hls.destroy(); hls = null; }
 
+      // HLS потоки (.m3u8) обрабатываем через hls.js
       if (finalUrl.includes('.m3u8')) {
         if (Hls.isSupported()) {
           hls = new Hls();
@@ -4591,11 +4818,13 @@
           video.play().catch(()=>{});
         }
       } else {
+        // Прямые MP4/WebM и другие файлы — нативная поддержка HTTP Range
+        // Перемотка работает через стандартный Range: bytes=... заголовок
         video.src = finalUrl;
         video.play().then(() => {
           showSpin(false);
           updatePlayState(true);
-        }).catch(() => showSpin(false));
+        }).catch(() => {});
       }
       resetHideTimer();
     }
@@ -4649,17 +4878,14 @@
     centerPlayBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
     bottomPlayBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
 
-    function showSpin(show) { playerSpin.style.display = show ? 'block' : 'none'; }
+    function showSpin(show) { /* RTDB instant - no spinners */ }
 
-    video.addEventListener('waiting', () => showSpin(true));
-    video.addEventListener('playing', () => showSpin(false));
+    // RTDB instant - no artificial spinners
 
     function resetHideTimer() {
       clearTimeout(hideTimeout);
       if (!video.paused && !isLocked) {
-        hideTimeout = setTimeout(() => {
-          playerOverlay.classList.add('hidden');
-        }, 1200);
+        playerOverlay.classList.add('hidden');
       }
     }
 
@@ -4690,20 +4916,11 @@
       e.stopPropagation();
       if (isLocked) return;
       const now = Date.now();
-      if (now - lastDoubleTapTime < 350) {
-        const heart = document.getElementById('doubleTapHeart');
-        heart.classList.remove('animate');
-        void heart.offsetWidth;
-        heart.classList.add('animate');
-        haptic('medium');
-      }
-      lastDoubleTapTime = now;
-      const now2 = Date.now();
-      if (now2 - lastC < 300) {
+      if (now - lastC < 300) {
         togglePlay();
         flash(tapC);
       }
-      lastC = now2;
+      lastC = now;
       resetHideTimer();
     });
 
@@ -4735,7 +4952,7 @@
 
     function flash(el) {
       el.classList.add('active');
-      setTimeout(() => el.classList.remove('active'), 250);
+      el.classList.remove('active');
     }
 
     video.addEventListener('timeupdate', () => {
@@ -4788,11 +5005,14 @@
     document.getElementById('fsBtn').addEventListener('click', (e) => {
       e.stopPropagation();
       if (isLocked) return;
-      if (!document.fullscreenElement) {
-        if (playerWrap.requestFullscreen) playerWrap.requestFullscreen();
+      const el = playerWrap;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        const req = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitEnterFullScreen || el.msRequestFullscreen;
+        if (req) req.call(el);
         if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{});
       } else {
-        if (document.exitFullscreen) document.exitFullscreen();
+        const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+        if (exit) exit.call(document);
         if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
       }
     });
@@ -4982,6 +5202,9 @@
 
             <div class="clip-progress-bar"></div>
             <div class="clip-overlay">
+              <div class="clip-sound-wave" id="soundWave_${clip.id}">
+                ${Array(12).fill(0).map((_,i) => `<div class="clip-sound-bar" style="animation-delay:${i*0.05}s;height:${4+Math.random()*12}px"></div>`).join('')}
+              </div>
               <div class="clip-info">
                 <div class="clip-title">${escapeHtml(clip.name || clip.category)}</div>
                 ${clip.hashtags ? `<div class="clip-meta">${escapeHtml(clip.hashtags)}</div>` : ''}
@@ -5064,7 +5287,7 @@
           const clipItem = videoEl.closest('.clip-item');
           const progBar = clipItem ? clipItem.querySelector('.clip-progress-bar') : null;
 
-          if (entry.isIntersecting && entry.intersectionRatio > 0.75) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
             videoEl.muted = isClipMuted;
             videoEl.play().catch(() => {
               videoEl.muted = true;
@@ -5072,7 +5295,6 @@
             });
             if (progBar) progBar.style.opacity = '1';
 
-            // INCREMENT VIEWS IN REALTIME
             const clipId = clipItem ? clipItem.getAttribute('data-clip-id') : null;
             if (clipId && !sessionViewedClips.has(clipId)) {
               sessionViewedClips.add(clipId);
@@ -5084,7 +5306,7 @@
             if (progBar) progBar.style.opacity = '0';
           }
         });
-      }, { threshold: 0.75 });
+      }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
 
       clipVideos.forEach(videoEl => {
         clipsIntersectionObserver.observe(videoEl);
@@ -5258,14 +5480,71 @@
       }
 
       masonry.innerHTML = filtered.map(art => `
-        <div class="art-card" onclick="openArtLightbox('${escapeAttr(art.url)}', '${escapeAttr(art.title)}', '${escapeAttr(art.author)}')">
+        <div class="art-card"
+             onclick="openArtLightbox('${escapeAttr(art.url)}', '${escapeAttr(art.title)}', '${escapeAttr(art.author)}')"
+             oncontextmenu="event.preventDefault(); deleteArtItem('${art.id}', '${escapeAttr(art.title)}');"
+             ontouchstart="handleArtLongPress(event, '${art.id}', '${escapeAttr(art.title)}')"
+             ontouchend="clearArtLongPress()"
+             onmousedown="handleArtLongPress(event, '${art.id}', '${escapeAttr(art.title)}')"
+             onmouseup="clearArtLongPress()"
+             onmouseleave="clearArtLongPress()">
           <img class="art-card-img" src="${escapeAttr(art.url)}" loading="lazy" alt="${escapeAttr(art.title)}">
+          <button class="art-save-btn" onclick="event.stopPropagation(); toggleSaveArt('${art.id}')" title="Сохранить">
+            <svg class="svg-icon" viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.5;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+          </button>
           <div class="art-card-overlay">
             <div class="art-card-title">${escapeHtml(art.title || 'Аниме Арт')}</div>
             <div class="art-card-author">${escapeHtml(art.author || 'Автор')}</div>
           </div>
         </div>
       `).join('');
+    }
+
+    let artLongPressTimer = null;
+
+    function handleArtLongPress(event, artId, artTitle) {
+      artLongPressTimer = setTimeout(() => {
+        haptic('heavy');
+        deleteArtItem(artId, artTitle);
+      }, 600);
+    }
+
+    function clearArtLongPress() {
+      clearTimeout(artLongPressTimer);
+    }
+
+    function deleteArtItem(artId, artTitle) {
+      showCustomConfirm(
+        'Удалить арт?',
+        `Арт "${artTitle || 'Без названия'}" будет удален из галереи!`,
+        'Удалить',
+        (confirmed) => {
+          if (confirmed) {
+            artsRef.child(artId).remove().then(() => {
+              showToast('Арт удален из галереи');
+              renderArtsGallery();
+            }).catch(err => {
+              showToast('Ошибка удаления: ' + err.message, 'danger');
+            });
+          }
+        }
+      );
+    }
+
+    let savedArts = JSON.parse(localStorage.getItem('tsuyu_saved_arts') || '[]');
+
+    function toggleSaveArt(artId) {
+      const idx = savedArts.indexOf(artId);
+      if (idx > -1) {
+        savedArts.splice(idx, 1);
+        showToast('Удалено из сохраненных');
+      } else {
+        savedArts.push(artId);
+        showToast('Сохранено');
+        haptic('light');
+      }
+      localStorage.setItem('tsuyu_saved_arts', JSON.stringify(savedArts));
+      renderArtsGallery();
     }
 
     function openArtUploadModal() {
@@ -5416,12 +5695,10 @@
     }
 
     function handleCommentTouchStart(event, key, text, author) {
-      longPressTimer = setTimeout(() => {
-        haptic('medium');
-        selectedCommentKey = key;
-        selectedCommentData = text;
-        document.getElementById('commentOptionsModal').classList.add('show');
-      }, 500);
+      haptic('medium');
+      selectedCommentKey = key;
+      selectedCommentData = text;
+      document.getElementById('commentOptionsModal').classList.add('show');
     }
 
     function handleCommentTouchEnd() {
@@ -6117,54 +6394,18 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(drawColorPalette, 200);
+      drawColorPalette();
       updateCacheSizeDisplay();
       if (!localStorage.getItem('user_id')) {
         localStorage.setItem('user_id', 'user_' + Date.now() + Math.random().toString(36).substring(2, 8));
       }
-      initPullToRefresh();
+
       // Auto-show home view on first load
       showCatalogView();
     });
 
     // PULL TO REFRESH
-    function initPullToRefresh() {
-      let startY = 0;
-      let currentY = 0;
-      let isPulling = false;
-      const indicator = document.getElementById('pullRefreshIndicator');
-      const icon = document.getElementById('pullRefreshIcon');
-      const threshold = 80;
-
-      document.addEventListener('touchstart', (e) => {
-        if (window.scrollY <= 0 && !showingClipsOnly) {
-          startY = e.touches[0].clientY;
-          isPulling = true;
-        }
-      }, { passive: true });
-
-      document.addEventListener('touchmove', (e) => {
-        if (!isPulling) return;
-        currentY = e.touches[0].clientY;
-        const diff = currentY - startY;
-        if (diff > 0 && diff < threshold * 2) {
-          indicator.style.top = (diff / 2 - 50) + 'px';
-          icon.style.transform = 'rotate(' + (diff * 2) + 'deg)';
-        }
-      }, { passive: true });
-
-      document.addEventListener('touchend', () => {
-        if (!isPulling) return;
-        const diff = currentY - startY;
-        indicator.style.top = '-50px';
-        icon.style.transform = 'rotate(0deg)';
-        isPulling = false;
-        if (diff > threshold) {
-          showToast('Обновление...');
-          location.reload();
-        }
-      });
-    }
+    
 
     window.addEventListener('resize', () => {
       drawColorPalette();
