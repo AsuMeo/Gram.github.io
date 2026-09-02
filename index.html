@@ -9,94 +9,513 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no">
-  <title>VOLT Stream</title>
+  <title>Meow Stream</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
-    :root { --bg: #000000; --surface: #121212; --surface2: #1a1a1a; --border: #222222; --text: #ffffff; --text-sub: #aaaaaa; --accent: #fe2c55; --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    html, body { width: 100%; height: 100%; background: #000; color: var(--text); font-family: var(--font); overflow: hidden; overscroll-behavior: none; -webkit-overflow-scrolling: touch; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+    *, *::before, *::after { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent; 
+      user-select: none; 
+      -webkit-user-select: none;
+    }
+    
+    :root {
+      --bg: #000000;
+      --surface: #121214;
+      --surface2: #1a1a1e;
+      --surface3: #222228;
+      --border: #26262e;
+      --border-glow: rgba(254, 44, 85, 0.3);
+      --text: #ffffff;
+      --text-sub: #aaaaaa;
+      --accent: #fe2c55;
+      --accent-hover: #e02447;
+      --accent-glow: rgba(254, 44, 85, 0.4);
+      --success: #25f4ee;
+      --success-glow: rgba(37, 244, 238, 0.3);
+      --warning: #ffb703;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --shadow-main: 0 20px 80px rgba(0, 0, 0, 0.9);
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+      --sar: env(safe-area-inset-right, 0px);
+    }
+    
+    html, body { 
+      width: 100%; 
+      height: 100%; 
+      background: #000000; 
+      color: var(--text); 
+      font-family: var(--font); 
+      overflow: hidden; 
+      overscroll-behavior: none; 
+      -webkit-overflow-scrolling: touch; 
+      -webkit-tap-highlight-color: transparent; 
+      -webkit-touch-callout: none; 
+      -webkit-user-select: none; 
+      user-select: none; 
+      -webkit-text-size-adjust: 100%; 
+      touch-action: manipulation; 
+      -webkit-font-smoothing: antialiased; 
+    }
+    
     body { touch-action: pan-y; }
     ::-webkit-scrollbar { display: none; }
     input, textarea { -webkit-user-select: text; user-select: text; }
-    button, input, textarea { font: inherit; color: inherit; }
+    button, input, textarea, select { font: inherit; color: inherit; }
     button { border: 0; background: none; padding: 0; cursor: pointer; }
 
-    .app-viewport { width: 100vw; height: 100vh; height: 100dvh; max-width: 480px; margin: 0 auto; background: var(--bg); position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
+    .app-viewport { 
+      width: 100vw; 
+      height: 100vh; 
+      height: 100dvh; 
+      max-width: 500px; 
+      margin: 0 auto; 
+      background: var(--bg); 
+      position: relative; 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden; 
+      box-shadow: 0 0 80px rgba(0,0,0,0.95); 
+      transform: translateZ(0);
+      will-change: transform;
+      padding-top: var(--sat);
+      padding-bottom: var(--sab);
+      padding-left: var(--sal);
+      padding-right: var(--sar);
+    }
 
-    /* === HEADER === */
-    .header { position: absolute; top: 0; left: 0; right: 0; height: 56px; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 0 16px; background: transparent; }
-    .header-tabs { display: flex; gap: 16px; font-size: 16px; font-weight: 600; }
-    .tab { color: var(--text-sub); cursor: pointer; position: relative; padding-bottom: 4px; transition: color 0.15s ease; }
-    .tab.active { color: var(--text); }
-    .tab.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 16px; height: 2px; background: var(--text); border-radius: 2px; }
+    .app-viewport.ui-hidden .header,
+    .app-viewport.ui-hidden .nav,
+    .app-viewport.ui-hidden .side-bar,
+    .app-viewport.ui-hidden .video-info,
+    .app-viewport.ui-hidden .progress-container {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease-out;
+    }
 
-    /* === VIDEO FEED === */
-    .feed { flex: 1; width: 100%; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; overscroll-behavior-y: contain; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; }
+    .screens-wrapper {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.96);
+      transition: opacity 0.25s cubic-bezier(0.25, 1, 0.5, 1), transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 10;
+      backface-visibility: hidden;
+      will-change: transform, opacity;
+    }
+
+    .screen.active-screen {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+      z-index: 15;
+    }
+
+    .header { 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      height: 56px; 
+      z-index: 20; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      padding: 0 16px; 
+      background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%);
+      pointer-events: auto;
+    }
+    
+    .header-tabs { 
+      display: flex; 
+      gap: 24px; 
+      font-size: 16px; 
+      font-weight: 700; 
+      position: relative;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 4px 8px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .tab { 
+      color: var(--text-sub); 
+      cursor: pointer; 
+      position: relative; 
+      padding: 6px 14px; 
+      border-radius: 16px;
+      transition: color 0.22s ease, background 0.22s ease, transform 0.15s ease; 
+      font-size: 14.5px;
+      letter-spacing: -0.2px;
+    }
+    
+    .tab:active {
+      transform: scale(0.94);
+    }
+    
+    .tab.active { 
+      color: var(--text); 
+      background: rgba(255, 255, 255, 0.18);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    }
+
+    .feed { 
+      flex: 1; 
+      width: 100%; 
+      height: 100%; 
+      overflow-y: scroll; 
+      scroll-snap-type: y mandatory; 
+      overscroll-behavior-y: contain; 
+      scrollbar-width: none; 
+      -ms-overflow-style: none; 
+      -webkit-overflow-scrolling: touch; 
+      position: relative;
+    }
     .feed::-webkit-scrollbar { display: none; }
-    .video-card { width: 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; background: #000; display: flex; align-items: center; justify-content: center; }
-    .stage { position: absolute; inset: 0; display: grid; place-items: center; background: #000; overflow: hidden; }
-    .video-player { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; background: #000; outline: 0; }
-    .poster { position: absolute; inset: 0; display: grid; place-items: center; background: #000; transition: opacity .16s linear; pointer-events: none; }
+    
+    .video-card { 
+      width: 100%; 
+      height: 100%; 
+      scroll-snap-align: start; 
+      scroll-snap-stop: always; 
+      position: relative; 
+      background: #000; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    .stage { 
+      position: absolute; 
+      inset: 0; 
+      display: grid; 
+      place-items: center; 
+      background: #000; 
+      overflow: hidden; 
+    }
+    .video-player { 
+      display: block; 
+      width: 100%; 
+      height: 100%; 
+      object-fit: contain; 
+      object-position: center; 
+      background: #000; 
+      outline: 0; 
+    }
+    
+    .poster { 
+      position: absolute; 
+      inset: 0; 
+      display: grid; 
+      place-items: center; 
+      background: #000; 
+      transition: opacity .16s linear; 
+      pointer-events: none; 
+    }
     .poster.hide { opacity: 0; }
-    .spin { position: absolute; z-index: 6; left: 50%; top: 50%; width: 28px; height: 28px; margin: -14px; border: 2px solid #444; border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: none; }
-    .video-card.wait .spin { display: block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .shade { position: absolute; inset: auto 0 0; height: 34%; pointer-events: none; background: rgba(0,0,0,.38); mask-image: linear-gradient(transparent, #000); -webkit-mask-image: linear-gradient(transparent, #000); }
-    .playflash { position: absolute; z-index: 9; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px; display: grid; place-items: center; border-radius: 50%; background: rgba(0,0,0,.45); opacity: 0; transform: scale(.82); pointer-events: none; }
+
+    .spin { display: none !important; }
+    .shade { display: none !important; }
+
+    .playflash { 
+      position: absolute; 
+      z-index: 9; 
+      left: 50%; 
+      top: 50%; 
+      width: 64px; 
+      height: 64px; 
+      margin: -32px; 
+      display: grid; 
+      place-items: center; 
+      border-radius: 50%; 
+      background: rgba(0,0,0,.5); 
+      opacity: 0; 
+      transform: scale(.82); 
+      pointer-events: none; 
+    }
     .playflash svg { width: 31px; height: 31px; fill: white; stroke: white; margin-left: 3px; }
     .playflash.show { animation: flash .55s ease; }
     @keyframes flash { 0% { opacity: 0; transform: scale(.7); } 25% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1); } }
-    .heartburst { position: absolute; z-index: 10; left: 50%; top: 50%; width: 98px; height: 98px; margin: -49px; color: var(--accent); fill: currentColor; stroke: white; stroke-width: 1; opacity: 0; pointer-events: none; filter: drop-shadow(0 4px 10px #000); }
+
+    .heartburst { 
+      position: absolute; 
+      z-index: 10; 
+      left: 50%; 
+      top: 50%; 
+      width: 98px; 
+      height: 98px; 
+      margin: -49px; 
+      color: var(--accent); 
+      fill: currentColor; 
+      stroke: white; 
+      stroke-width: 1; 
+      opacity: 0; 
+      pointer-events: none; 
+      filter: drop-shadow(0 4px 10px #000); 
+    }
     .heartburst.go { animation: heart .7s ease-out; }
     @keyframes heart { 0% { opacity: 0; transform: scale(.2) rotate(-15deg); } 25% { opacity: 1; transform: scale(1.15) rotate(7deg); } 60% { opacity: 1; transform: scale(1) rotate(0); } 100% { opacity: 0; transform: translateY(-75px) scale(.75); } }
-    .side-bar { position: absolute; right: 12px; bottom: 90px; display: flex; flex-direction: column; align-items: center; gap: 18px; z-index: 10; }
-    .action-btn { background: none; border: none; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-size: 12px; font-weight: 500; }
-    .icon-wrapper { width: 44px; height: 44px; border-radius: 50%; background: rgba(18,18,18,0.6); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-    .action-btn:active .icon-wrapper { transform: scale(0.9); }
+
+    .side-bar { 
+      position: absolute; 
+      right: 12px; 
+      bottom: 90px; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      gap: 18px; 
+      z-index: 10; 
+    }
+    .action-btn { 
+      background: none; 
+      border: none; 
+      color: var(--text); 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      gap: 4px; 
+      cursor: pointer; 
+      font-size: 12px; 
+      font-weight: 600; 
+    }
+    .icon-wrapper { 
+      width: 46px; 
+      height: 46px; 
+      border-radius: 50%; 
+      background: rgba(18,18,18,0.65); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      backdrop-filter: blur(8px); 
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .action-btn:active .icon-wrapper { transform: scale(0.88); }
     .action-btn.liked svg { fill: var(--accent); stroke: var(--accent); animation: pop .24s ease-out; }
     @keyframes pop { 0% { transform: scale(.65); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
-    .action-btn.bookmarked svg { fill: #ffb703; stroke: #ffb703; }
-    .video-info { position: absolute; left: 12px; bottom: 24px; right: 80px; z-index: 10; display: flex; flex-direction: column; gap: 8px; text-shadow: 0 1px 4px #000; pointer-events: none; }
+    .action-btn.bookmarked svg { fill: #ffb703; stroke: #ffb703; animation: pop .24s ease-out; }
+
+    .video-info { 
+      position: absolute; 
+      left: 14px; 
+      bottom: 24px; 
+      right: 80px; 
+      z-index: 10; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 8px; 
+      text-shadow: 0 1px 4px #000; 
+      pointer-events: none; 
+    }
     .username { font-weight: 700; font-size: 16px; letter-spacing: -0.2px; }
-    .description { font-size: 14px; line-height: 1.35; color: rgba(255,255,255,0.95); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .music-track { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-sub); }
-    .progress-container { position: absolute; bottom: 0; left: 0; right: 0; height: 18px; display: flex; align-items: flex-end; cursor: pointer; touch-action: none; z-index: 12; }
+    .description { 
+      font-size: 14px; 
+      line-height: 1.35; 
+      color: rgba(255,255,255,0.95); 
+      display: -webkit-box; 
+      -webkit-line-clamp: 2; 
+      -webkit-box-orient: vertical; 
+      overflow: hidden; 
+    }
+    .music-track { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-sub); width: 85%; overflow: hidden; }
+    .music-track svg { flex-shrink: 0; }
+    .music-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .progress-container { 
+      position: absolute; 
+      bottom: 0; 
+      left: 0; 
+      right: 0; 
+      height: 18px; 
+      display: flex; 
+      align-items: flex-end; 
+      cursor: pointer; 
+      touch-action: none; 
+      z-index: 12; 
+    }
     .track { position: relative; width: 100%; height: 2px; background: rgba(255,255,255,.24); }
     .fill, .buffer { position: absolute; inset: 0 auto 0 0; transform-origin: left; width: 100%; transform: scaleX(0); }
     .buffer { background: rgba(255,255,255,.32); }
     .fill { background: #fff; }
     .progress-container:active .track { height: 4px; }
 
-    /* === NAV === */
-    .nav { height: 50px; background: var(--bg); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-around; z-index: 20; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--text-sub); font-size: 10px; background: none; border: none; cursor: pointer; width: 20%; }
+    .empty-favorites-container {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+      padding: 30px;
+      z-index: 5;
+      background: var(--bg);
+    }
+    
+    .empty-favorites-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(255, 183, 3, 0.12);
+      border: 1px solid rgba(255, 183, 3, 0.3);
+      color: #ffb703;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 10px 30px rgba(255, 183, 3, 0.15);
+    }
+
+    .empty-favorites-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .empty-favorites-sub {
+      font-size: 14px;
+      color: var(--text-sub);
+      max-width: 260px;
+      line-height: 1.45;
+    }
+
+    .nav { 
+      height: 52px; 
+      background: var(--bg); 
+      border-top: 1px solid rgba(255,255,255,0.08); 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-around; 
+      z-index: 30; 
+      flex-shrink: 0; 
+    }
+    .nav-item { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 3px; 
+      color: var(--text-sub); 
+      font-size: 10px; 
+      font-weight: 600;
+      background: none; 
+      border: none; 
+      cursor: pointer; 
+      width: 20%; 
+      height: 100%; 
+      transition: color 0.18s ease, transform 0.15s ease; 
+    }
+    .nav-item:active {
+      transform: scale(0.92);
+    }
     .nav-item.active { color: var(--text); }
-    .create-btn { width: 42px; height: 28px; background: var(--text); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--bg); }
+    .nav-item.active svg { color: var(--text); }
+    
+    .create-btn { 
+      width: 44px; 
+      height: 29px; 
+      background: linear-gradient(90deg, #25f4ee 0%, #fe2c55 100%); 
+      border-radius: 9px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      padding: 2px;
+      box-shadow: 0 2px 10px rgba(254,44,85,0.3);
+    }
+    .create-btn-inner {
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+    }
 
-    /* === DRAWER (VIDEO COMMENTS) === */
-    .drawer { position: absolute; bottom: 0; left: 0; right: 0; height: 65%; background: var(--surface); border-top-left-radius: 16px; border-top-right-radius: 16px; z-index: 30; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1); display: flex; flex-direction: column; border-top: 1px solid var(--border); }
+    .drawer { 
+      position: absolute; 
+      bottom: 0; 
+      left: 0; 
+      right: 0; 
+      height: 68%; 
+      background: var(--surface); 
+      border-top-left-radius: 20px; 
+      border-top-right-radius: 20px; 
+      z-index: 45; 
+      transform: translateY(100%); 
+      transition: transform 0.28s cubic-bezier(0.1, 0.9, 0.2, 1); 
+      display: flex; 
+      flex-direction: column; 
+      border-top: 1px solid var(--border); 
+    }
     .drawer.open { transform: translateY(0); }
-    .drawer-header { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; }
+    .drawer-header { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 700; }
     .drawer-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
-    .comment-item { display: flex; gap: 12px; font-size: 13px; }
-    .comment-avatar { width: 32px; height: 32px; border-radius: 50%; background: #222; flex-shrink: 0; display: grid; place-items: center; font-size: 12px; font-weight: 800; }
-    .comment-content { display: flex; flex-direction: column; gap: 2px; }
-    .comment-author { color: var(--text-sub); font-size: 12px; }
+    .comment-item { display: flex; gap: 12px; font-size: 13px; align-items: flex-start; }
+    .comment-avatar { width: 36px; height: 36px; border-radius: 50%; background: #222; flex-shrink: 0; display: grid; place-items: center; font-size: 12px; font-weight: 800; overflow: hidden; object-fit: cover; }
+    .comment-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .comment-content { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+    .comment-author { color: var(--accent); font-size: 12px; font-weight: 700; }
+    .comment-text { font-size: 13.5px; color: var(--text); word-break: break-word; line-height: 1.4; }
     .drawer-footer { padding: 10px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; background: var(--bg); }
-    .comment-input { flex: 1; background: var(--surface); border: 1px solid var(--border); padding: 10px 14px; border-radius: 20px; color: #fff; font-size: 13px; outline: none; -webkit-user-select: text; }
-    .send-btn { background: none; border: none; color: var(--accent); font-weight: 600; font-size: 14px; cursor: pointer; }
+    .comment-input { flex: 1; background: var(--surface); border: 1px solid var(--border); padding: 10px 16px; border-radius: 20px; color: #fff; font-size: 13.5px; outline: none; -webkit-user-select: text; }
+    .send-btn { background: none; border: none; color: var(--accent); font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .comments-disabled-msg { padding: 12px; text-align: center; color: var(--text-sub); font-size: 13px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; }
+    .comments-disabled-msg svg { color: var(--accent); }
 
-    /* === OVERLAY === */
-    .overlay-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.6); z-index: 25; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+    .overlay-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.65); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
     .overlay-backdrop.show { opacity: 1; pointer-events: auto; }
 
-    /* === TOAST === */
-    .toast { position: fixed; z-index: 90; left: 50%; bottom: 80px; translate: -50% 12px; max-width: min(90vw, 420px); padding: 10px 14px; border: 1px solid #2a2a30; border-radius: 10px; background: #141418; color: #fff; font-size: 13px; font-weight: 650; opacity: 0; pointer-events: none; transition: .2s; }
+    .toast { 
+      position: fixed; 
+      z-index: 999; 
+      left: 50%; 
+      bottom: 80px; 
+      translate: -50% 12px; 
+      max-width: min(90vw, 420px); 
+      padding: 10px 18px; 
+      border: 1px solid #2a2a30; 
+      border-radius: 12px; 
+      background: rgba(20,20,24,0.95); 
+      color: #fff; 
+      font-size: 13.5px; 
+      font-weight: 600; 
+      opacity: 0; 
+      pointer-events: none; 
+      transition: .22s cubic-bezier(0.2, 0.8, 0.2, 1); 
+      text-align: center; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
     .toast.on { opacity: 1; translate: -50% 0; }
 
-    /* === MODALS === */
     .modal { position: fixed; z-index: 80; inset: 0; display: none; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.68); padding: 20px 14px 14px; backdrop-filter: blur(5px); }
     .modal.open { display: flex; }
-    .sheet { width: min(100%, 480px); border: 1px solid #29292e; border-radius: 17px; background: #101014; padding: 14px; box-shadow: 0 20px 80px #000; }
+    .sheet { width: min(100%, 480px); border: 1px solid #29292e; border-radius: 20px; background: #101014; padding: 16px; box-shadow: 0 20px 80px #000; }
     .sheethead { height: 35px; display: flex; align-items: flex-start; justify-content: space-between; font-size: 15px; font-weight: 800; }
     .close { width: 30px; height: 30px; display: grid; place-items: center; margin-top: -7px; border-radius: 50%; background: #242429; }
     .close svg { width: 18px; height: 18px; }
@@ -111,22 +530,203 @@
     .drop.on { display: grid; }
     .empty { padding: 42px 10px; text-align: center; color: #777; font-size: 13px; }
 
-    /* === CHANNEL VIEW === */
+    .custom-dialog-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 995;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease;
+    }
+    .custom-dialog-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .custom-dialog {
+      width: min(100%, 380px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px 20px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.95), 0 0 20px var(--border-glow);
+      transform: scale(0.9);
+      transition: transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+    .custom-dialog-overlay.open .custom-dialog {
+      transform: scale(1);
+    }
+
+    .custom-dialog-badge {
+      align-self: center;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(254, 44, 85, 0.15);
+      border: 1px solid var(--accent-glow);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    
+    .custom-dialog-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(254,44,85,0.12);
+      border: 1px solid var(--accent-glow);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    
+    .custom-dialog-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    
+    .custom-dialog-text {
+      font-size: 13.5px;
+      color: var(--text-sub);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .custom-dialog-media {
+      width: 100%;
+      max-height: 220px;
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .custom-dialog-media img, 
+    .custom-dialog-media video {
+      width: 100%;
+      height: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .custom-dialog-apk-box {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    .custom-dialog-apk-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(37,244,238,0.15);
+      color: var(--success);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .custom-dialog-apk-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .custom-dialog-apk-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .custom-dialog-apk-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .custom-dialog-actions {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .custom-dialog-btn-primary {
+      width: 100%;
+      padding: 13px;
+      border-radius: 14px;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px var(--accent-glow);
+      transition: background 0.15s, transform 0.1s;
+    }
+    .custom-dialog-btn-primary:active { transform: scale(0.98); }
+
+    .custom-dialog-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .custom-dialog-btn:active { background: var(--border); }
+
     .channel-view { 
-      display: none; 
+      display: flex; 
       flex-direction: column; 
-      position: fixed; 
+      position: absolute; 
       inset: 0; 
-      z-index: 15; 
+      z-index: 13; 
       background: var(--bg); 
       width: 100%; 
-      height: 100vh; 
-      height: 100dvh;
-      max-width: 480px;
-      left: 50%;
-      transform: translateX(-50%);
+      height: 100%;
     }
-    .channel-view.active { display: flex; }
     .channel-header { 
       display: flex; 
       align-items: center; 
@@ -144,7 +744,6 @@
     .channel-header-sub { font-size: 12px; color: var(--text-sub); }
     .channel-header .settings-btn { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); color: var(--text); border: none; flex-shrink: 0; }
 
-    /* === CHANNEL POSTS SCROLL === */
     .channel-posts { 
       flex: 1; 
       overflow-y: scroll; 
@@ -186,25 +785,22 @@
     .channel-post-action { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-sub); background: none; border: none; cursor: pointer; }
     .channel-post-action.active { color: var(--accent); }
     .channel-post-action svg { width: 18px; height: 18px; }
-    .channel-add-btn { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: #fff; border: none; display: grid; place-items: center; box-shadow: 0 4px 20px rgba(254,44,85,0.4); z-index: 20; cursor: pointer; }
+    .channel-add-btn { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: #fff; border: none; display: grid; place-items: center; box-shadow: 0 4px 20px var(--accent-glow); z-index: 20; cursor: pointer; }
     .channel-add-btn:active { transform: scale(0.92); }
 
-    /* === TG-STYLE COMMENTS SCREEN === */
     .tg-comments-screen { 
-      display: none; 
+      display: flex; 
       flex-direction: column; 
-      position: fixed; 
+      position: absolute; 
       inset: 0; 
       z-index: 50; 
       background: var(--bg); 
       width: 100%; 
-      height: 100vh;
-      height: 100dvh;
-      max-width: 480px;
-      left: 50%;
-      transform: translateX(-50%);
+      height: 100%;
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.1, 0.9, 0.2, 1);
     }
-    .tg-comments-screen.active { display: flex; }
+    .tg-comments-screen.active { transform: translateY(0); }
     .tg-comments-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg); flex-shrink: 0; height: 56px; }
     .tg-comments-header .back-btn { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); color: var(--text); border: none; flex-shrink: 0; }
     .tg-comments-header-title { font-size: 16px; font-weight: 700; flex: 1; text-align: center; margin-right: 48px; }
@@ -214,8 +810,6 @@
     .tg-comments-post-preview .preview-author { font-size: 14px; font-weight: 700; color: var(--text); }
     .tg-comments-post-preview .preview-time { font-size: 11px; color: var(--text-sub); }
     .tg-comments-post-preview .preview-text { font-size: 14px; line-height: 1.45; color: var(--text); margin-bottom: 10px; word-break: break-word; }
-    .tg-comments-post-preview .preview-media { width: 100%; border-radius: 12px; overflow: hidden; margin-top: 8px; }
-    .tg-comments-post-preview .preview-media img, .tg-comments-post-preview .preview-media video { width: 100%; max-height: 200px; object-fit: cover; display: block; }
     .tg-comments-post-preview .preview-media-grid { width: 100%; display: grid; gap: 2px; border-radius: 12px; overflow: hidden; margin-top: 8px; }
     .tg-comments-post-preview .preview-media-grid.single { grid-template-columns: 1fr; }
     .tg-comments-post-preview .preview-media-grid.double { grid-template-columns: 1fr 1fr; }
@@ -237,7 +831,8 @@
     }
     .tg-comments-list::-webkit-scrollbar { display: none; }
     .tg-comment { display: flex; gap: 10px; align-items: flex-start; flex-shrink: 0; }
-    .tg-comment-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #fe2c55, #ff6b6b); flex-shrink: 0; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; }
+    .tg-comment-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--surface2); flex-shrink: 0; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; overflow: hidden; object-fit: cover; }
+    .tg-comment-avatar-img { width: 100%; height: 100%; object-fit: cover; }
     .tg-comment-body { flex: 1; background: var(--surface2); border-radius: 14px; padding: 10px 14px; }
     .tg-comment-author { font-weight: 600; font-size: 13px; color: var(--accent); margin-bottom: 3px; }
     .tg-comment-text { font-size: 14px; line-height: 1.4; color: var(--text); word-break: break-word; }
@@ -248,7 +843,6 @@
     .tg-comments-send:active { transform: scale(0.92); }
     .tg-comments-empty { text-align: center; color: var(--text-sub); font-size: 14px; padding: 40px 20px; flex-shrink: 0; }
 
-    /* === SETTINGS / CREATE POST === */
     .channel-settings-sheet { width: min(100%, 480px); border: 1px solid var(--border); border-radius: 20px 20px 0 0; background: var(--surface); padding: 20px; }
     .channel-settings-field { margin-bottom: 14px; }
     .channel-settings-field label { display: block; font-size: 12px; color: var(--text-sub); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -269,14 +863,819 @@
     .create-post-cancel { background: var(--bg); color: var(--text); }
     .create-post-submit { background: var(--accent); color: #fff; }
 
+    .profile-view {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      inset: 0;
+      z-index: 14;
+      background: var(--bg);
+      width: 100%;
+      height: 100%;
+    }
+    
+    .profile-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+      height: 56px;
+    }
+    .profile-header .back-btn { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); color: var(--text); border: none; flex-shrink: 0; }
+    .profile-header-title { font-size: 16px; font-weight: 700; text-align: center; flex: 1; }
+
+    .profile-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .profile-avatar-card {
+      background: var(--surface);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+    }
+
+    .profile-avatar-wrap {
+      position: relative;
+      width: 104px;
+      height: 104px;
+      border-radius: 50%;
+      cursor: pointer;
+      margin-bottom: 12px;
+      border: 3px solid var(--accent);
+      padding: 2px;
+      background: #000;
+    }
+
+    .profile-avatar-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #222;
+      display: block;
+    }
+
+    .avatar-edit-badge {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      border: 2px solid var(--bg);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .avatar-hint {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 4px;
+      margin-bottom: 16px;
+      line-height: 1.3;
+    }
+
+    .profile-uid-card {
+      background: var(--surface2);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .profile-uid-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .profile-uid-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--success);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .profile-uid-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+
+    .profile-uid-value {
+      flex: 1;
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .copy-btn-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(37, 244, 238, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(37, 244, 238, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .copy-btn-icon:active {
+      transform: scale(0.92);
+      background: var(--success);
+      color: #000;
+    }
+
+    .profile-input-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .profile-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .profile-field label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .profile-field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .profile-field input:focus { border-color: var(--accent); }
+
+    .profile-save-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+    .profile-save-btn:active { transform: scale(0.98); }
+
+    .cache-card {
+      background: var(--surface2);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .cache-title { font-size: 12px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+    .cache-info-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; }
+    .clear-cache-btn {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+    .clear-cache-btn:active { background: rgba(254,44,85,0.2); color: var(--accent); }
+
+    .profile-preview-card {
+      background: var(--surface2);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 14px;
+    }
+    .profile-preview-title { font-size: 12px; font-weight: 700; color: var(--text-sub); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .profile-preview-comment { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); padding: 12px; border-radius: 12px; border: 1px solid var(--border); }
+    .preview-comment-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #222; flex-shrink: 0; }
+    .preview-comment-content { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .preview-comment-author { font-size: 13px; font-weight: 700; color: var(--accent); }
+    .preview-comment-text { font-size: 13px; color: #fff; }
+
+    .admin-panel {
+      background: var(--surface);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .admin-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .admin-title-row svg { color: var(--accent); }
+
+    .admin-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .admin-section-header {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .admin-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(37,244,238,0.15);
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .admin-announcement-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .admin-announcement-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .admin-announcement-field label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-announcement-field input[type="text"],
+    .admin-announcement-field textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13.5px;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .admin-announcement-field input[type="text"]:focus,
+    .admin-announcement-field textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .admin-file-picker-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--surface2);
+      border: 1px dashed var(--border);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .admin-file-picker-btn:hover,
+    .admin-file-picker-btn:active {
+      border-color: var(--accent);
+      background: rgba(254, 44, 85, 0.08);
+    }
+
+    .file-preview-box {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .file-preview-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+    .file-preview-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(37,244,238,0.15);
+      color: var(--success);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .file-preview-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .file-preview-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-preview-size {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+    .file-remove-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(254,44,85,0.15);
+      color: var(--accent);
+      border: none;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .publish-announcement-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+    .publish-announcement-btn:active { transform: scale(0.98); }
+
+    .active-announcement-card {
+      background: var(--bg);
+      border: 1px solid var(--accent-glow);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .active-announcement-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .active-announcement-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .active-announcement-body {
+      font-size: 12.5px;
+      color: var(--text-sub);
+      line-height: 1.4;
+    }
+
+    .admin-controls-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 6px 14px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .admin-switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .admin-switch-row:last-child { border-bottom: none; }
+
+    .admin-switch-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-right: 12px;
+    }
+
+    .admin-switch-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .admin-switch-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 46px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      background-color: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      transition: .25s ease;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #fff;
+      border-radius: 50%;
+      transition: .25s ease;
+    }
+    input:checked + .toggle-slider {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    .rtdb-stats-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .rtdb-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .rtdb-stat-box {
+      background: var(--surface2);
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .rtdb-stat-val { font-size: 15px; font-weight: 800; color: #fff; }
+    .rtdb-stat-lbl { font-size: 10px; color: var(--text-sub); text-transform: uppercase; }
+
+    .rtdb-progress-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .rtdb-progress-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .rtdb-progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--surface2);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .rtdb-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #25f4ee, #fe2c55);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .admin-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .admin-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+
+    .admin-item-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .admin-item-title {
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .admin-item-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .admin-item-btns {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .admin-edit-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(37,244,238,0.15);
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(37,244,238,0.3);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .admin-edit-btn:active { background: var(--success); color: #000; }
+
+    .admin-delete-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(254,44,85,0.15);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(254,44,85,0.3);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .admin-delete-btn:active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .admin-editor-sheet {
+      width: min(100%, 480px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .admin-editor-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .admin-editor-field label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .admin-editor-field input, .admin-editor-field textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+    }
+    .admin-editor-save {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .logs-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .copy-logs-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(37,244,238,0.12);
+      border: 1px solid rgba(37,244,238,0.3);
+      color: var(--success);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .copy-logs-btn:active {
+      background: var(--success);
+      color: #000;
+    }
+
+    .logs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .log-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #ff6b6b;
+      word-break: break-all;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 6px;
+      padding-top: 2px;
+    }
+    .log-item:last-child { border-bottom: none; }
+    
+    .log-text-content {
+      flex: 1;
+      min-width: 0;
+      line-height: 1.35;
+    }
+
+    .log-copy-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .log-copy-btn:hover, .log-copy-btn:active {
+      background: rgba(37, 244, 238, 0.2);
+      color: var(--success);
+      border-color: rgba(37, 244, 238, 0.4);
+    }
+
     @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
   </style>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <link rel="manifest" href="manifest.json">
 </head>
-<body>
+<body data-screen="feed">
 
   <svg width="0" height="0" aria-hidden="true" style="position:absolute">
     <defs>
@@ -290,43 +1689,352 @@
       <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13M9 8l11-2"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
       <symbol id="i-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
       <symbol id="i-channel" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 9h10M7 13h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="12" r="1.5" fill="currentColor"/></symbol>
-      <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
       <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><path d="M21 15l-5-5L5 21" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
       <symbol id="i-video" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></symbol>
-      <symbol id="i-audio" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-audio" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
       <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
       <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
       <symbol id="i-profile" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+      <symbol id="i-tools" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+      <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+      <symbol id="i-apk" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></symbol>
+      <symbol id="i-bookmark-fill" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><path d="M21 2l-2 2m-2 2l-2 2m2-2l2 2m-7 1a5 5 0 1 1-7 7 5 5 0 0 1 7-7zm0 0l5-5 2 2 2-2"/></symbol>
     </defs>
   </svg>
 
   <div class="app-viewport">
     <div class="offline" id="offline"></div>
 
-    <header class="header">
-      <div class="header-tabs">
-        <div class="tab">Подписки</div>
-        <div class="tab active">Рекомендации</div>
-      </div>
-    </header>
+    <div class="screens-wrapper">
 
-    <main class="feed" id="feed"></main>
+      <div class="screen active-screen" id="feedView">
+        <header class="header">
+          <div class="header-tabs">
+            <div class="tab" id="tabFavorites">Избранное</div>
+            <div class="tab active" id="tabRecs">Рекомендации</div>
+          </div>
+        </header>
+
+        <main class="feed" id="feed"></main>
+
+        <div class="empty-favorites-container" id="emptyFavorites" style="display: none;">
+          <div class="empty-favorites-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
+              <use href="#i-bookmark-fill"/>
+            </svg>
+          </div>
+          <div class="empty-favorites-title">Пока ничего нет</div>
+          <div class="empty-favorites-sub">Нажимайте на значок закладки в видео, чтобы сохранить их в избранное</div>
+        </div>
+      </div>
+
+      <div class="screen" id="channelView">
+        <div class="channel-view">
+          <div class="channel-header">
+            <button class="back-btn" id="channelBack">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-back"/></svg>
+            </button>
+            <img class="channel-avatar" id="channelAvatar" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect fill=%27%23222%27 width=%27100%27 height=%27100%27/%3E%3Ctext x=%2750%27 y=%2760%27 text-anchor=%27middle%27 fill=%27%23666%27 font-size=%2740%27%3E📡%3C/text%3E%3C/svg%3E" alt="">
+            <div class="channel-header-info">
+              <div class="channel-header-name" id="channelName">Meow Channel</div>
+              <div class="channel-header-sub" id="channelSub">0 подписчиков · 0 постов</div>
+            </div>
+            <button class="settings-btn" id="channelSettingsBtn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-settings"/></svg>
+            </button>
+          </div>
+          <div class="channel-posts" id="channelPosts">
+            <div class="empty">Пока нет постов. Создайте первый!</div>
+          </div>
+          <button class="channel-add-btn" id="channelAddBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><use href="#i-plus"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="screen" id="profileView">
+        <div class="profile-view">
+          <div class="profile-header">
+            <button class="back-btn" id="profileBack">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-back"/></svg>
+            </button>
+            <div class="profile-header-title">Профиль</div>
+            <div style="width:36px"></div>
+          </div>
+
+          <div class="profile-scroll">
+            <div class="profile-avatar-card">
+              <div class="profile-avatar-wrap" id="avatarPickerTrigger">
+                <img class="profile-avatar-img" id="profileAvatarImg" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2738%27 r=%2722%27 fill=%27%23555%27/%3E%3Cpath d=%27M20 90 A30 30 0 0 1 80 90 Z%27 fill=%27%23555%27/%3E%3C/svg%3E" alt="Avatar">
+                <div class="avatar-edit-badge">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
+                <input type="file" id="avatarFileInput" accept="image/*" style="display:none">
+              </div>
+              <div class="avatar-hint">Нажмите на фото, чтобы выбрать из галереи (макс. 5МБ)</div>
+
+              <div class="profile-uid-card">
+                <div class="profile-uid-header">
+                  <div class="profile-uid-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-key"/></svg>
+                    <span>Уникальный RTDB UID</span>
+                  </div>
+                </div>
+                <div class="profile-uid-row">
+                  <span class="profile-uid-value" id="profileUidValue">dev_00000000</span>
+                  <button class="copy-btn-icon" id="copyProfileUidBtn" title="Скопировать UID">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-copy"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="profile-input-group">
+                <div class="profile-field">
+                  <label>Имя профиля</label>
+                  <input type="text" id="profileNameInput" placeholder="Введите имя..." maxlength="30">
+                </div>
+
+                <div class="profile-field">
+                  <label>Уникальный Username (@юз)</label>
+                  <input type="text" id="profileUserHandleInput" placeholder="@username" maxlength="24">
+                </div>
+
+                <button class="profile-save-btn" id="saveProfileBtn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  Сохранить профиль
+                </button>
+              </div>
+            </div>
+
+            <div class="cache-card">
+              <div class="cache-title">
+                <span>Кэш медиа (IndexedDB)</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-db"/></svg>
+              </div>
+              <div class="cache-info-row">
+                <span>Занято в кэше:</span>
+                <span id="indexedDbSizeText">0.0 MB</span>
+              </div>
+              <button class="clear-cache-btn" id="clearCacheBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-trash"/></svg>
+                Очистить кэш видео/фото
+              </button>
+            </div>
+
+            <div class="profile-preview-card">
+              <div class="profile-preview-title">Превью в комментариях:</div>
+              <div class="profile-preview-comment">
+                <img class="preview-comment-avatar" id="demoCommentAvatar" src="" alt="">
+                <div class="preview-comment-content">
+                  <div class="preview-comment-author" id="demoCommentAuthor">Имя (@username)</div>
+                  <div class="preview-comment-text">Отличный контент! 🔥</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="admin-panel" id="adminPanel">
+              <div class="admin-title-row">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Панель Администратора
+              </div>
+
+              <div class="admin-section">
+                <div class="admin-section-header">
+                  <span>📢 Опубликовать Объявление / Обновление</span>
+                  <span class="admin-badge">Broadcast RTDB (AES-256)</span>
+                </div>
+
+                <div class="admin-announcement-card">
+                  <div class="admin-announcement-field">
+                    <label>Заголовок объявления</label>
+                    <input type="text" id="adminAnnounceTitle" placeholder="Например: Установите новое обновление!" maxlength="60">
+                  </div>
+
+                  <div class="admin-announcement-field">
+                    <label>Текст сообщения</label>
+                    <textarea id="adminAnnounceText" style="min-height:75px;" placeholder="Введите подробное описание..." maxlength="500"></textarea>
+                  </div>
+
+                  <div class="admin-announcement-field">
+                    <label>Прикрепить Медиа или APK файл</label>
+                    <button class="admin-file-picker-btn" id="adminAnnounceFileTrigger">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-file"/></svg>
+                      Выбрать файл (Фото / Видео / APK)
+                    </button>
+                    <input type="file" id="adminAnnounceFileInput" accept="image/*,video/*,.apk,application/vnd.android.package-archive,*/*" style="display:none">
+                  </div>
+
+                  <div class="file-preview-box" id="adminFilePreviewBox" style="display:none;">
+                    <div class="file-preview-info">
+                      <div class="file-preview-icon" id="adminFilePreviewIcon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-file"/></svg>
+                      </div>
+                      <div class="file-preview-meta">
+                        <div class="file-preview-name" id="adminFileNameText">file.apk</div>
+                        <div class="file-preview-size" id="adminFileSizeText">0 MB</div>
+                      </div>
+                    </div>
+                    <button class="file-remove-btn" id="adminFileRemoveBtn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><use href="#i-close"/></svg>
+                    </button>
+                  </div>
+
+                  <button class="publish-announcement-btn" id="publishAnnounceBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-send"/></svg>
+                    Опубликовать объявление всем
+                  </button>
+                </div>
+
+                <div class="active-announcement-card" id="activeAnnounceBox" style="display:none;">
+                  <div class="active-announcement-header">
+                    <span>Текущее активное объявление</span>
+                    <button class="admin-delete-btn" id="deleteAnnounceBtn">Удалить из RTDB</button>
+                  </div>
+                  <div class="active-announcement-title" id="activeAnnounceTitle">--</div>
+                  <div class="active-announcement-body" id="activeAnnounceBody">--</div>
+                </div>
+              </div>
+
+              <div class="admin-section">
+                <div class="admin-section-header">
+                  <span>⚙️ Управление системой</span>
+                  <span class="admin-badge">REST API Online</span>
+                </div>
+
+                <div class="admin-controls-card">
+                  <div class="admin-switch-row">
+                    <div class="admin-switch-info">
+                      <div class="admin-switch-title">Отключить комментарии</div>
+                      <div class="admin-switch-sub">Запретить писать везде в реальном времени</div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="disableCommentsToggle">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="admin-switch-row">
+                    <div class="admin-switch-info">
+                      <div class="admin-switch-title">Отключить раздел "Канал"</div>
+                      <div class="admin-switch-sub">Тех. работы при нажатии на Канал</div>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="disableChannelToggle">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-section">
+                <div class="admin-section-header">
+                  <span>⚡ Статистика системы</span>
+                  <span class="admin-badge">Безлимит</span>
+                </div>
+
+                <div class="rtdb-stats-card">
+                  <div class="rtdb-stats-grid">
+                    <div class="rtdb-stat-box">
+                      <div class="rtdb-stat-val" id="rtdbStorageText">0.00 KB</div>
+                      <div class="rtdb-stat-lbl">Занято памяти</div>
+                    </div>
+                    <div class="rtdb-stat-box">
+                      <div class="rtdb-stat-val">∞ GB</div>
+                      <div class="rtdb-stat-lbl">Лимит хранилища</div>
+                    </div>
+                    <div class="rtdb-stat-box">
+                      <div class="rtdb-stat-val">∞ GB</div>
+                      <div class="rtdb-stat-lbl">Лимит трафика</div>
+                    </div>
+                    <div class="rtdb-stat-box">
+                      <div class="rtdb-stat-val" style="color:#25f4ee;">∞ API</div>
+                      <div class="rtdb-stat-lbl">Соединения</div>
+                    </div>
+                  </div>
+
+                  <div class="rtdb-progress-container">
+                    <div class="rtdb-progress-header">
+                      <span>Заполненность базы</span>
+                      <span id="rtdbPercentText">0.0000%</span>
+                    </div>
+                    <div class="rtdb-progress-bar">
+                      <div class="rtdb-progress-fill" id="rtdbProgressFill"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-section">
+                <div class="admin-section-header">
+                  <span>🚨 Системные ошибки и логи</span>
+                  <div class="logs-header-actions">
+                    <span class="admin-badge" id="adminLogCount">0</span>
+                    <button class="copy-logs-btn" id="copyAllLogsBtn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-copy"/></svg>
+                      Скопировать все
+                    </button>
+                  </div>
+                </div>
+                <div class="logs-list" id="adminLogsList">
+                  <div class="empty">Ошибок и логов нет</div>
+                </div>
+              </div>
+
+              <div class="admin-section">
+                <div class="admin-section-header">
+                  <span>🎬 Клипы в рекомендациях</span>
+                  <span class="admin-badge" id="adminVideoCount">0</span>
+                </div>
+                <div class="admin-items-list" id="adminVideoList">
+                  <div class="empty">Загрузка клипов...</div>
+                </div>
+              </div>
+
+              <div class="admin-section">
+                <div class="admin-section-header">
+                  <span>📢 Посты в канале</span>
+                  <span class="admin-badge" id="adminPostCount">0</span>
+                </div>
+                <div class="admin-items-list" id="adminPostList">
+                  <div class="empty">Загрузка постов...</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
 
     <nav class="nav">
-      <button class="nav-item active">
+      <button class="nav-item active" id="homeBtn">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><use href="#i-home"/></svg>
       </button>
       <button class="nav-item" id="channelBtn">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-channel"/></svg>
       </button>
       <button class="nav-item" id="addVideoBtn">
-        <div class="create-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><use href="#i-plus"/></svg></div>
+        <div class="create-btn">
+          <div class="create-btn-inner">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><use href="#i-plus"/></svg>
+          </div>
+        </div>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" id="inboxBtn">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-inbox"/></svg>
       </button>
-      <button class="nav-item" id="profileBtn" onclick="window.location.href='admin.html'">
+      <button class="nav-item" id="profileBtn">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-profile"/></svg>
       </button>
     </nav>
@@ -339,36 +2047,12 @@
         <button id="closeDrawer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-close"/></svg></button>
       </div>
       <div class="drawer-body" id="commentsList"></div>
-      <div class="drawer-footer">
+      <div class="drawer-footer" id="commentsDrawerFooter">
         <input type="text" class="comment-input" id="commentInput" placeholder="Оставьте комментарий…" autocomplete="off" maxlength="220">
         <button class="send-btn" id="sendCommentBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-send"/></svg></button>
       </div>
     </div>
 
-    <!-- CHANNEL VIEW -->
-    <div class="channel-view" id="channelView">
-      <div class="channel-header">
-        <button class="back-btn" id="channelBack">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-back"/></svg>
-        </button>
-        <img class="channel-avatar" id="channelAvatar" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect fill=%27%23222%27 width=%27100%27 height=%27100%27/%3E%3Ctext x=%2750%27 y=%2760%27 text-anchor=%27middle%27 fill=%27%23666%27 font-size=%2740%27%3E📡%3C/text%3E%3C/svg%3E" alt="">
-        <div class="channel-header-info">
-          <div class="channel-header-name" id="channelName">VOLT Channel</div>
-          <div class="channel-header-sub" id="channelSub">0 подписчиков · 0 постов</div>
-        </div>
-        <button class="settings-btn" id="channelSettingsBtn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-settings"/></svg>
-        </button>
-      </div>
-      <div class="channel-posts" id="channelPosts">
-        <div class="empty">Пока нет постов. Создайте первый!</div>
-      </div>
-      <button class="channel-add-btn" id="channelAddBtn">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><use href="#i-plus"/></svg>
-      </button>
-    </div>
-
-    <!-- TG-STYLE COMMENTS SCREEN -->
     <div class="tg-comments-screen" id="tgCommentsScreen">
       <div class="tg-comments-header">
         <button class="back-btn" id="tgCommentsBack">
@@ -390,16 +2074,88 @@
       <div class="tg-comments-list" id="tgCommentsList">
         <div class="tg-comments-empty">Пока нет комментариев</div>
       </div>
-      <div class="tg-comments-input-row">
+      <div class="tg-comments-input-row" id="tgCommentsInputRow">
         <input type="text" class="tg-comments-input" id="tgCommentsInput" placeholder="Написать комментарий...">
         <button class="tg-comments-send" id="tgCommentsSend">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><use href="#i-send"/></svg>
         </button>
       </div>
     </div>
+
+    <div class="custom-dialog-overlay" id="techDialogOverlay">
+      <div class="custom-dialog">
+        <div class="custom-dialog-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-tools"/></svg>
+        </div>
+        <div class="custom-dialog-title">Технические работы</div>
+        <div class="custom-dialog-text">Раздел временно недоступен. На сервере ведутся профилактические работы. Попробуйте зайти позже.</div>
+        <button class="custom-dialog-btn" id="techDialogClose">Понятно</button>
+      </div>
+    </div>
+
+    <div class="custom-dialog-overlay" id="userAnnounceDialogOverlay">
+      <div class="custom-dialog">
+        <div class="custom-dialog-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><use href="#i-bell"/></svg>
+          Важное объявление
+        </div>
+        <div class="custom-dialog-icon" id="userAnnounceIcon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-bell"/></svg>
+        </div>
+        <div class="custom-dialog-title" id="userAnnounceTitle">--</div>
+        <div class="custom-dialog-text" id="userAnnounceText">--</div>
+        
+        <div class="custom-dialog-media" id="userAnnounceMediaContainer" style="display:none;"></div>
+
+        <div class="custom-dialog-apk-box" id="userAnnounceApkBox" style="display:none;">
+          <div class="custom-dialog-apk-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-apk"/></svg>
+          </div>
+          <div class="custom-dialog-apk-info">
+            <div class="custom-dialog-apk-name" id="userAnnounceApkName">app-update.apk</div>
+            <div class="custom-dialog-apk-sub" id="userAnnounceApkSize">Загрузка доступна</div>
+          </div>
+        </div>
+
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-primary" id="userAnnouncePrimaryBtn" style="display:none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-download"/></svg>
+            <span id="userAnnouncePrimaryBtnText">Скачать / Установить</span>
+          </button>
+          <button class="custom-dialog-btn" id="userAnnounceCloseBtn">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="adminVideoEditorModal">
+      <div class="admin-editor-sheet">
+        <div class="sheethead">
+          <span>Редактировать клип</span>
+          <button class="close" id="closeAdminEditor"><svg><use href="#i-close"/></svg></button>
+        </div>
+        <input type="hidden" id="editVideoKey">
+        <div class="admin-editor-field">
+          <label>Ссылка на видео (src)</label>
+          <input type="url" id="editVideoSrc" placeholder="https://...">
+        </div>
+        <div class="admin-editor-field">
+          <label>Автор / Юзернейм</label>
+          <input type="text" id="editVideoUser" placeholder="@username">
+        </div>
+        <div class="admin-editor-field">
+          <label>Название трека (Музыка)</label>
+          <input type="text" id="editVideoMusic" placeholder="Название трека...">
+        </div>
+        <div class="admin-editor-field">
+          <label>Описание / Хэштеги</label>
+          <textarea id="editVideoDesc" style="min-height:60px;" placeholder="Описание клипа..."></textarea>
+        </div>
+        <button class="admin-editor-save" id="saveAdminVideoBtn">Сохранить изменения</button>
+      </div>
+    </div>
+
   </div>
 
-  <!-- CHANNEL SETTINGS MODAL -->
   <div class="modal" id="channelSettingsModal">
     <div class="channel-settings-sheet">
       <div class="sheethead">
@@ -423,7 +2179,6 @@
     </div>
   </div>
 
-  <!-- CREATE POST MODAL -->
   <div class="modal" id="createPostModal">
     <div class="create-post-sheet">
       <div class="sheethead">
@@ -456,7 +2211,8 @@
         <input class="url" id="url" type="url" placeholder="https://…/video.mp4">
         <button class="go"><svg><use href="#i-arrow"/></svg></button>
       </div>
-      <input class="url" id="videoTitle" type="text" placeholder="Название / Автор" style="margin-top:8px;height:42px;border-radius:11px;font-size:14px;color:#fff;background:#08080a;border:1px solid #303036;padding:0 13px;outline:0;width:100%;">
+      <input class="url" id="videoTitle" type="text" placeholder="Название / Автор (@user)" style="margin-top:8px;height:42px;border-radius:11px;font-size:14px;color:#fff;background:#08080a;border:1px solid #303036;padding:0 13px;outline:0;width:100%;">
+      <input class="url" id="videoMusic" type="text" placeholder="Название трека (Музыка)" style="margin-top:8px;height:42px;border-radius:11px;font-size:14px;color:#fff;background:#08080a;border:1px solid #303036;padding:0 13px;outline:0;width:100%;">
       <input class="url" id="videoDesc" type="text" placeholder="Описание #теги" style="margin-top:8px;height:42px;border-radius:11px;font-size:14px;color:#fff;background:#08080a;border:1px solid #303036;padding:0 13px;outline:0;width:100%;">
       <div class="hint">MP4 · WebM · MOV · HLS в Safari</div>
     </form>
@@ -465,15 +2221,13 @@
   <template id="cardTpl">
     <section class="video-card">
       <div class="stage">
-        <video class="video-player" playsinline webkit-playsinline preload="metadata" disablepictureinpicture controlslist="nodownload noplaybackrate nofullscreen" x-webkit-airplay="allow"></video>
+        <video class="video-player" playsinline webkit-playsinline preload="metadata" disablepictureinpicture controlslist="nodownload noplaybackrate" x-webkit-airplay="allow"></video>
         <div class="poster">
           <svg class="mark" viewBox="0 0 64 64" width="78" height="78" style="opacity:.12">
             <path d="M39 10v29.5a11.5 11.5 0 1 1-9-11.2" stroke="#25f4ee" fill="none" stroke-width="3" transform="translate(-2px,1px)"/>
             <path d="M39 10c2 8 7 12 15 12" stroke="#fe2c55" fill="none" stroke-width="3" transform="translate(2px,-1px)"/>
           </svg>
         </div>
-        <div class="spin"></div>
-        <div class="shade"></div>
         <div class="playflash"><svg><use href="#i-play"/></svg></div>
         <svg class="heartburst" viewBox="0 0 24 24"><use href="#i-heart"/></svg>
       </div>
@@ -488,7 +2242,7 @@
       <div class="side-bar">
         <button class="action-btn like-btn"><div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-heart"/></svg></div><span class="like-count">0</span></button>
         <button class="action-btn commentBtn"><div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-chat"/></svg></div><span class="comment-count">0</span></button>
-        <button class="action-btn bookmark-btn"><div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div><span class="bookmark-count">0</span></button>
+        <button class="action-btn bookmark-btn"><div class="icon-wrapper"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-bookmark-fill"/></svg></div><span class="bookmark-count">0</span></button>
         <button class="action-btn mute-btn" id="muteBtn"><div class="icon-wrapper"><svg id="muteBtnIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></div></button>
       </div>
       <div class="progress-container"><div class="track"><div class="buffer"></div><div class="fill"></div></div></div>
@@ -496,11 +2250,10 @@
   </template>
 
   <script>
-
   (function(){
     "use strict";
 
-    if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+    if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function(){});
 
     var $ = function(s, r) { r = r || document; return r.querySelector(s); };
     var $$ = function(s, r) { r = r || document; return Array.from(r.querySelectorAll(s)); };
@@ -511,100 +2264,1384 @@
     var drawer = $("#commentsDrawer");
     var toastEl = $("#toast");
     var backdrop = $("#backdrop");
+    var techDialogOverlay = $("#techDialogOverlay");
+    var userAnnounceDialogOverlay = $("#userAnnounceDialogOverlay");
+    var emptyFavorites = $("#emptyFavorites");
 
-    // Firebase
-    var firebaseConfig = {
-      apiKey: "AIzaSyBm0mIvHVznIeF2PoFk6dtdaiT5r877wyA",
-      authDomain: "meow-874ce.firebaseapp.com",
-      databaseURL: "https://meow-874ce-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "meow-874ce",
-      storageBucket: "meow-874ce.firebasestorage.app",
-      messagingSenderId: "471541334599",
-      appId: "1:471541334599:web:567af3e7dbe70a37572762"
+    var API_URL = "https://meow-874ce-default-rtdb.europe-west1.firebasedatabase.app";
+    var feedTabMode = "recommendations";
+
+    var deviceId = localStorage.getItem("tkm-device") || ("uid_" + Math.random().toString(36).substring(2, 11) + "_" + Date.now().toString(36));
+    localStorage.setItem("tkm-device", deviceId);
+
+    function getSafeKey(str) {
+      if (!str) return "k_default";
+      var hash = 0;
+      for (var i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return "k_" + Math.abs(hash).toString(36) + "_" + str.length;
+    }
+
+    var AES256 = (function() {
+      var MASTER_KEY = [
+        0x4D, 0x45, 0x4F, 0x57, 0x5F, 0x53, 0x54, 0x52, 
+        0x45, 0x41, 0x4D, 0x5F, 0x41, 0x45, 0x53, 0x32, 
+        0x35, 0x36, 0x5F, 0x53, 0x45, 0x43, 0x52, 0x45, 
+        0x54, 0x5F, 0x4B, 0x45, 0x59, 0x5F, 0x33, 0x32
+      ];
+
+      var SBOX = [
+        0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76,
+        0xca,0x82,0xc9,0x7d,0xfa,0x59,0x47,0xf0,0xad,0xd4,0xa2,0xaf,0x9c,0xa4,0x72,0xc0,
+        0xb7,0xfd,0x93,0x26,0x36,0x3f,0xf7,0xcc,0x34,0xa5,0xe5,0xf1,0x71,0xd8,0x31,0x15,
+        0x04,0xc7,0x23,0xc3,0x18,0x96,0x05,0x9a,0x07,0x12,0x80,0xe2,0xeb,0x27,0xb2,0x75,
+        0x09,0x83,0x2c,0x1a,0x1b,0x6e,0x5a,0xa0,0x52,0x3b,0xd6,0xb3,0x29,0xe3,0x2f,0x84,
+        0x53,0xd1,0x00,0xed,0x20,0xfc,0xb1,0x5b,0x6a,0xcb,0xbe,0x39,0x4a,0x4c,0x58,0xcf,
+        0xd0,0xef,0xaa,0xfb,0x43,0x4d,0x33,0x85,0x45,0xf9,0x02,0x7f,0x50,0x3c,0x9f,0xa8,
+        0x51,0xa3,0x40,0x8f,0x92,0x9d,0x38,0xf5,0xbc,0xb6,0xda,0x21,0x10,0xff,0xf3,0xd2,
+        0xcd,0x0c,0x13,0xec,0x5f,0x97,0x44,0x17,0xc4,0xa7,0x7e,0x3d,0x64,0x5d,0x19,0x73,
+        0x60,0x81,0x4f,0xdc,0x22,0x2a,0x90,0x88,0x46,0xee,0xb8,0x14,0xde,0x5e,0x0b,0xdb,
+        0xe0,0x32,0x3a,0x0a,0x49,0x06,0x24,0x5c,0xc2,0xd3,0xac,0x62,0x91,0x95,0xe4,0x79,
+        0xe7,0xc8,0x37,0x6d,0x8d,0xd5,0x4e,0xa9,0x6c,0x56,0xf4,0xea,0x65,0x7a,0xae,0x08,
+        0xba,0x78,0x25,0x2e,0x1c,0xa6,0xb4,0xc6,0xe8,0xdd,0x74,0x1f,0x4b,0xbd,0x8b,0x8a,
+        0x70,0x3e,0xb5,0x66,0x48,0x03,0xf6,0x0e,0x61,0x35,0x57,0xb9,0x86,0xc1,0x1d,0x9e,
+        0xe1,0xf8,0x98,0x11,0x69,0xd9,0x8e,0x94,0x9b,0x1e,0x87,0xe9,0xce,0x55,0x28,0xdf,
+        0x8c,0xa1,0x89,0x0d,0xbf,0xe6,0x42,0x68,0x41,0x99,0x2d,0x0f,0xb0,0x54,0xbb,0x16
+      ];
+
+      var ISBOX = new Array(256);
+      for (var i = 0; i < 256; i++) ISBOX[SBOX[i]] = i;
+
+      var RCON = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36];
+
+      function keyExpansion(key) {
+        var w = new Array(60);
+        for (var i = 0; i < 8; i++) {
+          w[i] = [key[4*i], key[4*i+1], key[4*i+2], key[4*i+3]];
+        }
+        for (var i = 8; i < 60; i++) {
+          var temp = w[i-1].slice();
+          if (i % 8 === 0) {
+            temp = [SBOX[temp[1]] ^ RCON[i/8], SBOX[temp[2]], SBOX[temp[3]], SBOX[temp[0]]];
+          } else if (i % 8 === 4) {
+            temp = [SBOX[temp[0]], SBOX[temp[1]], SBOX[temp[2]], SBOX[temp[3]]];
+          }
+          w[i] = [w[i-8][0] ^ temp[0], w[i-8][1] ^ temp[1], w[i-8][2] ^ temp[2], w[i-8][3] ^ temp[3]];
+        }
+        return w;
+      }
+
+      function gmul(a, b) {
+        var p = 0;
+        for (var counter = 0; counter < 8; counter++) {
+          if ((b & 1) !== 0) p ^= a;
+          var hi_bit_set = (a & 0x80) !== 0;
+          a = (a << 1) & 0xff;
+          if (hi_bit_set) a ^= 0x1b;
+          b >>= 1;
+        }
+        return p;
+      }
+
+      function cipherBlock(block, w) {
+        var state = [[],[],[],[]];
+        for (var i = 0; i < 4; i++) {
+          for (var j = 0; j < 4; j++) state[j][i] = block[i*4+j];
+        }
+        for (var i = 0; i < 4; i++) {
+          for (var j = 0; j < 4; j++) state[j][i] ^= w[i][j];
+        }
+        for (var round = 1; round <= 14; round++) {
+          for (var r = 0; r < 4; r++) {
+            for (var c = 0; c < 4; c++) state[r][c] = SBOX[state[r][c]];
+          }
+          var t1 = state[1][0]; state[1][0] = state[1][1]; state[1][1] = state[1][2]; state[1][2] = state[1][3]; state[1][3] = t1;
+          var t2_0 = state[2][0], t2_1 = state[2][1]; state[2][0] = state[2][2]; state[2][1] = state[2][3]; state[2][2] = t2_0; state[2][3] = t2_1;
+          var t3 = state[3][3]; state[3][3] = state[3][2]; state[3][2] = state[3][1]; state[3][1] = state[3][0]; state[3][0] = t3;
+          if (round < 14) {
+            for (var c = 0; c < 4; c++) {
+              var s0 = state[0][c], s1 = state[1][c], s2 = state[2][c], s3 = state[3][c];
+              state[0][c] = gmul(s0, 2) ^ gmul(s1, 3) ^ s2 ^ s3;
+              state[1][c] = s0 ^ gmul(s1, 2) ^ gmul(s2, 3) ^ s3;
+              state[2][c] = s0 ^ s1 ^ gmul(s2, 2) ^ gmul(s3, 3);
+              state[3][c] = gmul(s0, 3) ^ s1 ^ s2 ^ gmul(s3, 2);
+            }
+          }
+          for (var c = 0; c < 4; c++) {
+            for (var r = 0; r < 4; r++) state[r][c] ^= w[round*4 + c][r];
+          }
+        }
+        var out = new Array(16);
+        for (var i = 0; i < 4; i++) {
+          for (var j = 0; j < 4; j++) out[i*4+j] = state[j][i];
+        }
+        return out;
+      }
+
+      function invCipherBlock(block, w) {
+        var state = [[],[],[],[]];
+        for (var i = 0; i < 4; i++) {
+          for (var j = 0; j < 4; j++) state[j][i] = block[i*4+j];
+        }
+        for (var i = 0; i < 4; i++) {
+          for (var j = 0; j < 4; j++) state[j][i] ^= w[14*4 + i][j];
+        }
+        for (var round = 13; round >= 0; round--) {
+          var t1 = state[1][3]; state[1][3] = state[1][2]; state[1][2] = state[1][1]; state[1][1] = state[1][0]; state[1][0] = t1;
+          var t2_0 = state[2][0], t2_1 = state[2][1]; state[2][0] = state[2][2]; state[2][1] = state[2][3]; state[2][2] = t2_0; state[2][3] = t2_1;
+          var t3 = state[3][0]; state[3][0] = state[3][1]; state[3][1] = state[3][2]; state[3][2] = state[3][3]; state[3][3] = t3;
+          for (var r = 0; r < 4; r++) {
+            for (var c = 0; c < 4; c++) state[r][c] = ISBOX[state[r][c]];
+          }
+          for (var c = 0; c < 4; c++) {
+            for (var r = 0; r < 4; r++) state[r][c] ^= w[round*4 + c][r];
+          }
+          if (round > 0) {
+            for (var c = 0; c < 4; c++) {
+              var s0 = state[0][c], s1 = state[1][c], s2 = state[2][c], s3 = state[3][c];
+              state[0][c] = gmul(s0, 0x0e) ^ gmul(s1, 0x0b) ^ gmul(s2, 0x0d) ^ gmul(s3, 0x09);
+              state[1][c] = gmul(s0, 0x09) ^ gmul(s1, 0x0e) ^ gmul(s2, 0x0b) ^ gmul(s3, 0x0d);
+              state[2][c] = gmul(s0, 0x0d) ^ gmul(s1, 0x09) ^ gmul(s2, 0x0e) ^ gmul(s3, 0x0b);
+              state[3][c] = gmul(s0, 0x0b) ^ gmul(s1, 0x0d) ^ gmul(s2, 0x09) ^ gmul(s3, 0x0e);
+            }
+          }
+        }
+        var out = new Array(16);
+        for (var i = 0; i < 4; i++) {
+          for (var j = 0; j < 4; j++) out[i*4+j] = state[j][i];
+        }
+        return out;
+      }
+
+      function stringToUtf8Bytes(str) {
+        var bytes = [];
+        for (var i = 0; i < str.length; i++) {
+          var code = str.charCodeAt(i);
+          if (code < 0x80) bytes.push(code);
+          else if (code < 0x800) {
+            bytes.push(0xc0 | (code >> 6));
+            bytes.push(0x80 | (code & 0x3f));
+          } else if (code < 0xd800 || code >= 0xe000) {
+            bytes.push(0xe0 | (code >> 12));
+            bytes.push(0x80 | ((code >> 6) & 0x3f));
+            bytes.push(0x80 | (code & 0x3f));
+          } else {
+            i++;
+            code = 0x10000 + (((code & 0x3ff) << 10) | (str.charCodeAt(i) & 0x3ff));
+            bytes.push(0xf0 | (code >> 18));
+            bytes.push(0x80 | ((code >> 12) & 0x3f));
+            bytes.push(0x80 | ((code >> 6) & 0x3f));
+            bytes.push(0x80 | (code & 0x3f));
+          }
+        }
+        return bytes;
+      }
+
+      function utf8BytesToString(bytes) {
+        var str = "";
+        var i = 0;
+        while (i < bytes.length) {
+          var c = bytes[i++];
+          if (c > 127) {
+            if (c > 191 && c < 224) {
+              c = ((c & 31) << 6) | (bytes[i++] & 63);
+            } else if (c > 223 && c < 240) {
+              c = ((c & 15) << 12) | ((bytes[i++] & 63) << 6) | (bytes[i++] & 63);
+            } else if (c > 239 && c < 248) {
+              c = ((c & 7) << 18) | ((bytes[i++] & 63) << 12) | ((bytes[i++] & 63) << 6) | (bytes[i++] & 63);
+            }
+          }
+          if (c <= 0xffff) {
+            str += String.fromCharCode(c);
+          } else {
+            c -= 0x10000;
+            str += String.fromCharCode((c >> 10) | 0xd800, (c & 0x3ff) | 0xdc00);
+          }
+        }
+        return str;
+      }
+
+      function getRandomBytes(n) {
+        var arr = new Uint8Array(n);
+        if (window.crypto && window.crypto.getRandomValues) {
+          window.crypto.getRandomValues(arr);
+        } else {
+          for (var i = 0; i < n; i++) arr[i] = Math.floor(Math.random() * 256);
+        }
+        var result = [];
+        for (var i = 0; i < n; i++) result.push(arr[i]);
+        return result;
+      }
+
+      function deriveKey(salt) {
+        var key = MASTER_KEY.slice();
+        for (var i = 0; i < key.length; i++) {
+          key[i] = key[i] ^ salt[i % salt.length];
+        }
+        return keyExpansion(key);
+      }
+
+      function bytesToBase64(bytes) {
+        var bin = "";
+        for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        return btoa(bin);
+      }
+
+      function base64ToBytes(b64) {
+        var bin = atob(b64);
+        var bytes = [];
+        for (var i = 0; i < bin.length; i++) bytes.push(bin.charCodeAt(i));
+        return bytes;
+      }
+
+      var PREFIX = "MEOWAES256:";
+
+      function encryptString(str) {
+        if (typeof str !== "string") return str;
+        if (str.startsWith(PREFIX)) return str; 
+
+        var plainBytes = stringToUtf8Bytes(str);
+        var pad = 16 - (plainBytes.length % 16);
+        for (var i = 0; i < pad; i++) plainBytes.push(pad);
+
+        var salt = getRandomBytes(8);
+        var iv = getRandomBytes(16);
+        var expandedKey = deriveKey(salt);
+
+        var cipherBytes = [];
+        var prevBlock = iv.slice();
+
+        for (var b = 0; b < plainBytes.length; b += 16) {
+          var block = plainBytes.slice(b, b + 16);
+          for (var i = 0; i < 16; i++) block[i] ^= prevBlock[i];
+          var encrypted = cipherBlock(block, expandedKey);
+          for (var i = 0; i < 16; i++) cipherBytes.push(encrypted[i]);
+          prevBlock = encrypted.slice();
+        }
+
+        var fullPayload = salt.concat(iv).concat(cipherBytes);
+        return PREFIX + bytesToBase64(fullPayload);
+      }
+
+      function decryptString(encStr) {
+        if (typeof encStr !== "string") return encStr;
+        if (!encStr.startsWith(PREFIX)) return encStr;
+
+        try {
+          var rawB64 = encStr.slice(PREFIX.length);
+          var fullBytes = base64ToBytes(rawB64);
+
+          if (fullBytes.length < 24) return encStr;
+
+          var salt = fullBytes.slice(0, 8);
+          var iv = fullBytes.slice(8, 24);
+          var cipherBytes = fullBytes.slice(24);
+
+          var expandedKey = deriveKey(salt);
+          var plainBytes = [];
+          var prevBlock = iv.slice();
+
+          for (var b = 0; b < cipherBytes.length; b += 16) {
+            var block = cipherBytes.slice(b, b + 16);
+            var decrypted = invCipherBlock(block, expandedKey);
+            for (var i = 0; i < 16; i++) plainBytes.push(decrypted[i] ^ prevBlock[i]);
+            prevBlock = block.slice();
+          }
+
+          var pad = plainBytes[plainBytes.length - 1];
+          if (pad > 0 && pad <= 16) {
+            plainBytes = plainBytes.slice(0, plainBytes.length - pad);
+          }
+
+          return utf8BytesToString(plainBytes);
+        } catch(e) {
+          return encStr;
+        }
+      }
+
+      function processData(val, encMode) {
+        if (val === null || val === undefined) return val;
+
+        if (typeof val === "string") {
+          return encMode ? encryptString(val) : decryptString(val);
+        }
+
+        if (typeof val === "boolean" || typeof val === "number") {
+          return val;
+        }
+
+        if (Array.isArray(val)) {
+          return val.map(function(item) { return processData(item, encMode); });
+        }
+
+        if (typeof val === "object") {
+          var res = {};
+          Object.keys(val).forEach(function(k) {
+            res[k] = processData(val[k], encMode);
+          });
+          return res;
+        }
+
+        return val;
+      }
+
+      return {
+        encrypt: function(val) { return processData(val, true); },
+        decrypt: function(val) { return processData(val, false); },
+        encryptString: encryptString,
+        decryptString: decryptString
+      };
+    })();
+
+    function reportError(msg, errObj) {
+      var errStr = errObj ? (errObj.message || String(errObj)) : "Unknown Error";
+      var fullMsg = "[" + new Date().toLocaleTimeString() + "] " + msg + ": " + errStr;
+      
+      var rawPayload = { message: fullMsg, timestamp: Date.now() };
+      var encryptedPayload = AES256.encrypt(rawPayload);
+
+      fetch(API_URL + "/systemLogs.json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(encryptedPayload)
+      }).catch(function(){});
+    }
+
+    window.addEventListener("error", function(e) {
+      reportError("RuntimeError", e.message || e.error);
+    });
+
+    window.addEventListener("unhandledrejection", function(e) {
+      reportError("PromiseReject", e.reason);
+    });
+
+    function apiGet(path) {
+      return fetch(API_URL + path + ".json").then(function(res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      }).then(function(data) {
+        return AES256.decrypt(data);
+      }).catch(function(err) {
+        reportError("GET " + path, err);
+        throw err;
+      });
+    }
+
+    function apiPut(path, data) {
+      var encData = AES256.encrypt(data);
+      return fetch(API_URL + path + ".json", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(encData)
+      }).then(function(res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      }).then(function(resData) {
+        return AES256.decrypt(resData);
+      }).catch(function(err) {
+        reportError("PUT " + path, err);
+        throw err;
+      });
+    }
+
+    function apiPost(path, data) {
+      var encData = AES256.encrypt(data);
+      return fetch(API_URL + path + ".json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(encData)
+      }).then(function(res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      }).then(function(resData) {
+        return AES256.decrypt(resData);
+      }).catch(function(err) {
+        reportError("POST " + path, err);
+        throw err;
+      });
+    }
+
+    function apiPatch(path, data) {
+      var encData = AES256.encrypt(data);
+      return fetch(API_URL + path + ".json", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(encData)
+      }).then(function(res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      }).then(function(resData) {
+        return AES256.decrypt(resData);
+      }).catch(function(err) {
+        reportError("PATCH " + path, err);
+        throw err;
+      });
+    }
+
+    function apiDelete(path) {
+      return fetch(API_URL + path + ".json", {
+        method: "DELETE"
+      }).then(function(res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      }).catch(function(err) {
+        reportError("DELETE " + path, err);
+        throw err;
+      });
+    }
+
+    var eventSource = null;
+    var remoteData = {};
+
+    function initDataStream() {
+      if (eventSource) {
+        try { eventSource.close(); } catch(e){}
+      }
+
+      eventSource = new EventSource(API_URL + "/.json");
+
+      eventSource.addEventListener("put", function(e) {
+        try {
+          var payload = JSON.parse(e.data);
+          var decryptedData = AES256.decrypt(payload.data);
+          applyUpdate(payload.path, decryptedData);
+        } catch(err) { reportError("SSE_PUT", err); }
+      });
+
+      eventSource.addEventListener("patch", function(e) {
+        try {
+          var payload = JSON.parse(e.data);
+          var decryptedData = AES256.decrypt(payload.data);
+          applyPatch(payload.path, decryptedData);
+        } catch(err) { reportError("SSE_PATCH", err); }
+      });
+
+      eventSource.onerror = function() {};
+    }
+
+    function setNested(obj, pathParts, val) {
+      var cur = obj;
+      for (var i = 0; i < pathParts.length - 1; i++) {
+        var p = pathParts[i];
+        if (!cur[p] || typeof cur[p] !== "object") cur[p] = {};
+        cur = cur[p];
+      }
+      if (pathParts.length > 0) {
+        var last = pathParts[pathParts.length - 1];
+        if (val === null) delete cur[last];
+        else cur[last] = val;
+      }
+    }
+
+    function applyUpdate(path, data) {
+      if (path === "/" || path === "") {
+        remoteData = data || {};
+      } else {
+        var parts = path.replace(/^\//, "").split("/");
+        setNested(remoteData, parts, data);
+      }
+      syncState();
+    }
+
+    function applyPatch(path, data) {
+      if (!data || typeof data !== "object") return;
+      var basePath = path === "/" ? "" : path;
+      Object.keys(data).forEach(function(k) {
+        var subPath = basePath + "/" + k;
+        var parts = subPath.replace(/^\//, "").split("/");
+        setNested(remoteData, parts, data[k]);
+      });
+      syncState();
+    }
+
+    function syncState() {
+      processVideos(remoteData.videos);
+      processLikes(remoteData.likes);
+      processUserLikes(remoteData.userLikes && remoteData.userLikes[deviceId]);
+      processAdminSettings(remoteData.adminSettings);
+      processChannelInfo(remoteData.channel && remoteData.channel.info);
+      processChannelPosts(remoteData.channel && remoteData.channel.posts);
+      processUserProfile(remoteData.users && remoteData.users[deviceId]);
+      processLogs(remoteData.systemLogs);
+      processAnnouncement(remoteData.announcement);
+      if (activeCommentSrc) processFeedComments(activeCommentSrc, remoteData.comments);
+      if (currentTgPostKey) processTgComments(currentTgPostKey, remoteData.channel && remoteData.channel.posts);
+      calcStats();
+      renderAdmin();
+    }
+
+    function enterFullscreenAuto() {
+      if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) return;
+      var el = document.documentElement;
+      var req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      if (req) {
+        req.call(el).catch(function(){});
+      }
+    }
+
+    try { enterFullscreenAuto(); } catch(e) {}
+    window.addEventListener("DOMContentLoaded", enterFullscreenAuto);
+    window.addEventListener("load", enterFullscreenAuto);
+    window.addEventListener("pageshow", enterFullscreenAuto);
+    document.addEventListener("click", enterFullscreenAuto);
+    document.addEventListener("touchstart", enterFullscreenAuto, { passive: true });
+    window.addEventListener("focus", enterFullscreenAuto);
+
+    document.addEventListener("visibilitychange", function() {
+      if (!document.hidden) {
+        setTimeout(enterFullscreenAuto, 50);
+      }
+    });
+
+    function stopAllExcept(activeIdx) {
+      $$("video, audio").forEach(function(media) {
+        var card = media.closest(".video-card");
+        if (card) {
+          var cardIdx = +card.dataset.i;
+          if (cardIdx !== activeIdx) {
+            media.pause();
+          }
+        } else {
+          if (!media.closest(".tg-comments-screen") && !media.closest(".channel-post") && !media.closest(".custom-dialog")) {
+            media.pause();
+          }
+        }
+      });
+    }
+
+    function clearFeedMedia() {
+      $$(".video-player", feed).forEach(function(v) {
+        try {
+          v.pause();
+          v.removeAttribute("src");
+          v.load();
+        } catch(e){}
+      });
+    }
+
+    function ensureSoundAndPlay() {
+      if (document.body.getAttribute("data-screen") !== "feed") return;
+      stopAllExcept(current);
+      if (feed && feed.children[current]) {
+        var v = $(".video-player", feed.children[current]);
+        if (v) {
+          v.muted = isMuted;
+          v.volume = 1.0;
+          if (v.paused && !isUserPaused) {
+            v.play().catch(function(){});
+          }
+        }
+      }
+    }
+
+    document.addEventListener("click", ensureSoundAndPlay);
+
+    var isUserPaused = false;
+
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.setActionHandler('play', function() {
+        isUserPaused = false;
+        if (feed && feed.children[current]) {
+          var v = $(".video-player", feed.children[current]);
+          if (v) {
+            v.muted = isMuted;
+            v.play().catch(function(){});
+          }
+        }
+      });
+      navigator.mediaSession.setActionHandler('pause', function() {
+        isUserPaused = true;
+        if (feed && feed.children[current]) {
+          var v = $(".video-player", feed.children[current]);
+          if (v) v.pause();
+        }
+      });
+      navigator.mediaSession.setActionHandler('previoustrack', function() { go(-1); });
+      navigator.mediaSession.setActionHandler('nexttrack', function() { go(1); });
+    }
+
+    feed.addEventListener("pause", function(e) {
+      if (document.hidden && e.target.matches(".video-player") && !isUserPaused) {
+        setTimeout(function() {
+          e.target.play().catch(function(){});
+        }, 50);
+      }
+    }, true);
+
+    document.addEventListener("visibilitychange", function() {
+      if (!document.hidden && feed.children[current] && !isUserPaused && document.body.getAttribute("data-screen") === "feed") {
+        var v = $(".video-player", feed.children[current]);
+        if (v && v.paused) v.play().catch(function(){});
+      }
+    });
+
+    var adminSettings = {
+      commentsDisabled: false,
+      channelDisabled: false
     };
-    var db = null;
-    var videosRef = null;
-    var firebaseLoaded = false;
-    try {
-      firebase.initializeApp(firebaseConfig);
-      db = firebase.database();
-      videosRef = db.ref("videos");
-    } catch(e) { console.log("Firebase init failed:", e); }
 
-    // Variables
     var items = [];
+    var visibleItems = [];
     var current = 0;
     var lastTap = 0;
     var toastTimer;
     var io;
     var dragDepth = 0;
     var isMuted = false;
-    var deviceId = localStorage.getItem("tkm-device") || ("dev_" + Math.random().toString(36).slice(2, 10));
-    localStorage.setItem("tkm-device", deviceId);
-    var key = "tkm-feed-v1";
-    var commentKey = "tkm-comments-v1";
+    var key = "meow-feed-v1";
+    var commentKey = "meow-comments-v1";
+
+    var userProfile = {
+      name: "Пользователь",
+      username: "@user_" + deviceId.slice(-4),
+      avatar: ""
+    };
 
     function clean(x) { return String(x || "").replace(/[<>]/g, ""); }
     function compact(n) { return Intl.NumberFormat("ru", { notation: "compact", maximumFractionDigits: 1 }).format(n || 0); }
 
-    // Firebase video listeners
-    if (db) {
-      videosRef.orderByChild("timestamp").limitToLast(50).on("child_added", function(snap) {
-        if (!firebaseLoaded) return;
-        var v = snap.val();
-        if (!v || !v.src) return;
-        if (items.some(function(x) { return x.src === v.src; })) return;
-        items.unshift({ src: v.src, user: v.user || "@direct", desc: v.desc || "", music: v.music || "", likes: v.likes || 0, bookmarks: v.bookmarks || 0, shares: v.shares || 0, timestamp: v.timestamp });
-        render();
-        toast("Новое видео в ленте!");
-      });
+    function formatMusicTitle(music, user) {
+      var cleanMusic = clean(music || "").trim();
+      if (!cleanMusic || /^https?:\/\//i.test(cleanMusic) || (cleanMusic.includes(".") && !cleanMusic.includes(" "))) {
+        return "Оригинальный звук - " + clean(user || "@direct");
+      }
+      return cleanMusic;
+    }
 
-      videosRef.orderByChild("timestamp").limitToLast(50).once("value", function(snap) {
-        var data = snap.val();
-        if (data) {
-          var vids = Object.values(data).sort(function(a, b) { return (b.timestamp || 0) - (a.timestamp || 0); });
-          if (vids.length > 0) {
-            items = vids.map(function(v) { return { src: v.src, user: v.user || "@direct", desc: v.desc || "", music: v.music || "", likes: v.likes || 0, bookmarks: v.bookmarks || 0, shares: v.shares || 0, timestamp: v.timestamp }; });
+    var idb = null;
+    var IDB_NAME = "MeowMediaCacheDB";
+    var IDB_STORE = "mediaBlobs";
+
+    function initIndexedDB() {
+      if (!window.indexedDB) return;
+      var req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = function(e) {
+        var database = e.target.result;
+        if (!database.objectStoreNames.contains(IDB_STORE)) {
+          database.createObjectStore(IDB_STORE, { keyPath: "url" });
+        }
+      };
+      req.onsuccess = function(e) {
+        idb = e.target.result;
+        updateIndexedDbSizeUI();
+      };
+      req.onerror = function(e) { reportError("IDB_Open", e.target.error); };
+    }
+
+    function saveToIndexedDb(url, blob) {
+      if (!idb || !url || !blob) return;
+      try {
+        var tx = idb.transaction(IDB_STORE, "readwrite");
+        var store = tx.objectStore(IDB_STORE);
+        store.put({ url: url, blob: blob, timestamp: Date.now(), size: blob.size || 0 });
+        tx.oncomplete = function() { updateIndexedDbSizeUI(); };
+        tx.onerror = function(e) { reportError("IDB_Save", e.target.error); };
+      } catch(e) { reportError("IDB_SaveTry", e); }
+    }
+
+    function getFromIndexedDb(url, callback) {
+      if (!idb || !url) return callback(null);
+      try {
+        var tx = idb.transaction(IDB_STORE, "readonly");
+        var store = tx.objectStore(IDB_STORE);
+        var req = store.get(url);
+        req.onsuccess = function() {
+          if (req.result && req.result.blob) {
+            callback(req.result.blob);
+          } else {
+            callback(null);
+          }
+        };
+        req.onerror = function() { callback(null); };
+      } catch(e) { callback(null); }
+    }
+
+    function clearIndexedDbCache() {
+      if (!idb) { toast("Кэш пуст"); return; }
+      try {
+        var tx = idb.transaction(IDB_STORE, "readwrite");
+        var store = tx.objectStore(IDB_STORE);
+        store.clear();
+        tx.oncomplete = function() {
+          updateIndexedDbSizeUI();
+          toast("Кэш медиа успешно очищен!");
+        };
+      } catch(e) { reportError("IDB_Clear", e); toast("Ошибка при очистке кэша"); }
+    }
+
+    function updateIndexedDbSizeUI() {
+      if (!idb) return;
+      try {
+        var tx = idb.transaction(IDB_STORE, "readonly");
+        var store = tx.objectStore(IDB_STORE);
+        var req = store.getAll();
+        req.onsuccess = function() {
+          var items = req.result || [];
+          var totalBytes = 0;
+          items.forEach(function(item) { totalBytes += (item.size || (item.blob ? item.blob.size : 0) || 0); });
+          var mb = (totalBytes / (1024 * 1024)).toFixed(1);
+          $("#indexedDbSizeText").textContent = mb + " MB (" + items.length + " файлов)";
+        };
+      } catch(e) {}
+    }
+
+    $("#clearCacheBtn").addEventListener("click", clearIndexedDbCache);
+
+    function copyToClipboard(text, successMsg) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          toast(successMsg || "Скопировано!");
+        }).catch(function() {
+          fallbackCopyText(text, successMsg);
+        });
+      } else {
+        fallbackCopyText(text, successMsg);
+      }
+    }
+
+    function fallbackCopyText(text, successMsg) {
+      var textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast(successMsg || "Скопировано!");
+      } catch (err) {
+        toast("Ошибка копирования");
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function updateUidUI() {
+      var uidEl = $("#profileUidValue");
+      if (uidEl) uidEl.textContent = deviceId;
+    }
+
+    $("#copyProfileUidBtn").addEventListener("click", function() {
+      copyToClipboard(deviceId, "RTDB UID скопирован!");
+    });
+
+    function processUserProfile(val) {
+      if (val) {
+        userProfile.name = val.name || userProfile.name;
+        userProfile.username = val.username || userProfile.username;
+        userProfile.avatar = val.avatar || userProfile.avatar;
+      }
+      updateProfileUI();
+    }
+
+    function updateProfileUI() {
+      updateUidUI();
+      $("#profileNameInput").value = userProfile.name;
+      $("#profileUserHandleInput").value = userProfile.username;
+      
+      var defaultAvatarSvg = "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2738%27 r=%2722%27 fill=%27%23fe2c55%27/%3E%3Cpath d=%27M20 90 A30 30 0 0 1 80 90 Z%27 fill=%27%23fe2c55%27/%3E%3C/svg%3E";
+      var avatarSrc = userProfile.avatar || defaultAvatarSvg;
+      
+      $("#profileAvatarImg").src = avatarSrc;
+      $("#demoCommentAvatar").src = avatarSrc;
+      $("#demoCommentAuthor").textContent = userProfile.name + " (" + userProfile.username + ")";
+    }
+
+    var avatarPickerTrigger = $("#avatarPickerTrigger");
+    var avatarFileInput = $("#avatarFileInput");
+
+    avatarPickerTrigger.addEventListener("click", function() { avatarFileInput.click(); });
+
+    avatarFileInput.addEventListener("change", function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        toast("Ошибка: Размер аватарки максимум 5 МБ!");
+        avatarFileInput.value = "";
+        return;
+      }
+
+      if (!file.type.startsWith("image/")) {
+        toast("Ошибка: Выберите изображение");
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        var base64 = evt.target.result;
+        userProfile.avatar = base64;
+        updateProfileUI();
+        toast("Аватарка загружена");
+      };
+      reader.onerror = function(err) { reportError("FileReader", err); toast("Ошибка чтения файла"); };
+      reader.readAsDataURL(file);
+    });
+
+    $("#saveProfileBtn").addEventListener("click", function() {
+      var nameVal = $("#profileNameInput").value.trim();
+      var handleVal = $("#profileUserHandleInput").value.trim();
+
+      if (!nameVal) { toast("Введите имя"); return; }
+      if (!handleVal) { toast("Введите юзернейм"); return; }
+      if (!handleVal.startsWith("@")) handleVal = "@" + handleVal;
+
+      userProfile.name = nameVal;
+      userProfile.username = handleVal;
+
+      apiPut("/users/" + deviceId, {
+        name: userProfile.name,
+        username: userProfile.username,
+        avatar: userProfile.avatar,
+        uid: deviceId,
+        updatedAt: Date.now()
+      }).then(function() {
+        toast("Профиль сохранен!");
+      }).catch(function(err) {
+        toast("Ошибка сохранения профиля");
+      });
+    });
+
+    var pendingAnnounceFile = null;
+
+    var adminAnnounceFileTrigger = $("#adminAnnounceFileTrigger");
+    var adminAnnounceFileInput = $("#adminAnnounceFileInput");
+    var adminFilePreviewBox = $("#adminFilePreviewBox");
+    var adminFileNameText = $("#adminFileNameText");
+    var adminFileSizeText = $("#adminFileSizeText");
+    var adminFileRemoveBtn = $("#adminFileRemoveBtn");
+
+    adminAnnounceFileTrigger.addEventListener("click", function() {
+      adminAnnounceFileInput.click();
+    });
+
+    adminAnnounceFileInput.addEventListener("change", function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+
+      var sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        var base64 = evt.target.result;
+        pendingAnnounceFile = {
+          name: file.name,
+          size: sizeMB + " MB",
+          type: file.type || (file.name.endsWith(".apk") ? "application/vnd.android.package-archive" : "file"),
+          base64: base64
+        };
+
+        adminFileNameText.textContent = file.name;
+        adminFileSizeText.textContent = sizeMB + " MB";
+        adminFilePreviewBox.style.display = "flex";
+        toast("Файл выбран (" + sizeMB + " MB)");
+      };
+
+      reader.onerror = function(err) {
+        reportError("FileReaderAnnounce", err);
+        toast("Ошибка чтения файла");
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    adminFileRemoveBtn.addEventListener("click", function() {
+      pendingAnnounceFile = null;
+      adminAnnounceFileInput.value = "";
+      adminFilePreviewBox.style.display = "none";
+    });
+
+    $("#publishAnnounceBtn").addEventListener("click", function() {
+      var title = $("#adminAnnounceTitle").value.trim();
+      var text = $("#adminAnnounceText").value.trim();
+
+      if (!title) { toast("Введите заголовок объявления"); return; }
+      if (!text) { toast("Введите текст сообщения"); return; }
+
+      var announceId = "ann_" + Date.now();
+
+      var announcePayload = {
+        id: announceId,
+        title: title,
+        text: text,
+        timestamp: Date.now(),
+        author: userProfile.name + " (" + userProfile.username + ")",
+        file: pendingAnnounceFile ? pendingAnnounceFile : null
+      };
+
+      apiPut("/announcement", announcePayload).then(function() {
+        toast("Объявление зашифровано и опубликовано!");
+        $("#adminAnnounceTitle").value = "";
+        $("#adminAnnounceText").value = "";
+        pendingAnnounceFile = null;
+        adminAnnounceFileInput.value = "";
+        adminFilePreviewBox.style.display = "none";
+      }).catch(function(err) {
+        toast("Ошибка публикации объявления");
+      });
+    });
+
+    $("#deleteAnnounceBtn").addEventListener("click", function() {
+      if (confirm("Удалить текущее объявление из системы?")) {
+        apiDelete("/announcement").then(function() {
+          toast("Объявление удалено из RTDB!");
+        }).catch(function(err) {
+          toast("Ошибка удаления объявления");
+        });
+      }
+    });
+
+    function processAnnouncement(data) {
+      var activeAnnounceBox = $("#activeAnnounceBox");
+
+      if (!data || !data.title) {
+        if (activeAnnounceBox) activeAnnounceBox.style.display = "none";
+        return;
+      }
+
+      if (activeAnnounceBox) {
+        activeAnnounceBox.style.display = "flex";
+        $("#activeAnnounceTitle").textContent = data.title;
+        $("#activeAnnounceBody").textContent = data.text + (data.file ? " [Прикреплен файл: " + data.file.name + "]" : "");
+      }
+
+      var seenKey = "meow_seen_announce_" + data.id;
+      if (!localStorage.getItem(seenKey)) {
+        showCustomAnnouncementDialog(data, seenKey);
+      }
+    }
+
+    function showCustomAnnouncementDialog(data, seenKey) {
+      $("#userAnnounceTitle").textContent = data.title;
+      $("#userAnnounceText").textContent = data.text;
+
+      var mediaContainer = $("#userAnnounceMediaContainer");
+      var apkBox = $("#userAnnounceApkBox");
+      var primaryBtn = $("#userAnnouncePrimaryBtn");
+      var primaryBtnText = $("#userAnnouncePrimaryBtnText");
+
+      mediaContainer.style.display = "none";
+      mediaContainer.innerHTML = "";
+      apkBox.style.display = "none";
+      primaryBtn.style.display = "none";
+
+      if (data.file && data.file.base64) {
+        var file = data.file;
+        var isImage = file.type.startsWith("image/");
+        var isVideo = file.type.startsWith("video/");
+        var isApk = file.name.endsWith(".apk") || file.type.includes("android.package-archive");
+
+        if (isImage) {
+          mediaContainer.innerHTML = '<img src="' + clean(file.base64) + '" alt="">';
+          mediaContainer.style.display = "flex";
+        } else if (isVideo) {
+          mediaContainer.innerHTML = '<video src="' + clean(file.base64) + '" controls playsinline autoplay muted></video>';
+          mediaContainer.style.display = "flex";
+        } else if (isApk) {
+          apkBox.style.display = "flex";
+          $("#userAnnounceApkName").textContent = file.name || "update.apk";
+          $("#userAnnounceApkSize").textContent = file.size || "Размер неизвестен";
+
+          primaryBtnText.textContent = "Установить обновление (APK)";
+          primaryBtn.style.display = "flex";
+          primaryBtn.onclick = function() {
+            var a = document.createElement("a");
+            a.href = file.base64;
+            a.download = file.name || "Meow_Update.apk";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            toast("Загрузка обновления началась...");
+          };
+        } else {
+          primaryBtnText.textContent = "Скачать файл (" + clean(file.name) + ")";
+          primaryBtn.style.display = "flex";
+          primaryBtn.onclick = function() {
+            var a = document.createElement("a");
+            a.href = file.base64;
+            a.download = file.name || "file";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          };
+        }
+      }
+
+      userAnnounceDialogOverlay.classList.add("open");
+
+      $("#userAnnounceCloseBtn").onclick = function() {
+        localStorage.setItem(seenKey, "1");
+        userAnnounceDialogOverlay.classList.remove("open");
+      };
+    }
+
+    function processAdminSettings(val) {
+      val = val || {};
+      adminSettings.commentsDisabled = !!val.commentsDisabled;
+      adminSettings.channelDisabled = !!val.channelDisabled;
+
+      $("#disableCommentsToggle").checked = adminSettings.commentsDisabled;
+      $("#disableChannelToggle").checked = adminSettings.channelDisabled;
+
+      applyRealtimeRestrictions();
+    }
+
+    $("#disableCommentsToggle").addEventListener("change", function(e) {
+      var checked = e.target.checked;
+      apiPut("/adminSettings/commentsDisabled", checked).then(function() {
+        toast(checked ? "Комментарии отключены!" : "Комментарии включены!");
+      }).catch(function(err) { toast("Ошибка настройки"); });
+    });
+
+    $("#disableChannelToggle").addEventListener("change", function(e) {
+      var checked = e.target.checked;
+      apiPut("/adminSettings/channelDisabled", checked).then(function() {
+        toast(checked ? "Раздел Канал отключен!" : "Раздел Канал включен!");
+      }).catch(function(err) { toast("Ошибка настройки"); });
+    });
+
+    function applyRealtimeRestrictions() {
+      var drawerFooter = $("#commentsDrawerFooter");
+      var tgInputRow = $("#tgCommentsInputRow");
+
+      var disabledMarkup = '<div class="comments-disabled-msg"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-lock"/></svg><span>Комментарии отключены администратором</span></div>';
+
+      if (adminSettings.commentsDisabled) {
+        if (drawerFooter) drawerFooter.innerHTML = disabledMarkup;
+        if (tgInputRow) tgInputRow.innerHTML = disabledMarkup;
+      } else {
+        if (drawerFooter && !$("#commentInput")) {
+          drawerFooter.innerHTML = '<input type="text" class="comment-input" id="commentInput" placeholder="Оставьте комментарий…" autocomplete="off" maxlength="220"><button class="send-btn" id="sendCommentBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-send"/></svg></button>';
+          bindFeedCommentEvents();
+        }
+        if (tgInputRow && !$("#tgCommentsInput")) {
+          tgInputRow.innerHTML = '<input type="text" class="tg-comments-input" id="tgCommentsInput" placeholder="Написать комментарий..."><button class="tg-comments-send" id="tgCommentsSend"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><use href="#i-send"/></svg></button>';
+          bindTgCommentEvents();
+        }
+      }
+
+      if (adminSettings.channelDisabled) {
+        if (document.body.getAttribute("data-screen") === "channel") {
+          switchScreen("feed");
+          openTechDialog();
+        }
+      }
+    }
+
+    function openTechDialog() { techDialogOverlay.classList.add("open"); }
+    function closeTechDialog() { techDialogOverlay.classList.remove("open"); }
+    $("#techDialogClose").addEventListener("click", closeTechDialog);
+    techDialogOverlay.addEventListener("click", function(e) { if (e.target === techDialogOverlay) closeTechDialog(); });
+
+    function bindFeedCommentEvents() {
+      var btn = $("#sendCommentBtn");
+      var inp = $("#commentInput");
+      if (btn) btn.onclick = sendFeedComment;
+      if (inp) inp.onkeydown = function(e) { if (e.key === "Enter") sendFeedComment(); };
+    }
+
+    function bindTgCommentEvents() {
+      var btn = $("#tgCommentsSend");
+      var inp = $("#tgCommentsInput");
+      if (btn) btn.onclick = sendTgComment;
+      if (inp) inp.onkeydown = function(e) { if (e.key === "Enter") sendTgComment(); };
+    }
+
+    function calcStats() {
+      var jsonStr = JSON.stringify(remoteData);
+      var bytes = jsonStr.length;
+      var kb = (bytes / 1024).toFixed(2);
+      var mb = (bytes / (1024 * 1024)).toFixed(3);
+
+      $("#rtdbStorageText").textContent = bytes > 1024 * 1024 ? mb + " MB" : kb + " KB";
+
+      var maxBytes = 1073741824; 
+      var percentage = (bytes / maxBytes) * 100;
+      var percentStr = percentage.toFixed(4) + "%";
+
+      $("#rtdbPercentText").textContent = percentStr;
+      $("#rtdbProgressFill").style.width = Math.max(percentage * 10, 0.5) + "%";
+    }
+
+    var currentLogsArr = [];
+
+    function processLogs(logsData) {
+      var adminLogsList = $("#adminLogsList");
+      if (!logsData) {
+        $("#adminLogCount").textContent = "0";
+        currentLogsArr = [];
+        adminLogsList.innerHTML = '<div class="empty">Ошибок и логов нет</div>';
+        return;
+      }
+      var logKeys = Object.keys(logsData);
+      $("#adminLogCount").textContent = logKeys.length;
+
+      if (logKeys.length === 0) {
+        currentLogsArr = [];
+        adminLogsList.innerHTML = '<div class="empty">Ошибок и логов нет</div>';
+      } else {
+        var logArr = logKeys.map(function(k) { return logsData[k]; });
+        logArr.sort(function(a, b) { return (b.timestamp || 0) - (a.timestamp || 0); });
+        currentLogsArr = logArr;
+        
+        adminLogsList.innerHTML = logArr.slice(0, 50).map(function(l, idx) {
+          var textMsg = clean(l.message || JSON.stringify(l));
+          return '<div class="log-item">' +
+            '<div class="log-text-content">' + textMsg + '</div>' +
+            '<button class="log-copy-btn" onclick="window.copyLogItem(' + idx + ')" title="Скопировать лог">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-copy"/></svg>' +
+            '</button>' +
+          '</div>';
+        }).join("");
+      }
+    }
+
+    window.copyLogItem = function(idx) {
+      if (!currentLogsArr[idx]) return;
+      var item = currentLogsArr[idx];
+      var textToCopy = item.message || JSON.stringify(item);
+      copyToClipboard(textToCopy, "Лог скопирован!");
+    };
+
+    $("#copyAllLogsBtn").addEventListener("click", function() {
+      if (!currentLogsArr || currentLogsArr.length === 0) {
+        toast("Нет логов для копирования");
+        return;
+      }
+      var fullLogText = currentLogsArr.map(function(l) { return l.message || JSON.stringify(l); }).join("\n");
+      copyToClipboard(fullLogText, "Все логи скопированы (" + currentLogsArr.length + ")");
+    });
+
+    function renderAdmin() {
+      var adminVideoList = $("#adminVideoList");
+      var vids = remoteData.videos || {};
+      var vidKeys = Object.keys(vids);
+      $("#adminVideoCount").textContent = vidKeys.length;
+
+      if (vidKeys.length === 0) {
+        adminVideoList.innerHTML = '<div class="empty">Нет загруженных клипов</div>';
+      } else {
+        adminVideoList.innerHTML = vidKeys.map(function(k) {
+          var v = vids[k];
+          var title = clean(v.user || "@direct") + " — " + clean(v.desc || "Видео");
+          var musicTitle = formatMusicTitle(v.music, v.user);
+          return '<div class="admin-item"><div class="admin-item-info"><div class="admin-item-title">' + title + '</div><div class="admin-item-sub">🎵 ' + musicTitle + '</div></div><div class="admin-item-btns"><button class="admin-edit-btn" onclick="window.adminEditVideo(\'' + k + '\')">Редактировать</button><button class="admin-delete-btn" onclick="window.adminDeleteVideo(\'' + k + '\')">Удалить</button></div></div>';
+        }).join("");
+      }
+
+      var adminPostList = $("#adminPostList");
+      var posts = (remoteData.channel && remoteData.channel.posts) || {};
+      var postKeys = Object.keys(posts);
+      $("#adminPostCount").textContent = postKeys.length;
+
+      if (postKeys.length === 0) {
+        adminPostList.innerHTML = '<div class="empty">Нет постов в канале</div>';
+      } else {
+        adminPostList.innerHTML = postKeys.map(function(k) {
+          var p = posts[k];
+          var title = clean(p.text || (p.media && p.media.length ? "Медиа-пост (" + p.media.length + ")" : "Пост"));
+          return '<div class="admin-item"><div class="admin-item-info"><div class="admin-item-title">' + title + '</div><div class="admin-item-sub">Ключ: ' + k + '</div></div><button class="admin-delete-btn" onclick="window.adminDeletePost(\'' + k + '\')">Удалить</button></div>';
+        }).join("");
+      }
+    }
+
+    var adminVideoEditorModal = $("#adminVideoEditorModal");
+    window.adminEditVideo = function(videoKey) {
+      if (!remoteData.videos || !remoteData.videos[videoKey]) return;
+      var v = remoteData.videos[videoKey];
+      $("#editVideoKey").value = videoKey;
+      $("#editVideoSrc").value = v.src || "";
+      $("#editVideoUser").value = v.user || "@direct";
+      $("#editVideoMusic").value = v.music || "";
+      $("#editVideoDesc").value = v.desc || "";
+      adminVideoEditorModal.classList.add("open");
+    };
+
+    $("#closeAdminEditor").addEventListener("click", function() { adminVideoEditorModal.classList.remove("open"); });
+    adminVideoEditorModal.addEventListener("click", function(e) { if (e.target === adminVideoEditorModal) adminVideoEditorModal.classList.remove("open"); });
+
+    $("#saveAdminVideoBtn").addEventListener("click", function() {
+      var videoKey = $("#editVideoKey").value;
+      if (!videoKey) return;
+      var updatedData = {
+        src: $("#editVideoSrc").value.trim(),
+        user: $("#editVideoUser").value.trim() || "@direct",
+        music: $("#editVideoMusic").value.trim(),
+        desc: $("#editVideoDesc").value.trim()
+      };
+      if (!updatedData.src) { toast("Ссылка на видео не может быть пустой"); return; }
+
+      apiPatch("/videos/" + videoKey, updatedData).then(function() {
+        toast("Клип успешно обновлён!");
+        adminVideoEditorModal.classList.remove("open");
+      }).catch(function(err) {
+        toast("Ошибка редактирования");
+      });
+    });
+
+    window.adminDeleteVideo = function(videoKey) {
+      if (!videoKey) return;
+      if (confirm("Удалить это видео? Оно удалится у всех моментально!")) {
+        apiDelete("/videos/" + videoKey).then(function() {
+          toast("Видео удалено!");
+        }).catch(function(err) {
+          toast("Ошибка удаления");
+        });
+      }
+    };
+
+    window.adminDeletePost = function(postKey) {
+      if (!postKey) return;
+      if (confirm("Удалить этот пост? Он удалится у всех моментально!")) {
+        apiDelete("/channel/posts/" + postKey).then(function() {
+          toast("Пост удален!");
+        }).catch(function(err) {
+          toast("Ошибка удаления");
+        });
+      }
+    };
+
+    function processVideos(data) {
+      var savedBookmarks = getSavedBookmarks();
+      var userLikesMap = (remoteData.userLikes && remoteData.userLikes[deviceId]) || {};
+      var likesMap = remoteData.likes || {};
+
+      var existingMap = {};
+      items.forEach(function(it) { existingMap[it._key] = it; });
+
+      var newItems = [];
+      if (data) {
+        var vids = [];
+        Object.keys(data).forEach(function(k) {
+          var v = data[k];
+          if (v && v.src) {
+            v._key = k;
+            vids.push(v);
+          }
+        });
+        vids.sort(function(a, b) { return (b.timestamp || 0) - (a.timestamp || 0); });
+
+        newItems = vids.map(function(v) {
+          var safeK = v._key || getSafeKey(v.src);
+          var prev = existingMap[safeK];
+
+          var likesCount = (likesMap[safeK] !== undefined) ? likesMap[safeK] : (v.likes || 0);
+          var isLiked = (userLikesMap[safeK] !== undefined) ? !!userLikesMap[safeK] : (prev ? !!prev.liked : false);
+          var isBookmarked = (savedBookmarks[v.src] !== undefined) ? !!savedBookmarks[v.src] : (prev ? !!prev.bookmarked : false);
+
+          return { 
+            _key: safeK, 
+            src: v.src, 
+            user: v.user || "@direct", 
+            desc: v.desc || "", 
+            music: formatMusicTitle(v.music, v.user), 
+            likes: likesCount, 
+            liked: isLiked,
+            bookmarks: v.bookmarks || 0, 
+            bookmarked: isBookmarked,
+            shares: v.shares || 0, 
+            timestamp: v.timestamp 
+          };
+        });
+      }
+
+      var keysEqual = (newItems.length === items.length);
+      if (keysEqual) {
+        for (var i = 0; i < newItems.length; i++) {
+          if (newItems[i]._key !== items[i]._key) {
+            keysEqual = false;
+            break;
           }
         }
-        firebaseLoaded = true;
+      }
+
+      items = newItems;
+
+      if (!keysEqual) {
         render();
-        if (items.length > 0) activate(0, true);
-      });
+      } else {
+        updateFeedItemsData();
+      }
+    }
 
-      db.ref("likes").on("value", function(snap) {
-        var data = snap.val(); if (!data) return;
-        items.forEach(function(x, i) {
-          var safeSrc = encodeURIComponent(x.src).replace(/\./g, "%2E");
-          if (data[safeSrc] !== undefined) {
-            x.likes = data[safeSrc];
-            var card = feed.children[i]; if (!card) return;
-            var lc = $(".like-count", card); if (lc) lc.textContent = compact(x.likes);
-          }
-        });
-      });
+    function updateFeedItemsData() {
+      if (feedTabMode === "favorites") {
+        visibleItems = items.filter(function(x) { return !!x.bookmarked; });
+      } else {
+        visibleItems = items;
+      }
 
-      db.ref("userLikes/" + deviceId).on("value", function(snap) {
-        var data = snap.val(); if (!data) return;
-        items.forEach(function(x, i) {
-          var safeSrc = encodeURIComponent(x.src).replace(/\./g, "%2E");
-          if (data[safeSrc] === true) {
-            x.liked = true;
-            var card = feed.children[i]; if (!card) return;
-            var lb = $(".like-btn", card); if (lb) lb.classList.add("liked");
-          } else if (data[safeSrc] === false) {
-            x.liked = false;
-            var card = feed.children[i]; if (!card) return;
-            var lb = $(".like-btn", card); if (lb) lb.classList.remove("liked");
-          }
-        });
+      visibleItems.forEach(function(x, i) {
+        var card = feed.children[i];
+        if (!card) return;
+        var lc = $(".like-count", card); if (lc) lc.textContent = compact(x.likes);
+        var bc = $(".bookmark-count", card); if (bc) bc.textContent = compact(x.bookmarks || 0);
+        var un = $(".username", card); if (un) un.textContent = clean(x.user || "@direct");
+        var ds = $(".description", card); if (ds) ds.textContent = clean(x.desc || "");
+        var ms = $(".music-text", card); if (ms) ms.textContent = formatMusicTitle(x.music, x.user);
+        
+        var lb = $(".like-btn", card);
+        if (lb) {
+          if (x.liked) lb.classList.add("liked");
+          else lb.classList.remove("liked");
+        }
+
+        var bm = $(".bookmark-btn", card);
+        if (bm) {
+          if (x.bookmarked) bm.classList.add("bookmarked");
+          else bm.classList.remove("bookmarked");
+        }
+      });
+    }
+
+    function getSavedBookmarks() {
+      try {
+        return JSON.parse(localStorage.getItem("meow_bookmarks_" + deviceId) || "{}");
+      } catch(e) {
+        return {};
+      }
+    }
+
+    function saveBookmarks(map) {
+      try {
+        localStorage.setItem("meow_bookmarks_" + deviceId, JSON.stringify(map));
+      } catch(e){}
+    }
+
+    function processLikes(data) {
+      if (!data) return;
+      visibleItems.forEach(function(x, i) {
+        var itemKey = x._key || getSafeKey(x.src);
+        if (data[itemKey] !== undefined) {
+          x.likes = data[itemKey];
+          var card = feed.children[i]; if (!card) return;
+          var lc = $(".like-count", card); if (lc) lc.textContent = compact(x.likes);
+        }
+      });
+    }
+
+    function processUserLikes(data) {
+      if (!data) return;
+      visibleItems.forEach(function(x, i) {
+        var itemKey = x._key || getSafeKey(x.src);
+        if (data[itemKey] === true) {
+          x.liked = true;
+          var card = feed.children[i]; if (!card) return;
+          var lb = $(".like-btn", card); if (lb) lb.classList.add("liked");
+        } else if (data[itemKey] === false) {
+          x.liked = false;
+          var card = feed.children[i]; if (!card) return;
+          var lb = $(".like-btn", card); if (lb) lb.classList.remove("liked");
+        }
       });
     }
 
     function load() {
       try { var saved = JSON.parse(localStorage.getItem(key) || "[]"); if (Array.isArray(saved) && saved.length) items = saved; } catch(e) {}
       var q = new URLSearchParams(location.search).get("v");
-      if (q && /^https?:\/\//i.test(q) && !items.some(function(x) { return x.src === q; })) items.unshift({ src: q, user: "@direct", desc: "", music: "", likes: 0, bookmarks: 0, shares: 0 });
+      if (q && /^https?:\/\//i.test(q) && !items.some(function(x) { return x.src === q; })) items.unshift({ src: q, user: "@direct", desc: "", music: "Оригинальный звук - @direct", likes: 0, bookmarks: 0, shares: 0 });
     }
     function save() { try { localStorage.setItem(key, JSON.stringify(items.slice(0, 50))); } catch(e) {} }
 
@@ -612,32 +3649,69 @@
     function getComments(src) { return getAllComments()[src] || []; }
     function saveComments(all) { try { localStorage.setItem(commentKey, JSON.stringify(all)); } catch(e) {} }
 
-    var activeCommentRef = null;
-    function listenComments(src) {
-      if (!db) return;
-      if (activeCommentRef) activeCommentRef.off("value");
-      var safeSrc = encodeURIComponent(src).replace(/\./g, "%2E");
-      activeCommentRef = db.ref("comments/" + safeSrc);
-      activeCommentRef.on("value", function(snap) {
-        var data = snap.val(); if (!data) return;
-        var list = Object.values(data).sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
-        var all = getAllComments(); all[src] = list.map(function(x) { return x.text; }); saveComments(all);
-        if (items[current] && items[current].src === src) {
-          $("#commentsCountText").textContent = list.length + " комментариев";
-          $("#commentsList").innerHTML = list.length ? list.map(function(x) { return '<div class="comment-item"><div class="comment-avatar">' + clean(x.author || "@user").slice(0, 2).toUpperCase() + '</div><div class="comment-content"><span class="comment-author">' + clean(x.author || "@user") + '</span><span>' + clean(x.text) + '</span></div></div>'; }).join("") : '<div class="empty">Пока пусто</div>';
-          var cc = $(".comment-count", feed.children[current]); if (cc) cc.textContent = compact(list.length);
-        }
-      });
+    var activeCommentSrc = null;
+    function processFeedComments(src, commentsRootData) {
+      var safeKey = visibleItems[current] ? (visibleItems[current]._key || getSafeKey(src)) : getSafeKey(src);
+      var data = (commentsRootData && (commentsRootData[safeKey] || commentsRootData[encodeURIComponent(src).replace(/\./g, "%2E")])) || null;
+      var list = data ? Object.values(data).sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); }) : [];
+      var all = getAllComments(); all[src] = list.map(function(x) { return x.text; }); saveComments(all);
+      
+      if (visibleItems[current] && visibleItems[current].src === src) {
+        $("#commentsCountText").textContent = list.length + " комментариев";
+        $("#commentsList").innerHTML = list.length ? list.map(function(x) {
+          var avatarMarkup = x.avatar ? '<img class="comment-avatar-img" src="' + clean(x.avatar) + '">' : clean(x.author || "@user").slice(0, 2).toUpperCase();
+          return '<div class="comment-item"><div class="comment-avatar">' + avatarMarkup + '</div><div class="comment-content"><span class="comment-author">' + clean(x.author || x.username || "@user") + '</span><span class="comment-text">' + clean(x.text) + '</span></div></div>';
+        }).join("") : '<div class="empty">Пока пусто</div>';
+        var cc = $(".comment-count", feed.children[current]); if (cc) cc.textContent = compact(list.length);
+      }
     }
 
+    $("#tabFavorites").addEventListener("click", function() {
+      if (feedTabMode === "favorites") return;
+      feedTabMode = "favorites";
+      $("#tabFavorites").classList.add("active");
+      $("#tabRecs").classList.remove("active");
+      render();
+    });
+
+    $("#tabRecs").addEventListener("click", function() {
+      if (feedTabMode === "recommendations") return;
+      feedTabMode = "recommendations";
+      $("#tabRecs").classList.add("active");
+      $("#tabFavorites").classList.remove("active");
+      render();
+    });
+
     function render() {
+      clearFeedMedia();
+
+      if (feedTabMode === "favorites") {
+        visibleItems = items.filter(function(x) { return !!x.bookmarked; });
+      } else {
+        visibleItems = items;
+      }
+
       feed.innerHTML = "";
-      items.forEach(function(x, i) {
+
+      if (visibleItems.length === 0) {
+        if (feedTabMode === "favorites") {
+          emptyFavorites.style.display = "flex";
+        } else {
+          emptyFavorites.style.display = "none";
+          feed.innerHTML = '<div class="empty" style="display:flex;align-items:center;justify-content:center;height:100%;">Пока нет загруженных видео</div>';
+        }
+        stopAllExcept(-1);
+        return;
+      }
+
+      emptyFavorites.style.display = "none";
+
+      visibleItems.forEach(function(x, i) {
         var c = tpl.content.firstElementChild.cloneNode(true);
         c.dataset.i = i; c.dataset.src = x.src;
         $(".username", c).textContent = clean(x.user || "@direct");
         $(".description", c).textContent = clean(x.desc || "");
-        $(".music-text", c).textContent = clean(x.music || "Оригинальный звук");
+        $(".music-text", c).textContent = formatMusicTitle(x.music, x.user);
         $(".like-count", c).textContent = compact(x.likes);
         $(".comment-count", c).textContent = compact(getComments(x.src).length);
         $(".bookmark-count", c).textContent = compact(x.bookmarks || 0);
@@ -645,81 +3719,220 @@
         if (x.bookmarked) $(".bookmark-btn", c).classList.add("bookmarked");
         feed.appendChild(c);
       });
+
       observe();
-      activate(Math.min(current, items.length - 1), false);
+      activate(0, true);
     }
 
     function source(i) {
       var c = feed.children[i]; if (!c) return;
-      var v = $(".video-player", c); var src = items[i].src;
-      if (v.dataset.src !== src) { v.dataset.src = src; v.src = src; v.load(); }
+      var v = $(".video-player", c); var src = visibleItems[i].src;
+      if (v.dataset.src !== src) { 
+        v.dataset.src = src; 
+
+        getFromIndexedDb(src, function(cachedBlob) {
+          if (v.dataset.src !== src) return; 
+          if (cachedBlob) {
+            v.src = URL.createObjectURL(cachedBlob);
+            v.load();
+          } else {
+            v.src = src;
+            v.load();
+            fetch(src).then(function(res) {
+              if (res.ok) return res.blob();
+            }).then(function(blob) {
+              if (blob) saveToIndexedDb(src, blob);
+            }).catch(function(err) { reportError("VideoFetch", err); });
+          }
+
+          if (i === current && document.body.getAttribute("data-screen") === "feed" && !isUserPaused) {
+            stopAllExcept(i);
+            v.muted = isMuted;
+            v.volume = 1.0;
+            v.play().catch(function() {});
+          } else {
+            v.pause();
+          }
+        });
+      } else {
+        if (i === current && document.body.getAttribute("data-screen") === "feed" && !isUserPaused) {
+          stopAllExcept(i);
+          v.muted = isMuted;
+          v.volume = 1.0;
+          if (v.paused) v.play().catch(function() {});
+        } else if (i !== current) {
+          v.pause();
+        }
+      }
     }
+
     function unloadFar(i) {
       $$(".video-player", feed).forEach(function(v, n) {
-        if (Math.abs(n - i) > 1 && v.src) { v.removeAttribute("src"); v.load(); delete v.dataset.src; }
+        if (Math.abs(n - i) > 1 && v.src) { 
+          v.removeAttribute("src"); 
+          v.load(); 
+          delete v.dataset.src; 
+        }
       });
     }
 
     function activate(i, play) {
       if (play === undefined) play = true;
-      if (i < 0 || i >= items.length) return;
-      current = i; source(i); if (i + 1 < items.length) source(i + 1); unloadFar(i);
-      $$(".video-player", feed).forEach(function(v, n) { if (n !== i) v.pause(); });
-      var c = feed.children[i]; var v = $(".video-player", c);
-      v.muted = false; v.volume = 1; if (play) v.play().catch(function() {});
+      if (i < 0 || i >= visibleItems.length) return;
+      current = i; 
+      isUserPaused = false;
+      
+      stopAllExcept(i);
+      source(i); 
+      if (i + 1 < visibleItems.length) source(i + 1); 
+
+      unloadFar(i);
+      
+      var c = feed.children[i]; if (!c) return;
+      var v = $(".video-player", c);
+      
+      v.muted = isMuted; 
+      v.volume = 1.0; 
+
+      if (play && document.body.getAttribute("data-screen") === "feed") {
+        var p = v.play();
+        if (p !== undefined) {
+          p.catch(function() {
+            v.play().catch(function() {});
+          });
+        }
+      }
+
+      if ('mediaSession' in navigator && visibleItems[i]) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: visibleItems[i].desc || "Meow Clip",
+          artist: visibleItems[i].user || "@direct",
+          album: formatMusicTitle(visibleItems[i].music, visibleItems[i].user)
+        });
+        navigator.mediaSession.playbackState = "playing";
+      }
     }
 
     function observe() {
       if (io) io.disconnect();
-      io = new IntersectionObserver(function(es) { es.forEach(function(e) { if (e.isIntersecting && e.intersectionRatio > 0.72) activate(+e.target.dataset.i); }); }, { root: feed, threshold: [0.72] });
+      io = new IntersectionObserver(function(es) { es.forEach(function(e) { if (e.isIntersecting && e.intersectionRatio > 0.72) activate(+e.target.dataset.i, true); }); }, { root: feed, threshold: [0.72] });
       $$(".video-card", feed).forEach(function(c) { io.observe(c); });
     }
 
-    function toast(s) { clearTimeout(toastTimer); toastEl.textContent = s; toastEl.classList.add("on"); toastTimer = setTimeout(function() { toastEl.classList.remove("on"); }, 1700); }
+    function toast(s) { clearTimeout(toastTimer); toastEl.textContent = s; toastEl.classList.add("on"); toastTimer = setTimeout(function() { toastEl.classList.remove("on"); }, 2000); }
 
     function openModal() { modal.classList.add("open"); setTimeout(function() { $("#url").focus(); }, 80); }
-    function closeModal() { modal.classList.remove("open"); $("#url").blur(); $("#videoTitle").value = ""; $("#videoDesc").value = ""; }
+    function closeModal() { modal.classList.remove("open"); $("#url").blur(); $("#videoTitle").value = ""; $("#videoMusic").value = ""; $("#videoDesc").value = ""; }
 
-    function addUrl(raw, title, desc) {
+    function addUrl(raw, title, music, desc) {
       var u; try { u = new URL(raw.trim()); } catch(e) { toast("Проверьте ссылку"); return; }
       if (!/^https?:$/.test(u.protocol)) { toast("Нужна HTTP(S) ссылка"); return; }
       var src = u.href; var old = items.findIndex(function(x) { return x.src === src; });
       if (old >= 0) { current = old; closeModal(); render(); feed.children[old].scrollIntoView(); return; }
-      var newVideo = { src: src, user: title && title.trim() ? title.trim() : "@direct", desc: desc && desc.trim() ? desc.trim() : "", music: u.hostname, likes: 0, bookmarks: 0, shares: 0, timestamp: Date.now() };
-      if (db) videosRef.push(newVideo);
-      items.unshift(newVideo); current = 0; save(); closeModal(); render(); feed.scrollTo({ top: 0 }); toast("Видео добавлено");
+      
+      var authorVal = title && title.trim() ? title.trim() : userProfile.username;
+      var musicVal = formatMusicTitle(music, authorVal);
+
+      var newVideo = { 
+        src: src, 
+        user: authorVal, 
+        music: musicVal,
+        desc: desc && desc.trim() ? desc.trim() : "", 
+        likes: 0, 
+        bookmarks: 0, 
+        shares: 0, 
+        timestamp: Date.now() 
+      };
+
+      apiPost("/videos", newVideo).then(function() {
+        items.unshift(newVideo); current = 0; save(); closeModal(); render(); feed.scrollTo({ top: 0 }); toast("Видео добавлено");
+      }).catch(function(err) {
+        toast("Ошибка добавления видео");
+      });
     }
 
-    function openComments() { var src = items[current].src; listenComments(src); var list = getComments(src); $("#commentsCountText").textContent = list.length + " комментариев"; $("#commentsList").innerHTML = list.length ? list.map(function(x) { return '<div class="comment-item"><div class="comment-avatar">V</div><div class="comment-content"><span class="comment-author">@viewer</span><span>' + clean(x) + '</span></div></div>'; }).join("") : '<div class="empty">Пока пусто</div>'; drawer.classList.add("open"); backdrop.classList.add("show"); }
-    function closeComments() { drawer.classList.remove("open"); backdrop.classList.remove("show"); $("#commentInput").blur(); }
+    function openComments() { 
+      if (!visibleItems[current]) return;
+      var src = visibleItems[current].src; 
+      activeCommentSrc = src;
+      processFeedComments(src, remoteData.comments); 
+      drawer.classList.add("open"); 
+      backdrop.classList.add("show"); 
+    }
+    function closeComments() { 
+      activeCommentSrc = null;
+      drawer.classList.remove("open"); 
+      backdrop.classList.remove("show"); 
+      var inp = $("#commentInput"); if (inp) inp.blur(); 
+    }
 
     function like(c, burst) {
       if (burst === undefined) burst = false;
-      var i = +c.dataset.i; var b = $(".like-btn", c); var src = items[i].src;
-      if (!items[i].liked) {
-        items[i].liked = true; items[i].likes = (items[i].likes || 0) + 1; b.classList.add("liked");
-        if (db) { db.ref("likes/" + encodeURIComponent(src).replace(/\./g, "%2E")).transaction(function(curr) { return (curr || 0) + 1; }); db.ref("userLikes/" + deviceId + "/" + encodeURIComponent(src).replace(/\./g, "%2E")).set(true); }
+      var i = +c.dataset.i; var b = $(".like-btn", c);
+      if (!visibleItems[i]) return;
+      var item = visibleItems[i];
+      var safeKey = item._key || getSafeKey(item.src);
+
+      var wasLiked = !!item.liked;
+
+      if (!wasLiked) {
+        item.liked = true; 
+        item.likes = (item.likes || 0) + 1; 
+        b.classList.add("liked");
+        apiPut("/likes/" + safeKey, item.likes);
+        apiPut("/userLikes/" + deviceId + "/" + safeKey, true);
       } else if (!burst) {
-        items[i].liked = false; items[i].likes = Math.max(0, (items[i].likes || 0) - 1); b.classList.remove("liked");
-        if (db) { db.ref("likes/" + encodeURIComponent(src).replace(/\./g, "%2E")).transaction(function(curr) { return Math.max(0, (curr || 0) - 1); }); db.ref("userLikes/" + deviceId + "/" + encodeURIComponent(src).replace(/\./g, "%2E")).set(false); }
+        item.liked = false; 
+        item.likes = Math.max(0, (item.likes || 0) - 1); 
+        b.classList.remove("liked");
+        apiPut("/likes/" + safeKey, item.likes);
+        apiPut("/userLikes/" + deviceId + "/" + safeKey, false);
       }
-      $(".like-count", c).textContent = compact(items[i].likes); save();
-      if (burst) { var h = $(".heartburst", c); h.classList.remove("go"); void h.offsetWidth; h.classList.add("go"); }
+
+      var lc = $(".like-count", c);
+      if (lc) lc.textContent = compact(item.likes); 
+      save();
+
+      if (burst) { 
+        var h = $(".heartburst", c); 
+        if (h) {
+          h.classList.remove("go"); 
+          void h.offsetWidth; 
+          h.classList.add("go"); 
+        }
+      }
     }
 
     function toggleBookmark(c) {
       var i = +c.dataset.i; var b = $(".bookmark-btn", c);
-      items[i].bookmarked = !items[i].bookmarked;
-      if (items[i].bookmarked) { b.classList.add("bookmarked"); items[i].bookmarks = (items[i].bookmarks || 0) + 1; }
-      else { b.classList.remove("bookmarked"); items[i].bookmarks = Math.max(0, (items[i].bookmarks || 0) - 1); }
-      $(".bookmark-count", c).textContent = compact(items[i].bookmarks); save();
+      if (!visibleItems[i]) return;
+      var item = visibleItems[i];
+      item.bookmarked = !item.bookmarked;
+
+      var bmap = getSavedBookmarks();
+      if (item.bookmarked) {
+        bmap[item.src] = true;
+        b.classList.add("bookmarked");
+        item.bookmarks = (item.bookmarks || 0) + 1;
+        toast("Добавлено в избранное");
+      } else {
+        delete bmap[item.src];
+        b.classList.remove("bookmarked");
+        item.bookmarks = Math.max(0, (item.bookmarks || 0) - 1);
+        toast("Удалено из избранного");
+      }
+
+      saveBookmarks(bmap);
+      $(".bookmark-count", c).textContent = compact(item.bookmarks); 
+      save();
+
+      if (feedTabMode === "favorites" && !item.bookmarked) {
+        render();
+      }
     }
 
-    function share() { var x = items[current]; if (navigator.share) navigator.share({ title: "VOLT", text: x.desc || "Видео", url: x.src }).catch(function() {}); else if (navigator.clipboard) navigator.clipboard.writeText(x.src).then(function() { toast("Ссылка скопирована"); }); }
+    function go(d) { var n = Math.max(0, Math.min(visibleItems.length - 1, current + d)); if (feed.children[n]) feed.children[n].scrollIntoView({ behavior: "smooth" }); activate(n, true); }
 
-    function go(d) { var n = Math.max(0, Math.min(items.length - 1, current + d)); if (feed.children[n]) feed.children[n].scrollIntoView({ behavior: "smooth" }); activate(n); }
-
-    // Event handlers
     feed.addEventListener("click", function(e) {
       var btn = e.target.closest(".mute-btn");
       if (btn) {
@@ -743,16 +3956,24 @@
       var v = $(".video-player", c);
       setTimeout(function() {
         if (lastTap === now) {
-          if (v.paused) { v.play().catch(function() {}); $(".playflash", c).classList.remove("show"); }
-          else { v.pause(); var f = $(".playflash", c); f.classList.remove("show"); void f.offsetWidth; f.classList.add("show"); }
+          if (v.paused) { 
+            isUserPaused = false;
+            stopAllExcept(+c.dataset.i);
+            v.play().catch(function() {}); 
+            $(".playflash", c).classList.remove("show"); 
+          } else { 
+            isUserPaused = true;
+            v.pause(); 
+            var f = $(".playflash", c); 
+            f.classList.remove("show"); 
+            void f.offsetWidth; 
+            f.classList.add("show"); 
+          }
         }
       }, 295);
     });
 
-    feed.addEventListener("loadeddata", function(e) { if (!e.target.matches(".video-player")) return; e.target.closest(".video-card").classList.remove("wait"); var p = e.target.nextElementSibling; if (p && p.classList) p.classList.add("hide"); }, true);
-    feed.addEventListener("loadstart", function(e) { if (e.target.matches(".video-player")) e.target.closest(".video-card").classList.add("wait"); }, true);
-    feed.addEventListener("waiting", function(e) { if (e.target.matches(".video-player")) e.target.closest(".video-card").classList.add("wait"); }, true);
-    feed.addEventListener("playing", function(e) { if (e.target.matches(".video-player")) e.target.closest(".video-card").classList.remove("wait"); }, true);
+    feed.addEventListener("loadeddata", function(e) { if (!e.target.matches(".video-player")) return; var p = e.target.nextElementSibling; if (p && p.classList) p.classList.add("hide"); }, true);
     feed.addEventListener("ended", function(e) { if (e.target.matches(".video-player")) { e.target.currentTime = 0; e.target.play().catch(function() {}); } }, true);
     feed.addEventListener("timeupdate", function(e) { var v = e.target; if (!v.matches(".video-player") || !isFinite(v.duration)) return; $(".fill", v.closest(".video-card")).style.transform = "scaleX(" + (v.currentTime / v.duration) + ")"; }, true);
     feed.addEventListener("progress", function(e) { var v = e.target; if (!v.matches(".video-player") || !v.duration || !v.buffered.length) return; var end = 0; for (var i = 0; i < v.buffered.length; i++) if (v.buffered.start(i) <= v.currentTime + 0.1) end = v.buffered.end(i); $(".buffer", v.closest(".video-card")).style.transform = "scaleX(" + Math.min(1, end / v.duration) + ")"; }, true);
@@ -767,13 +3988,34 @@
       p.addEventListener("pointermove", move); p.addEventListener("pointerup", up);
     });
 
-    $("#urlForm").addEventListener("submit", function(e) { e.preventDefault(); addUrl($("#url").value, $("#videoTitle").value, $("#videoDesc").value); $("#videoTitle").value = ""; $("#videoDesc").value = ""; });
+    $("#urlForm").addEventListener("submit", function(e) { e.preventDefault(); addUrl($("#url").value, $("#videoTitle").value, $("#videoMusic").value, $("#videoDesc").value); closeModal(); });
     modal.addEventListener("click", function(e) { if (e.target === modal || e.target.closest("[data-close]")) closeModal(); });
     drawer.addEventListener("click", function(e) { if (e.target === drawer) closeComments(); });
     $("#closeDrawer").addEventListener("click", closeComments);
     backdrop.addEventListener("click", closeComments);
-    $("#sendCommentBtn").addEventListener("click", function() { var input = $("#commentInput"); var text = input.value.trim(); if (!text) return; var src = items[current].src; if (db) { var safeSrc = encodeURIComponent(src).replace(/\./g, "%2E"); db.ref("comments/" + safeSrc).push({ author: "@" + deviceId.slice(-6), text: text, timestamp: Date.now() }); } var all = getAllComments(); if (!all[src]) all[src] = []; all[src].push(text); saveComments(all); input.value = ""; openComments(); var cc = $(".comment-count", feed.children[current]); if (cc) cc.textContent = compact(all[src].length); });
-    $("#commentInput").addEventListener("keydown", function(e) { if (e.key === "Enter") $("#sendCommentBtn").click(); });
+    
+    function sendFeedComment() {
+      if (adminSettings.commentsDisabled) { toast("Комментарии отключены администратором"); return; }
+      var input = $("#commentInput"); if (!input) return;
+      var text = input.value.trim(); if (!text || !visibleItems[current]) return; 
+      var item = visibleItems[current];
+      var safeKey = item._key || getSafeKey(item.src);
+
+      var commentData = {
+        author: userProfile.name + " (" + userProfile.username + ")",
+        username: userProfile.username,
+        avatar: userProfile.avatar,
+        text: text,
+        timestamp: Date.now()
+      };
+
+      apiPost("/comments/" + safeKey, commentData).then(function() {
+        var all = getAllComments(); if (!all[item.src]) all[item.src] = []; all[item.src].push(text); saveComments(all);
+        input.value = ""; openComments();
+      }).catch(function(err) { toast("Ошибка отправки комментария"); });
+    }
+
+    bindFeedCommentEvents();
 
     addEventListener("keydown", function(e) {
       if (modal.classList.contains("open") || drawer.classList.contains("open")) { if (e.key === "Escape") { closeModal(); closeComments(); } return; }
@@ -795,7 +4037,7 @@
       e.preventDefault(); dragDepth = 0; $("#drop").classList.remove("on");
       var f = e.dataTransfer.files[0]; var txt = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text");
       if (f && f.type && f.type.startsWith("video/")) { var src = URL.createObjectURL(f); items.unshift({ src: src, user: "@local", desc: f.name, music: "Локальный файл", likes: 0, bookmarks: 0, shares: 0 }); current = 0; render(); feed.scrollTo({ top: 0 }); toast("Локальное видео открыто"); }
-      else if (txt) addUrl(txt);
+      else if (txt) addUrl(txt, "", "", "");
     });
 
     var initialPinchDist = 0; var uiHidden = false; var appViewport = document.querySelector(".app-viewport");
@@ -807,19 +4049,48 @@
     document.addEventListener("dragstart", function(e) { e.preventDefault(); }, true);
     document.addEventListener("selectstart", function(e) { e.preventDefault(); }, true);
     addEventListener("keydown", function(e) { if ((e.ctrlKey || e.metaKey) && ("sSpPuUjJ".indexOf(e.key) !== -1)) { e.preventDefault(); return false; } });
-    document.addEventListener("touchstart", function(e) { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
-
-    var goFullscreen = function() { var el = document.documentElement; if (el.requestFullscreen) el.requestFullscreen().catch(function() {}); else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(); else if (el.msRequestFullscreen) el.msRequestFullscreen(); };
-    document.addEventListener("click", goFullscreen, { once: true });
-    document.addEventListener("touchstart", goFullscreen, { once: true });
-
-    document.addEventListener("visibilitychange", function() { if (document.visibilityState === "visible") { setTimeout(function() { var el = document.documentElement; if (!document.fullscreenElement && !document.webkitFullscreenElement) { if (el.requestFullscreen) el.requestFullscreen().catch(function() {}); else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(); } }, 300); } });
 
     var haptic = function() { if (navigator.vibrate) navigator.vibrate(8); };
-    feed.addEventListener("click", function(e) { if (e.target.closest(".action-btn") || e.target.closest(".nav-item")) haptic(); });
+    document.addEventListener("click", function(e) { if (e.target.closest(".action-btn") || e.target.closest(".nav-item")) haptic(); });
 
-    // === CHANNEL SYSTEM RTDB ===
-    var channelView = $("#channelView");
+    function switchScreen(targetScreen) {
+      if (targetScreen === "channel" && adminSettings.channelDisabled) {
+        openTechDialog();
+        return;
+      }
+
+      document.body.setAttribute("data-screen", targetScreen);
+      
+      $$(".screen").forEach(function(sc) {
+        sc.classList.remove("active-screen");
+      });
+
+      var targetEl = $("#" + targetScreen + "View");
+      if (targetEl) {
+        targetEl.classList.add("active-screen");
+      }
+
+      $$(".nav-item").forEach(function(b) { b.classList.remove("active"); });
+      if (targetScreen === "feed") $("#homeBtn").classList.add("active");
+      if (targetScreen === "channel") $("#channelBtn").classList.add("active");
+      if (targetScreen === "profile") $("#profileBtn").classList.add("active");
+
+      if (targetScreen !== "feed") {
+        stopAllExcept(-1);
+      } else {
+        if (feed.children[current]) {
+          activate(current, true);
+        }
+      }
+    }
+
+    $("#homeBtn").addEventListener("click", function() { switchScreen("feed"); });
+    $("#channelBtn").addEventListener("click", function() { switchScreen("channel"); });
+    $("#profileBtn").addEventListener("click", function() { switchScreen("profile"); });
+
+    $("#channelBack").addEventListener("click", function() { switchScreen("feed"); });
+    $("#profileBack").addEventListener("click", function() { switchScreen("feed"); });
+
     var channelPosts = $("#channelPosts");
     var channelName = $("#channelName");
     var channelSub = $("#channelSub");
@@ -828,59 +4099,44 @@
     var createPostModal = $("#createPostModal");
     var postMediaList = $("#postMediaList");
 
-    // TG Comments Screen
     var tgCommentsScreen = $("#tgCommentsScreen");
     var tgCommentsTitle = $("#tgCommentsTitle");
     var tgCommentsList = $("#tgCommentsList");
-    var tgCommentsInput = $("#tgCommentsInput");
-    var tgCommentsSend = $("#tgCommentsSend");
-    var tgPreviewAuthor = $("#tgPreviewAuthor");
-    var tgPreviewText = $("#tgPreviewText");
     var currentTgPostKey = null;
-    var currentTgCommentsRef = null;
 
-    var channelData = { name: "VOLT Channel", avatar: "", description: "Официальный канал VOLT", subscribers: 0 };
+    var channelData = { name: "Meow Channel", avatar: "", description: "Официальный канал Meow", subscribers: 0 };
     var channelPostsData = [];
     var postMediaItems = [];
     var channelPostsByKey = {};
 
-    function initChannelRTDB() {
-      if (!db) { console.log("Firebase not available"); return; }
+    function processChannelInfo(data) {
+      if (data) {
+        channelData.name = data.name || channelData.name;
+        channelData.avatar = data.avatar || "";
+        channelData.description = data.description || "";
+        channelData.subscribers = data.subscribers || 0;
+      }
+      updateChannelHeader();
+      renderChannelPosts();
+    }
 
-      // Слушаем инфо канала в реальном времени
-      db.ref("channel/info").on("value", function(snap) {
-        var data = snap.val();
-        if (data) {
-          channelData.name = data.name || channelData.name;
-          channelData.avatar = data.avatar || "";
-          channelData.description = data.description || "";
-          channelData.subscribers = data.subscribers || 0;
-        }
-        updateChannelHeader();
-        renderChannelPosts();
-      });
-
-      // Слушаем посты канала в реальном времени
-      db.ref("channel/posts").on("value", function(snap) {
-        var data = snap.val();
-        channelPostsData = [];
-        channelPostsByKey = {};
-        if (data) {
-          Object.keys(data).forEach(function(key) {
-            var post = data[key];
-            post._key = key;
-            channelPostsData.push(post);
-            channelPostsByKey[key] = post;
-          });
-          // Сортируем по timestamp (новые сверху)
-          channelPostsData.sort(function(a, b) { return (b.timestamp || 0) - (a.timestamp || 0); });
-        }
-        renderChannelPosts();
-      });
+    function processChannelPosts(data) {
+      channelPostsData = [];
+      channelPostsByKey = {};
+      if (data) {
+        Object.keys(data).forEach(function(key) {
+          var post = data[key];
+          post._key = key;
+          channelPostsData.push(post);
+          channelPostsByKey[key] = post;
+        });
+        channelPostsData.sort(function(a, b) { return (b.timestamp || 0) - (a.timestamp || 0); });
+      }
+      renderChannelPosts();
     }
 
     function updateChannelHeader() {
-      channelName.textContent = channelData.name || "VOLT Channel";
+      channelName.textContent = channelData.name || "Meow Channel";
       channelSub.textContent = (channelData.subscribers || 0) + " подписчиков · " + channelPostsData.length + " постов";
       if (channelData.avatar) channelAvatar.src = channelData.avatar;
     }
@@ -909,34 +4165,45 @@
         }
         var comments = post.comments || {};
         var commentsList = Object.values(comments);
-        var commentsHtml = "";
-        if (commentsList.length > 0) {
-          commentsHtml = '<div class="channel-post-comments">' + commentsList.slice(0, 2).map(function(c) {
-            return '<div class="channel-comment"><div class="channel-comment-avatar">' + clean(c.author || "@user").slice(0, 2).toUpperCase() + '</div><div class="channel-comment-body"><div class="channel-comment-author">' + clean(c.author || "@user") + '</div>' + clean(c.text) + '</div></div>';
-          }).join("") + (commentsList.length > 2 ? '<div style="font-size:12px;color:var(--text-sub);padding-left:36px;">Ещё ' + (commentsList.length - 2) + " комментариев</div>" : "") + "</div>";
-        }
         var postKey = post._key;
         var liked = post.likedBy && post.likedBy[deviceId];
-        return '<div class="channel-post" data-key="' + postKey + '"><div class="channel-post-header"><img class="channel-post-avatar" src="' + avatarSrc + '" alt=""><div class="channel-post-meta"><div class="channel-post-author">' + clean(channelData.name) + '</div><div class="channel-post-time">' + time + '</div></div></div>' + (post.text ? '<div class="channel-post-text">' + clean(post.text).replace(/\n/g, "<br>") + "</div>" : "") + mediaHtml + '<div class="channel-post-actions"><button class="channel-post-action ' + (liked ? "active" : "") + '" onclick="window.likeChanPost(\'' + postKey + '\')"><svg viewBox="0 0 24 24" fill="' + (liked ? "currentColor" : "none") + '" stroke="currentColor" stroke-width="2"><use href="#i-heart"/></svg><span>' + compact(post.likes || 0) + '</span></button><button class="channel-post-action" onclick="window.openTgComments(\'' + postKey + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-chat"/></svg><span>' + compact(commentsList.length) + '</span></button><button class="channel-post-action" onclick="window.shareChanPost(\'' + postKey + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-share"/></svg></button></div>' + commentsHtml + "</div>";
+        return '<div class="channel-post" data-key="' + postKey + '"><div class="channel-post-header"><img class="channel-post-avatar" src="' + avatarSrc + '" alt=""><div class="channel-post-meta"><div class="channel-post-author">' + clean(channelData.name) + '</div><div class="channel-post-time">' + time + '</div></div></div>' + (post.text ? '<div class="channel-post-text">' + clean(post.text).replace(/\n/g, "<br>") + '</div>' : "") + mediaHtml + '<div class="channel-post-actions"><button class="channel-post-action ' + (liked ? "active" : "") + '" onclick="window.likeChanPost(\'' + postKey + '\')"><svg viewBox="0 0 24 24" fill="' + (liked ? "currentColor" : "none") + '" stroke="currentColor" stroke-width="2"><use href="#i-heart"/></svg><span>' + compact(post.likes || 0) + '</span></button><button class="channel-post-action" onclick="window.openTgComments(\'' + postKey + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-chat"/></svg><span>' + compact(commentsList.length) + '</span></button><button class="channel-post-action" onclick="window.shareChanPost(\'' + postKey + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><use href="#i-share"/></svg></button></div></div>';
       }).join("");
       updateChannelHeader();
     }
 
-    // === TG-STYLE COMMENTS SCREEN ===
+    function processTgComments(postKey, postsRootData) {
+      var post = (postsRootData && postsRootData[postKey]) || channelPostsByKey[postKey];
+      if (!post) return;
+
+      var comments = post.comments || {};
+      var list = Object.values(comments).sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
+
+      if (list.length === 0) {
+        tgCommentsList.innerHTML = '<div class="tg-comments-empty">Пока нет комментариев.<br>Будьте первым!</div>';
+      } else {
+        tgCommentsList.innerHTML = list.map(function(c) {
+          var time = c.timestamp ? new Date(c.timestamp).toLocaleString("ru", { hour: "2-digit", minute: "2-digit" }) : "";
+          var avatarMarkup = c.avatar ? '<img class="tg-comment-avatar-img" src="' + clean(c.avatar) + '">' : clean(c.author || "@user").slice(0, 2).toUpperCase();
+          return '<div class="tg-comment"><div class="tg-comment-avatar">' + avatarMarkup + '</div><div class="tg-comment-body"><div class="tg-comment-author">' + clean(c.author || c.username || "@user") + '</div><div class="tg-comment-text">' + clean(c.text) + '</div><div class="tg-comment-time">' + time + '</div></div></div>';
+        }).join("");
+        setTimeout(function() { tgCommentsList.scrollTop = tgCommentsList.scrollHeight; }, 50);
+      }
+      tgCommentsTitle.textContent = list.length + " комментариев";
+    }
+
     window.openTgComments = function(postKey) {
       var post = channelPostsByKey[postKey];
       if (!post) return;
       currentTgPostKey = postKey;
 
-      tgPreviewAuthor.textContent = channelData.name || "@channel";
-      tgPreviewText.textContent = post.text || "Медиа-пост";
-      tgPreviewTime.textContent = post.timestamp ? new Date(post.timestamp).toLocaleString("ru", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+      $("#tgPreviewAuthor").textContent = channelData.name || "@channel";
+      $("#tgPreviewText").textContent = post.text || "Медиа-пост";
+      $("#tgPreviewTime").textContent = post.timestamp ? new Date(post.timestamp).toLocaleString("ru", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
 
-      // Аватарка канала в превью
       var previewAvatar = $("#tgPreviewAvatar");
       if (previewAvatar) previewAvatar.src = channelData.avatar || "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect fill=%27%23222%27 width=%27100%27 height=%27100%27/%3E%3Ctext x=%2750%27 y=%2760%27 text-anchor=%27middle%27 fill=%27%23666%27 font-size=%2740%27%3E📡%3C/text%3E%3C/svg%3E";
 
-      // Медиа превью поста
       var mediaContainer = $("#tgPreviewMedia");
       if (mediaContainer) {
         if (post.media && post.media.length > 0) {
@@ -956,54 +4223,40 @@
         }
       }
 
-      tgCommentsTitle.textContent = "Комментарии";
-
-      // Слушаем комментарии в реальном времени
-      if (currentTgCommentsRef) currentTgCommentsRef.off("value");
-      currentTgCommentsRef = db.ref("channel/posts/" + postKey + "/comments");
-      currentTgCommentsRef.on("value", function(snap) {
-        var data = snap.val();
-        var list = data ? Object.values(data).sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); }) : [];
-
-        if (list.length === 0) {
-          tgCommentsList.innerHTML = '<div class="tg-comments-empty">Пока нет комментариев.<br>Будьте первым!</div>';
-        } else {
-          tgCommentsList.innerHTML = list.map(function(c) {
-            var time = c.timestamp ? new Date(c.timestamp).toLocaleString("ru", { hour: "2-digit", minute: "2-digit" }) : "";
-            var initials = clean(c.author || "@user").slice(0, 2).toUpperCase();
-            return '<div class="tg-comment"><div class="tg-comment-avatar">' + initials + '</div><div class="tg-comment-body"><div class="tg-comment-author">' + clean(c.author || "@user") + '</div><div class="tg-comment-text">' + clean(c.text) + '</div><div class="tg-comment-time">' + time + '</div></div></div>';
-          }).join("");
-          // Скролл вниз к последнему комменту
-          setTimeout(function() { tgCommentsList.scrollTop = tgCommentsList.scrollHeight; }, 50);
-        }
-        tgCommentsTitle.textContent = list.length + " комментариев";
-      });
-
+      processTgComments(postKey, remoteData.channel && remoteData.channel.posts);
       tgCommentsScreen.classList.add("active");
     };
 
     function closeTgComments() {
       tgCommentsScreen.classList.remove("active");
-      if (currentTgCommentsRef) { currentTgCommentsRef.off("value"); currentTgCommentsRef = null; }
       currentTgPostKey = null;
     }
 
     $("#tgCommentsBack").addEventListener("click", closeTgComments);
 
-    tgCommentsSend.addEventListener("click", function() {
-      var text = tgCommentsInput.value.trim();
-      if (!text || !db || !currentTgPostKey) return;
-      var comment = { author: "@" + deviceId.slice(-6), text: text, timestamp: firebase.database.ServerValue.TIMESTAMP };
-      db.ref("channel/posts/" + currentTgPostKey + "/comments").push(comment, function(err) {
-        if (err) toast("Ошибка отправки");
-        else { tgCommentsInput.value = ""; toast("Комментарий отправлен"); }
+    function sendTgComment() {
+      if (adminSettings.commentsDisabled) { toast("Комментарии отключены администратором"); return; }
+      var input = $("#tgCommentsInput"); if (!input) return;
+      var text = input.value.trim();
+      if (!text || !currentTgPostKey) return;
+
+      var comment = {
+        author: userProfile.name + " (" + userProfile.username + ")",
+        username: userProfile.username,
+        avatar: userProfile.avatar,
+        text: text,
+        timestamp: Date.now()
+      };
+
+      apiPost("/channel/posts/" + currentTgPostKey + "/comments", comment).then(function() {
+        input.value = ""; toast("Комментарий отправлен");
+      }).catch(function(err) {
+        toast("Ошибка отправки комментария");
       });
       if (navigator.vibrate) navigator.vibrate(8);
-    });
+    }
 
-    tgCommentsInput.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") tgCommentsSend.click();
-    });
+    bindTgCommentEvents();
 
     window.playChanMedia = function(el, url, type) {
       if (type === "video") {
@@ -1022,13 +4275,17 @@
     };
 
     window.likeChanPost = function(postKey) {
-      if (!db || !postKey) return;
-      var likesRef = db.ref("channel/posts/" + postKey + "/likes");
-      var likedByRef = db.ref("channel/posts/" + postKey + "/likedBy/" + deviceId);
-      likedByRef.once("value", function(snap) {
-        if (snap.val()) { likedByRef.remove(); likesRef.transaction(function(curr) { return Math.max(0, (curr || 0) - 1); }); }
-        else { likedByRef.set(true); likesRef.transaction(function(curr) { return (curr || 0) + 1; }); }
-      });
+      if (!postKey) return;
+      var post = channelPostsByKey[postKey]; if (!post) return;
+      var isLiked = post.likedBy && post.likedBy[deviceId];
+      var newLikesCount = isLiked ? Math.max(0, (post.likes || 0) - 1) : (post.likes || 0) + 1;
+
+      apiPut("/channel/posts/" + postKey + "/likes", newLikesCount);
+      if (isLiked) {
+        apiDelete("/channel/posts/" + postKey + "/likedBy/" + deviceId);
+      } else {
+        apiPut("/channel/posts/" + postKey + "/likedBy/" + deviceId, true);
+      }
       if (navigator.vibrate) navigator.vibrate(8);
     };
 
@@ -1043,9 +4300,6 @@
     window.updateMediaType = function(i, type) { postMediaItems[i].type = type; };
     window.removeMedia = function(i) { postMediaItems.splice(i, 1); renderPostMediaList(); };
 
-    $("#channelBtn").addEventListener("click", function() { channelView.classList.add("active"); document.querySelector(".nav").style.display = "none"; document.querySelector(".header").style.display = "none"; });
-    $("#channelBack").addEventListener("click", function() { channelView.classList.remove("active"); document.querySelector(".nav").style.display = "flex"; document.querySelector(".header").style.display = "flex"; });
-
     $("#channelSettingsBtn").addEventListener("click", function() {
       $("#settingsChannelName").value = channelData.name || "";
       $("#settingsChannelAvatar").value = channelData.avatar || "";
@@ -1059,10 +4313,13 @@
     $("#settingsChannelAvatar").addEventListener("input", function(e) { $("#settingsAvatarPreview").src = e.target.value; });
 
     $("#saveChannelSettings").addEventListener("click", function() {
-      if (!db) { toast("Нет подключения к Firebase"); return; }
       var newData = { name: $("#settingsChannelName").value.trim() || channelData.name, avatar: $("#settingsChannelAvatar").value.trim(), description: $("#settingsChannelDesc").value.trim(), subscribers: channelData.subscribers || 0, updatedAt: Date.now() };
-      db.ref("channel/info").set(newData, function(err) { if (err) toast("Ошибка: " + err.message); else toast("Настройки сохранены!"); });
-      channelSettingsModal.classList.remove("open");
+      apiPut("/channel/info", newData).then(function() {
+        toast("Настройки сохранены!");
+        channelSettingsModal.classList.remove("open");
+      }).catch(function(err) {
+        toast("Ошибка сохранения настроек");
+      });
     });
 
     $("#channelAddBtn").addEventListener("click", function() { postMediaItems = []; $("#postText").value = ""; renderPostMediaList(); createPostModal.classList.add("open"); });
@@ -1079,19 +4336,24 @@
     $("#addMediaBtn").addEventListener("click", function() { postMediaItems.push({ url: "", type: "image" }); renderPostMediaList(); });
 
     $("#submitPost").addEventListener("click", function() {
-      if (!db) { toast("Нет подключения к Firebase"); return; }
       var text = $("#postText").value.trim();
       var media = postMediaItems.filter(function(m) { return m.url.trim(); });
       if (!text && media.length === 0) { toast("Добавьте текст или медиа"); return; }
-      var newPost = { text: text, media: media, likes: 0, likedBy: {}, comments: {}, timestamp: firebase.database.ServerValue.TIMESTAMP, author: "@" + deviceId.slice(-6) };
-      db.ref("channel/posts").push(newPost, function(err) { if (err) toast("Ошибка: " + err.message); else toast("Пост опубликован! Виден всем!"); });
-      createPostModal.classList.remove("open");
+      var newPost = { text: text, media: media, likes: 0, likedBy: {}, comments: {}, timestamp: Date.now(), author: userProfile.name + " (" + userProfile.username + ")" };
+      
+      apiPost("/channel/posts", newPost).then(function() {
+        toast("Пост опубликован!");
+        createPostModal.classList.remove("open");
+      }).catch(function(err) {
+        toast("Ошибка публикации поста");
+      });
     });
 
-    // INIT
-    if (db) initChannelRTDB();
-    load(); render();
-    if (items.length > 0) activate(0, true);
+    initIndexedDB();
+    initDataStream();
+    load(); 
+    render();
+    if (visibleItems.length > 0) activate(0, true);
   })();
   </script>
 </body>
