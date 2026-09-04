@@ -2,6 +2,8 @@
 
 Статус: **design draft, не production и не audited**.
 
+Текущий web-клиент использует локальный AES-GCM ключ только для smoke-теста ciphertext transport; это не multi-device session и не замена TSY-1. Production-клиент обязан перейти на device bundles и ratchet flow ниже.
+
 Tsuyu определяет orchestration и wire format поверх проверенных криптографических primitives. Это принципиально: собственный «математический шифр» нельзя объявлять самым сильным без многолетнего публичного анализа. Tsuyu не заменяет Signal Protocol; до аудита используйте реализацию Double Ratchet из libsodium/официально проверенного компонента, а не самописную криптографию.
 
 ## Цели

@@ -1,0 +1,6 @@
+# Runtime data and local build output
+server/tsuyu-server
+server/data/*
+!server/data/.gitkeep
+*.store
+*.store.tmp

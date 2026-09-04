@@ -93,9 +93,18 @@ sudo certbot --nginx -d chat.example.com
 
 Проверьте, что автоматически перенаправляется HTTP → HTTPS. Не добавляйте в CSP wildcard `*` и не разрешайте CORS для всех доменов.
 
-## 4. Подключение C++ backend
+## 4. Запуск C++ gateway
 
-Gateway должен слушать только loopback или private network, например `127.0.0.1:9000`, а наружу публиковаться через Nginx. Базовые endpoints:
+В репозитории есть dependency-free reference gateway в `server/`. Для локальной проверки:
+
+```bash
+make -C server
+./server/tsuyu-server --port 9000 --web-root . --data server/data/tsuyu.store
+```
+
+Компонент уже умеет отдавать клиент, создавать Bearer-сессии, загружать список чатов, принимать сообщения и транслировать `message.created` через WebSocket `/ws`. Его файловое хранилище — удобный single-node режим для staging и разработки. Runtime-файл `server/data/tsuyu.store` добавлен в `.gitignore`.
+
+Для production соберите gateway за Nginx и замените file store на PostgreSQL/очередь. Gateway должен слушать только loopback или private network, например `127.0.0.1:9000`, а наружу публиковаться через Nginx. Базовые endpoints:
 
 ```text
 POST   /api/v1/auth/session

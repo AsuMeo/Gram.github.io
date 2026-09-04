@@ -1,5 +1,7 @@
 # Архитектура production Tsuyu
 
+В репозитории уже есть минимальный runnable gateway в `server/tsuyu_server.cpp`. Он предназначен для локальной сети/staging: dependency-free C++20 HTTP/WebSocket server, Bearer sessions, append-only file store и broadcast событий. Ниже — целевая production-архитектура, в которую этот gateway можно развивать.
+
 ## Компоненты
 
 ```text

@@ -391,7 +391,7 @@
         <div class="inbox-tabs" role="tablist"><button class="filter-tab active" data-filter="all" role="tab">Все <span id="allCount"></span></button><button class="filter-tab" data-filter="unread" role="tab">Непрочитанные</button><button class="filter-tab" data-filter="favorites" role="tab">Избранное</button></div>
       </div>
       <div class="chat-list" id="chatList"></div>
-      <div class="sidebar-foot"><svg class="icon"><use href="#i-shield"/></svg><div><strong>Tsuyu Secure</strong><span>Сообщения защищены сквозным шифрованием</span></div></div>
+      <div class="sidebar-foot"><svg class="icon"><use href="#i-shield"/></svg><div><strong>Tsuyu Secure</strong><span>Сообщения защищены сквозным шифрованием</span><span id="backendState" style="display:flex;align-items:center;gap:5px;margin-top:6px;color:var(--muted-2)"><i class="status-dot" style="width:5px;height:5px;background:var(--muted-2)"></i>Локальная демонстрация</span></div></div>
     </section>
 
     <main class="conversation">
@@ -495,6 +495,9 @@
       ];
       var activeKey = 'arina';
       var activeFilter = 'all';
+      var apiOnline = false;
+      var apiToken = '';
+      var realtime = null;
       var recordingTimer = null;
       var recordingSeconds = 0;
       var $ = function (selector) { return document.querySelector(selector); };
@@ -504,6 +507,90 @@
 
       function avatar(data, extra) { return '<span class="chat-avatar ' + (data.tone ? 'tone-' + data.tone : '') + ' ' + (extra || '') + '">' + escapeHtml(data.initials) + (data.status === 'В сети' ? '<i class="online-dot"></i>' : '') + '</span>'; }
       function activeChat() { return chats[activeKey]; }
+
+      function setBackendState(online, label) {
+        apiOnline = online;
+        var state = $('#backendState');
+        if (!state) return;
+        state.innerHTML = '<i class="status-dot" style="width:5px;height:5px;background:' + (online ? 'var(--accent)' : 'var(--muted-2)') + '"></i>' + escapeHtml(label);
+        state.style.color = online ? '#a9bf82' : 'var(--muted-2)';
+      }
+
+      function apiFetch(path, options) {
+        options = options || {};
+        options.headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+        if (apiToken) options.headers.Authorization = 'Bearer ' + apiToken;
+        return fetch('/api/v1' + path, options).then(function (response) {
+          if (!response.ok) throw new Error('API ' + response.status);
+          return response.status === 204 ? {} : response.json();
+        });
+      }
+
+      function normalizeServerChat(chat) {
+        chat.messages = (chat.messages || []).map(function (message) {
+          if (!message.text && message.ciphertext) message.text = 'Зашифрованное сообщение';
+          if (message.ciphertext && message.ciphertext.indexOf('TSY1.demo.file.') === 0) { message.type = 'file'; message.name = 'tsuyu-flow-v3.fig'; message.size = 'зашифрованный файл'; message.text = ''; }
+          if (message.ciphertext && message.ciphertext.indexOf('TSY1.demo.voice.') === 0) { message.type = 'voice'; message.duration = '0:32'; message.text = ''; }
+          return message;
+        });
+        return chat;
+      }
+
+      function loadBackendChats() {
+        return apiFetch('/chats').then(function (payload) {
+          var serverChats = payload.chats || [];
+          return Promise.all(serverChats.map(function (chat) {
+            return Promise.all((chat.messages || []).map(function (message) {
+              return openClientMessage(message.ciphertext).then(function (plain) { if (plain) message.text = plain; return message; });
+            })).then(function () { return normalizeServerChat(chat); });
+          }));
+        }).then(function (serverChats) {
+          var next = {};
+          serverChats.forEach(function (chat) { next[chat.key || chat.id] = chat; });
+          if (!Object.keys(next).length) throw new Error('empty chat list');
+          chats = next;
+          if (!chats[activeKey]) activeKey = Object.keys(chats)[0];
+          setBackendState(true, 'Сервер Tsuyu подключён');
+          renderChatList(); renderIdentity(activeChat()); renderThread(); renderProfile();
+          connectRealtime();
+        });
+      }
+
+      function connectRealtime() {
+        if (!apiOnline || !apiToken || !window.WebSocket) return;
+        if (realtime) { try { realtime.close(); } catch (error) {} }
+        var protocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
+        try { realtime = new WebSocket(protocol + location.host + '/ws?token=' + encodeURIComponent(apiToken)); } catch (error) { return; }
+        realtime.onmessage = function (event) {
+          try {
+            var payload = JSON.parse(event.data);
+            if (payload.type !== 'message.created' || !payload.chat_id || !payload.message || !chats[payload.chat_id]) return;
+            var known = chats[payload.chat_id].messages.some(function (message) { return String(message.id) === String(payload.message.id); });
+            if (known) return;
+            chats[payload.chat_id].messages.push(normalizeServerChat({ messages: [payload.message] }).messages[0]);
+            chats[payload.chat_id].preview = payload.message.text || 'Зашифрованное сообщение';
+            renderChatList();
+            if (payload.chat_id === activeKey) renderThread();
+          } catch (error) {}
+        };
+        realtime.onclose = function () { if (apiOnline) setTimeout(connectRealtime, 2500); };
+      }
+
+      function connectBackend() {
+        if (!window.fetch) return;
+        apiFetch('/health').then(function () {
+          try { apiToken = localStorage.getItem('tsuyu_token') || ''; } catch (error) { apiToken = ''; }
+          var session = apiToken ? apiFetch('/me').catch(function () { apiToken = ''; return null; }) : Promise.resolve(null);
+          return session.then(function (current) {
+            if (current) return current;
+            return apiFetch('/auth/session', { method: 'POST', body: JSON.stringify({ name: 'Алексей Ким', username: 'alexkim' }) }).then(function (result) {
+              apiToken = result.token || '';
+              try { localStorage.setItem('tsuyu_token', apiToken); } catch (error) {}
+              return result.user;
+            });
+          });
+        }).then(function () { return loadBackendChats(); }).catch(function () { setBackendState(false, 'Локальная демонстрация'); });
+      }
 
       function renderChatList() {
         var query = ($('#chatSearch').value || '').toLowerCase().trim();
@@ -592,12 +679,53 @@
         $$('#contactList .contact-option').forEach(function (option) { option.addEventListener('click', function () { if (!chats[option.dataset.contact]) { var contact = contacts.find(function (item) { return item.key === option.dataset.contact; }); chats[contact.key] = { name: contact.name, handle: contact.handle, initials: contact.initials, tone: contact.tone, status: 'В сети', time: 'сейчас', preview: 'Новый диалог', unread: 0, favorite: false, about: 'Новый защищённый диалог в Tsuyu.', messages: [] }; } closeModal('newChatModal'); selectChat(option.dataset.contact); showToast('Новый защищённый диалог создан'); }); });
       }
 
-      function sendMessage() {
+      var clientKeyPromise = null;
+      function bytesToBase64(bytes) { var binary = ''; for (var i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]); return btoa(binary); }
+      function base64ToBytes(value) { var binary = atob(value); var bytes = new Uint8Array(binary.length); for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i); return bytes; }
+      function getClientKey() {
+        if (clientKeyPromise) return clientKeyPromise;
+        if (!window.crypto || !window.crypto.subtle || !window.TextEncoder) return Promise.resolve(null);
+        clientKeyPromise = (function () {
+          var stored = null; try { stored = localStorage.getItem('tsuyu_local_demo_key'); } catch (error) {}
+          if (stored) return crypto.subtle.importKey('raw', base64ToBytes(stored), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+          return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']).then(function (key) {
+            return crypto.subtle.exportKey('raw', key).then(function (raw) { try { localStorage.setItem('tsuyu_local_demo_key', bytesToBase64(new Uint8Array(raw))); } catch (error) {} return key; });
+          });
+        })();
+        return clientKeyPromise;
+      }
+      function sealClientMessage(text) {
+        return getClientKey().then(function (key) {
+          if (!key) throw new Error('secure context required');
+          var iv = crypto.getRandomValues(new Uint8Array(12));
+          return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(text)).then(function (encrypted) { return 'TSY1.web.' + bytesToBase64(iv) + '.' + bytesToBase64(new Uint8Array(encrypted)); });
+        });
+      }
+      function openClientMessage(ciphertext) {
+        if (!ciphertext || ciphertext.indexOf('TSY1.web.') !== 0 || !window.TextDecoder) return Promise.resolve('');
+        return getClientKey().then(function (key) {
+          if (!key) return '';
+          var parts = ciphertext.split('.');
+          if (parts.length !== 3) return '';
+          return crypto.subtle.decrypt({ name: 'AES-GCM', iv: base64ToBytes(parts[1]) }, key, base64ToBytes(parts[2])).then(function (plain) { return new TextDecoder().decode(plain); }).catch(function () { return ''; });
+        });
+      }
+
+      async function sendMessage() {
         var input = $('#messageInput'); var text = input.value.trim();
         if (!text) return;
-        activeChat().messages.push({ id: Date.now(), side: 'outgoing', text: text, time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), read: true });
+        var messageId = 'local_' + Date.now();
+        var localMessage = { id: messageId, side: 'outgoing', text: text, time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), read: true };
+        activeChat().messages.push(localMessage);
         activeChat().preview = text; activeChat().time = 'сейчас'; input.value = ''; input.style.height = 'auto'; toggleSend(); renderChatList(); renderThread();
-        showToast('Сообщение отправлено защищённо');
+        if (!apiOnline) { showToast('Сообщение сохранено в локальном демо'); return; }
+        try {
+          var payload = { client_message_id: messageId, ciphertext: await sealClientMessage(text) };
+          await apiFetch('/chats/' + encodeURIComponent(activeKey) + '/messages', { method: 'POST', body: JSON.stringify(payload) });
+          showToast('Сообщение доставлено через C++ gateway');
+        } catch (error) {
+          showToast('Сервер недоступен · сообщение осталось локально');
+        }
       }
       function toggleSend() { var hasText = $('#messageInput').value.trim().length > 0; $('#sendButton').classList.toggle('hidden', !hasText); $('#voiceButton').classList.toggle('hidden', hasText); }
       function autoGrow() { var input = $('#messageInput'); input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 126) + 'px'; toggleSend(); }
