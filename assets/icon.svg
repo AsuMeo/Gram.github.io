@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Gram Flow">
+  <defs>
+    <linearGradient id="g" x1="72" y1="55" x2="440" y2="462" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b19aff"/>
+      <stop offset=".48" stop-color="#8260f2"/>
+      <stop offset="1" stop-color="#43ded0"/>
+    </linearGradient>
+    <filter id="s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="22" stdDeviation="20" flood-color="#30226f" flood-opacity=".35"/></filter>
+  </defs>
+  <rect width="512" height="512" rx="126" fill="#0a0b11"/>
+  <path d="M116 124c5-56 51-100 108-100h64c57 0 103 44 108 100l16 176c8 89-62 164-152 164h-8c-90 0-160-75-152-164l16-176Z" fill="url(#g)" filter="url(#s)"/>
+  <path d="M198 185c0-26 28-42 50-29l112 66c22 13 22 45 0 58l-112 66c-22 13-50-3-50-29V185Z" fill="#0a0b11"/>
+  <circle cx="397" cy="113" r="25" fill="#43ded0"/>
+</svg>

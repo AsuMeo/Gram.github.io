@@ -1,0 +1,91 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "videos": {
+      ".read": true,
+      "$clipId": {
+        ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid) || (data.exists() && data.child('authorId').val() === auth.uid))",
+        ".validate": "newData.hasChildren(['src', 'authorId', 'createdAt']) && newData.child('src').isString() && newData.child('src').val().matches(/^https:\/\/.+/) && newData.child('authorId').isString() && newData.child('createdAt').isNumber()",
+        "likes": {
+          ".write": false
+        },
+        "bookmarks": {
+          ".write": false
+        },
+        "shares": {
+          ".write": false
+        },
+        "views": {
+          ".write": false
+        }
+      }
+    },
+    "likes": {
+      "$clipId": {
+        ".read": true,
+        ".write": false
+      }
+    },
+    "bookmarks": {
+      "$clipId": {
+        ".read": true,
+        ".write": false
+      }
+    },
+    "views": {
+      "$clipId": {
+        ".read": true,
+        ".write": false
+      }
+    },
+    "userLikes": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$clipId": {
+          ".write": "auth != null && auth.uid === $uid && newData.isBoolean()"
+        }
+      }
+    },
+    "userBookmarks": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$clipId": {
+          ".write": "auth != null && auth.uid === $uid && newData.isBoolean()"
+        }
+      }
+    },
+    "follows": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$authorId": {
+          ".write": "auth != null && auth.uid === $uid && newData.isBoolean()"
+        }
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && newData.child('uid').val() === auth.uid",
+        ".validate": "newData.child('name').isString() && newData.child('username').isString()"
+      }
+    },
+    "comments": {
+      "$clipId": {
+        ".read": true,
+        "$commentId": {
+          ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid) || (data.exists() && data.child('authorId').val() === auth.uid))",
+          ".validate": "newData.child('text').isString() && newData.child('text').val().length <= 400 && newData.child('authorId').isString()"
+        }
+      }
+    },
+    "reposts": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$clipId": {
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    }
+  }
+}
