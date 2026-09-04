@@ -1,0 +1,39 @@
+{
+  "name": "Gram Flow",
+  "short_name": "Gram",
+  "description": "Профессиональный RTDB-клиент для видеопотока по прямым ссылкам.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "background_color": "#08090d",
+  "theme_color": "#08090d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "entertainment", "video"],
+  "shortcuts": [
+    {
+      "name": "Новый клип",
+      "short_name": "Создать",
+      "description": "Добавить прямую ссылку на видео",
+      "url": "./?action=create",
+      "icons": [{"src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml"}]
+    },
+    {
+      "name": "Открыть поток",
+      "short_name": "Для вас",
+      "description": "Перейти к видеопотоку",
+      "url": "./",
+      "icons": [{"src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml"}]
+    }
+  ]
+}
